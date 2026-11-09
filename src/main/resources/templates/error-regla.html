@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es" th:replace="~{fragments/layout :: pagina('Acción no permitida', 'revision', ~{::contenido})}">
+
+<body>
+<div th:fragment="contenido" class="error-regla">
+
+	<!--
+		Esta pantalla usa los componentes del sistema visual: hero-inicio,
+		tarjeta, boton. Solo declara aquí lo propio de esta página: el sello
+		circular de error.
+
+		El 403 y el error de regla se parecen en pantalla pero no en causa:
+		uno es un rol que no alcanza y el otro un estado que ya no admite
+		la acción. Por eso el encabezado se redacta distinto en cada caso
+		y no se resuelve con una sola plantilla.
+
+		Estilo: mismo sistema de colaboradores.html y transporte.html.
+		Todas las reglas van prefijadas con .error-regla.
+	-->
+	<style>
+		/* =================================================================
+		   Error de regla · estilos locales
+		   ================================================================= */
+		.error-regla {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+
+		/* Tarjeta centrada, ancho contenido, sin hover */
+		.error-regla .tarjeta {
+			text-align: center;
+			max-width: 42rem;
+			margin: 0 auto;
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+		}
+		.error-regla .tarjeta:hover {
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			border-color: var(--a-borde);
+		}
+		.error-regla .tarjeta__cuerpo { padding: 2.25rem 1.75rem; }
+
+		/* ---- Sello circular: sin rotación ni animación ---- */
+		.error-regla .sello {
+			position: relative;
+			width: 6rem;
+			height: 6rem;
+			margin: 0 auto 1.25rem;
+			border-radius: 50%;
+			background: #fdecec;
+			border: 1px solid #f0c4c4;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 2.125rem;
+			color: #b42318;
+		}
+		.error-regla .sello::before { content: none; }
+
+		.error-regla h1 {
+			margin: 0 0 .875rem;
+			font-size: 1.4375rem;
+			font-weight: 700;
+			color: var(--a-navy);
+			letter-spacing: -.01em;
+		}
+
+		.error-regla p {
+			margin: 0 auto 1.625rem;
+			max-width: 56ch;
+			font-size: .9375rem;
+			line-height: 1.65;
+			color: var(--a-tenue);
+			font-weight: 500;
+		}
+
+		/* ---- Acciones ---- */
+		.error-regla .acciones {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			gap: .625rem;
+			flex-wrap: wrap;
+		}
+
+		/* ---- Botones ---- */
+		.error-regla .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.error-regla .boton::after { display: none; }
+		.error-regla .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.error-regla .boton--primario,
+		.error-regla .boton--primario:hover {
+			border-color: var(--a-accion);
+			background: var(--a-accion);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(221, 145, 44, .28);
+		}
+		.error-regla .boton--primario:hover {
+			border-color: var(--a-accion-hover);
+			background: var(--a-accion-hover);
+			box-shadow: 0 4px 12px rgba(221, 145, 44, .36);
+		}
+		.error-regla .boton--fantasma {
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.error-regla .boton--fantasma:hover {
+			border: 1px solid #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+
+		/* =================================================================
+		   Móvil
+		   ================================================================= */
+		@media (max-width: 768px) {
+			.error-regla .tarjeta__cuerpo { padding: 1.875rem 1.25rem; }
+			.error-regla h1 { font-size: 1.25rem; }
+			.error-regla .sello { width: 5rem; height: 5rem; font-size: 1.75rem; }
+
+			.error-regla .acciones {
+				flex-direction: column;
+				align-items: stretch;
+			}
+			.error-regla .acciones .boton {
+				width: 100%;
+				justify-content: center;
+			}
+		}
+	</style>
+
+	<div class="tarjeta">
+		<div class="tarjeta__cuerpo">
+			<div class="sello"><i class="fas fa-ban"></i></div>
+			<h1>La acción no aplica</h1>
+			<p th:if="${error != null}" th:text="${error}">Regla incumplida.</p>
+			<p th:unless="${error != null}">
+				El estado del registro no admite lo que se intentó hacer.
+			</p>
+			<div class="acciones">
+				<a th:href="@{/programaciones/revision}" class="boton boton--primario">
+					<i class="fas fa-arrow-left"></i> Volver a la cola
+				</a>
+				<a th:href="@{/}" class="boton boton--fantasma">
+					<i class="fas fa-house"></i> Ir al inicio
+				</a>
+			</div>
+		</div>
+	</div>
+
+</div>
+</body>
+
+</html>

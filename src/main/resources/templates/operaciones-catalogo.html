@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="es" th:replace="~{fragments/layout :: pagina('Operaciones', 'operaciones', ~{::contenido})}">
+<body>
+<div th:fragment="contenido" class="op-cat">
+
+	<!--
+		Catálogo de operaciones: alta de operación y requisitos por operación.
+		Los cursos y aptitudes se mudaron a /operaciones/aptitudes
+		(aptitudes-cursos.html): esta pantalla se queda con lo que es de las
+		operaciones.
+
+		Estilo: mismo sistema de colaboradores.html y transporte.html.
+		Todas las reglas van prefijadas con .op-cat y anulan las de app.css.
+
+		Colores por función:
+		- Alta (nueva operación) → cálido #e09837 (nuevos registros).
+		- Configuración (requisitos) → azul #194779 (listados).
+
+		En móvil:
+		- El hero se apila en una columna.
+		- Cada línea de requisitos se apila: primero la operación, después
+		  el formulario de asociar a todo el ancho.
+		- Los inputs miden 16px para que iOS no haga zoom al enfocar.
+	-->
+	<style>
+		/* =================================================================
+		   Operaciones · estilos locales
+		   ================================================================= */
+		.op-cat {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+		.op-cat > .hero-inicio,
+		.op-cat > .tarjeta { margin-bottom: 1.25rem; }
+
+		/* ---- Portada ---- */
+		.op-cat .hero-inicio,
+		.op-cat .hero-inicio * { animation: none; }
+		.op-cat .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.op-cat .hero-inicio::before,
+		.op-cat .hero-inicio::after { content: none; }
+		.op-cat .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.op-cat .hero-inicio__contenido { max-width: 44rem; }
+		.op-cat .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+			text-transform: uppercase;
+		}
+		.op-cat .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.op-cat .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+
+		/* ---- Tarjeta y cabecera ---- */
+		.op-cat .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+			overflow: hidden;
+		}
+		.op-cat .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.op-cat .tarjeta__cabecera {
+			justify-content: flex-start;
+			padding: 1.375rem 1.5rem;
+			gap: 1rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.op-cat .tarjeta__titulo-grupo { flex: 1 1 16rem; }
+		.op-cat .tarjeta__titulo-grupo h2 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+		}
+		.op-cat .tarjeta__cabecera h2::before,
+		.op-cat .tarjeta__titulo-grupo h2::before { display: none; }
+		.op-cat .tarjeta__titulo-grupo p {
+			margin-top: .25rem;
+			max-width: 62ch;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+		.op-cat .tarjeta__cuerpo { padding: 1.5rem; }
+
+		/* Acento cálido: alta (cabecera #fdf8f0) */
+		.op-cat .tarjeta--alta { border-color: #f1d8b2; }
+		.op-cat .tarjeta--alta .tarjeta__cabecera {
+			background: #fdf8f0;
+			border-bottom-color: #f1d8b2;
+		}
+		/* Acento azul: listado/configuración */
+		.op-cat .tarjeta--config { border-color: var(--a-borde); }
+
+		/* ---- Íconos de sección ---- */
+		.op-cat .sec-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.25rem;
+		}
+		.op-cat .sec-icono--azul { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+		.op-cat .sec-icono--oro { background: #e09837; box-shadow: 0 3px 10px rgba(224, 152, 55, .3); }
+		.op-cat .sec-icono--cian { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+
+		/* ---- Etiquetas ---- */
+		.op-cat .etiqueta {
+			padding: .375rem .875rem;
+			border: 0;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+			white-space: nowrap;
+		}
+		.op-cat .etiqueta::before { content: none; display: none; animation: none; }
+		.op-cat .etiqueta--info { background: #e6effa; color: #24406a; }
+		.op-cat .etiqueta--gris { background: #eceff3; color: #3f5670; }
+		.op-cat .tarjeta__cabecera > .etiqueta { align-self: center; }
+
+		/* ---- Botones ---- */
+		.op-cat .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.op-cat .boton::after { display: none; }
+		.op-cat .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.op-cat .boton--primario,
+		.op-cat .boton--primario:hover {
+			border-color: var(--a-accion);
+			background: var(--a-accion);
+			box-shadow: 0 3px 10px rgba(221, 145, 44, .28);
+		}
+		.op-cat .boton--primario:hover {
+			border-color: var(--a-accion-hover);
+			background: var(--a-accion-hover);
+			box-shadow: 0 4px 12px rgba(221, 145, 44, .36);
+		}
+		.op-cat .boton--chico { padding: .5rem .875rem; font-size: .75rem; }
+		.op-cat .boton--fantasma {
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.op-cat .boton--fantasma:hover {
+			border: 1px solid #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.op-cat .boton--peligro {
+			border: 1px solid #f0c4c4;
+			background: #fff;
+			color: #b42318;
+			box-shadow: none;
+		}
+		.op-cat .boton--peligro:hover {
+			border: 1px solid #e6a8a8;
+			background: #fdf3f3;
+			color: #b42318;
+			box-shadow: none;
+		}
+
+		/* ---- Campos ---- */
+		.op-cat .campo__etiqueta,
+		.op-cat .campo:focus-within .campo__etiqueta {
+			margin-bottom: .375rem;
+			color: var(--a-navy);
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+		.op-cat .campo__ayuda { color: var(--a-tenue); line-height: 1.45; }
+		.op-cat input[type="text"],
+		.op-cat input[type="search"],
+		.op-cat select {
+			padding: .625rem .875rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background-color: #fff;
+			font-size: .9375rem;
+			font-weight: 500;
+			color: var(--a-texto);
+		}
+		.op-cat select { padding-right: 2.5rem; }
+		.op-cat input:hover, .op-cat select:hover { border-color: #b9c9dc; }
+		.op-cat input[type="text"]:focus,
+		.op-cat input[type="search"]:focus,
+		.op-cat select:focus {
+			border-color: var(--a-azul);
+			box-shadow: 0 0 0 3px rgba(23, 68, 117, .14);
+		}
+
+		/* ---- Bloque-form ---- */
+		.op-cat .bloque-form {
+			margin-bottom: 1.25rem;
+			border: 1px solid var(--a-borde);
+			border-radius: 12px;
+			background: #f9fbfd;
+			box-shadow: none;
+			overflow: hidden;
+		}
+		.op-cat .bloque-form__cabecera {
+			display: flex;
+			align-items: center;
+			gap: .875rem;
+			padding: 1rem 1.125rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.op-cat .bloque-form__icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 2rem;
+			height: 2rem;
+			border-radius: 50%;
+			background: var(--a-circulo);
+			color: #fff;
+			font-size: .875rem;
+			box-shadow: none;
+		}
+		.op-cat .bloque-form__cabecera > div:not(.bloque-form__icono) { min-width: 0; flex: 1; }
+		.op-cat .bloque-form__cabecera h3 {
+			margin: 0;
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: .01em;
+			color: var(--a-navy);
+			line-height: 1.3;
+		}
+		.op-cat .bloque-form__cabecera p {
+			margin: .1875rem 0 0;
+			font-size: .75rem;
+			color: var(--a-tenue);
+			font-weight: 500;
+			line-height: 1.5;
+			max-width: 52ch;
+		}
+		.op-cat .bloque-form__cuerpo { padding: 1.25rem 1.125rem; }
+		.op-cat .bloque-form__cuerpo .campo { margin-bottom: 0; }
+
+		/* ---- Form actions ---- */
+		.op-cat .form-actions-bar {
+			display: flex;
+			align-items: center;
+			justify-content: flex-end;
+			gap: .75rem;
+			flex-wrap: wrap;
+			padding-top: 1.25rem;
+			margin-top: 1.25rem;
+			border-top: 1px solid var(--a-borde);
+			background: none;
+		}
+
+		/* ---- Rejilla de campos ---- */
+		.op-cat .rejilla-campos {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 1rem 1.125rem;
+		}
+		.op-cat .rejilla-campos .campo--ancho { grid-column: 1 / -1; }
+
+		/* ---- Línea de operación con sus requisitos ---- */
+		.op-cat .operacion-linea {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 1.25rem;
+			flex-wrap: wrap;
+			padding: 1.125rem 0;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.op-cat .operacion-linea:first-child { padding-top: 0; }
+		.op-cat .operacion-linea:last-child { border-bottom: none; padding-bottom: 0; }
+
+		.op-cat .operacion-linea strong {
+			display: block;
+			font-size: .9375rem;
+			font-weight: 700;
+			color: var(--a-navy);
+			line-height: 1.3;
+		}
+		.op-cat .operacion-codigo {
+			display: inline-block;
+			margin-top: .1875rem;
+			font-size: .6875rem;
+			font-weight: 700;
+			letter-spacing: .06em;
+			color: var(--a-tenue);
+			text-transform: uppercase;
+		}
+		.op-cat .requisitos {
+			display: flex;
+			flex-wrap: wrap;
+			gap: .375rem;
+			margin-top: .625rem;
+		}
+
+		/* ---- Formulario de asociar ---- */
+		.op-cat .asignar-form {
+			display: flex;
+			align-items: center;
+			gap: .5rem;
+			flex-wrap: wrap;
+			margin: 0;
+		}
+		.op-cat .asignar-form select { min-width: 11rem; width: auto; }
+
+		/* ---- Requisito (píldora que se puede quitar) ---- */
+		.op-cat .requisito {
+			display: inline-flex;
+			align-items: center;
+			gap: .375rem;
+			margin: 0;
+			padding: .3125rem .5rem .3125rem .75rem;
+			border: 1px solid var(--a-borde);
+			border-radius: 999px;
+			background: var(--a-suave);
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .02em;
+			line-height: 1.3;
+			cursor: default;
+		}
+		.op-cat .requisito__quitar {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 1.125rem;
+			height: 1.125rem;
+			padding: 0;
+			border: none;
+			border-radius: 50%;
+			background: rgba(15, 23, 42, .08);
+			color: var(--a-tenue);
+			font-size: .625rem;
+			cursor: pointer;
+			transition: background .15s, color .15s;
+		}
+		.op-cat .requisito__quitar:hover,
+		.op-cat .requisito__quitar:focus-visible {
+			background: #fdecec;
+			color: #b42318;
+		}
+
+		/* ---- Nota vacía ---- */
+		.op-cat .vacio-nota {
+			display: block;
+			text-align: center;
+			color: var(--a-tenue);
+			font-style: italic;
+			font-size: .875rem;
+			padding: 1.75rem;
+			margin: 0;
+		}
+
+		/* ---- Buscador de operaciones ---- */
+		.op-cat .tarjeta--config .campo { margin-bottom: 1.25rem; }
+
+		/* ---- Paginación de la lista larga (la inserta app.js bajo la lista) ----
+		   Sus botones traen el color del tema base; aquí se fijan para que
+		   "Anterior" y "Siguiente" siempre se lean. */
+		.op-cat .paginacion {
+			margin: 0;
+			padding: 1rem 1.5rem;
+			background: #f8fafd;
+			border-top: 1px solid var(--a-borde);
+			color: var(--a-tenue);
+			font-size: .875rem;
+		}
+		.op-cat .paginacion__estado,
+		.op-cat .paginacion__actual {
+			color: var(--a-navy);
+			font-size: .8125rem;
+			font-weight: 700;
+		}
+		.op-cat .paginacion .boton {
+			padding: .5rem .875rem;
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			font-size: .8125rem;
+			box-shadow: none;
+		}
+		.op-cat .paginacion .boton:hover:not([disabled]) {
+			border-color: #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.op-cat .paginacion .boton[disabled] {
+			border-color: #e3ebf4;
+			background: #f3f6fa;
+			color: var(--a-tenue);
+			opacity: .6;
+			box-shadow: none;
+		}
+
+		/* =================================================================
+		   Móvil
+		   ================================================================= */
+		@media (max-width: 768px) {
+			.op-cat .hero-inicio { padding: 1.25rem; min-height: 0; }
+			.op-cat .hero-inicio h1 { font-size: 1.5rem; }
+			.op-cat .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.op-cat .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.op-cat .tarjeta__cuerpo { padding: 1rem; }
+			.op-cat .rejilla-campos { grid-template-columns: 1fr; }
+			.op-cat .bloque-form__cuerpo { padding: 1rem; }
+			.op-cat .form-actions-bar {
+				flex-direction: column-reverse;
+				align-items: stretch;
+			}
+			.op-cat .form-actions-bar .boton { width: 100%; justify-content: center; }
+
+			/* inputs a 16px: iOS no hace zoom al enfocar */
+			.op-cat .campo input,
+			.op-cat .campo select { font-size: 16px; }
+
+			/* Cada línea de requisitos: operación arriba, form abajo a todo el ancho */
+			.op-cat .operacion-linea { flex-direction: column; align-items: stretch; gap: 1rem; }
+			.op-cat .asignar-form { flex-direction: column; align-items: stretch; }
+			.op-cat .asignar-form select,
+			.op-cat .asignar-form .boton { width: 100%; }
+			.op-cat .asignar-form .boton { justify-content: center; }
+		}
+
+		@media (max-width: 480px) {
+			.op-cat .hero-icono { display: none; }
+			.op-cat .operacion-linea strong { font-size: .875rem; }
+		}
+		/* ---- Tarjeta plegable ---- */
+		.op-cat .detalle__flecha { margin-left: auto; background: var(--a-suave); color: var(--a-navy); }
+		.op-cat .detalle__cabecera:hover .detalle__flecha { background: var(--a-accion); color: #fff; }
+		.op-cat details:not([open]) > .tarjeta__cabecera { border-bottom: 0; }
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-gears"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">CONFIGURACIÓN</span>
+			<h1>Operaciones</h1>
+			<p>
+				Defina la actividad que se programa y las aptitudes que exige
+				cada una, para que el sistema ordene candidatos compatibles.
+			</p>
+		</div>
+	</section>
+
+	<!-- ======== ALTA ======== -->
+	<details class="tarjeta tarjeta--alta detalle">
+		<summary class="tarjeta__cabecera detalle__cabecera">
+			<span class="sec-icono sec-icono--oro" aria-hidden="true"><i class="fas fa-ship"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Nueva operación</h2>
+				<p>Defina el código y el nombre de la actividad que se programa.</p>
+			</div>
+			<span class="detalle__flecha" aria-hidden="true"><i class="fas fa-chevron-down"></i></span>
+		</summary>
+
+		<div class="tarjeta__cuerpo">
+			<form th:action="@{/operaciones}" method="post">
+				<div class="bloque-form">
+					<div class="bloque-form__cabecera">
+						<div class="bloque-form__icono"><i class="fas fa-tag"></i></div>
+						<div>
+							<h3>Identificación de la operación</h3>
+							<p>El código debe ser corto y único (MAIZ, PETCOKE, CARBON…).</p>
+						</div>
+					</div>
+					<div class="bloque-form__cuerpo">
+						<div class="rejilla-campos">
+							<label class="campo">
+								<span class="campo__etiqueta">Código</span>
+								<input type="text" name="codigo" placeholder="MAIZ" required>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Nombre</span>
+								<input type="text" name="nombre" placeholder="Descarga de maíz" required>
+							</label>
+						</div>
+					</div>
+				</div>
+
+				<div class="form-actions-bar">
+					<button type="submit" class="boton boton--primario">
+						<i class="fas fa-plus"></i> Crear operación
+					</button>
+				</div>
+			</form>
+		</div>
+	</details>
+
+	<!-- ======== REQUISITOS POR OPERACIÓN ======== -->
+	<div class="tarjeta tarjeta--config">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--cian" aria-hidden="true"><i class="fas fa-diagram-project"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Requisitos por operación</h2>
+				<p>Una persona solo aparecerá como compatible cuando tenga todas las aptitudes vigentes.</p>
+			</div>
+			<span class="etiqueta etiqueta--info"
+				  th:text="${#lists.size(operaciones)} + ' operaciones'">0</span>
+		</div>
+
+		<div class="tarjeta__cuerpo">
+
+			<!--
+				Con más de cincuenta operaciones el desplazamiento a ciegas
+				era el paso más lento: se filtra en el navegador por nombre
+				o código, sin viajar al servidor ni perder el estado, y la
+				lista se pagina de 10 en 10 (data-paginar, igual que las
+				tablas largas de aptitudes). Buscar y paginar se reparten la
+				visibilidad: quien coincide sale en la primera página.
+			-->
+			<label class="campo">
+				<span class="campo__etiqueta">Buscar operación</span>
+				<input type="search" placeholder="Nombre o código…" autocomplete="off"
+					   data-buscar-filas=".operacion-linea"
+					   aria-label="Buscar operación por nombre o código">
+			</label>
+
+			<div class="operacion-lineas" data-paginar=".operacion-linea">
+				<div class="operacion-linea" th:each="operacion : ${operaciones}">
+					<div>
+						<strong th:text="${operacion.nombre}">Operación</strong>
+						<span class="operacion-codigo" th:text="${operacion.codigo}">COD</span>
+						<div class="requisitos">
+							<!--
+								Cada requisito se puede quitar de la operación sin borrar ni la
+								aptitud ni la operación: era el único movimiento que faltaba y
+								era lo que dejaba las dos eliminaciones atascadas.
+							-->
+							<form class="etiqueta requisito"
+								  th:each="requisito : ${requisitos[operacion.id]}"
+								  th:action="@{/operaciones/requisitos/quitar}" method="post"
+								  th:attr="data-confirm=|¿Quitar la aptitud ${requisito.habilitacion.nombre} de la operación ${operacion.nombre}?|">
+								<input type="hidden" name="operacionId" th:value="${operacion.id}">
+								<input type="hidden" name="habilitacionId" th:value="${requisito.habilitacion.id}">
+								<span th:text="${requisito.habilitacion.nombre}">Aptitud</span>
+								<button type="submit" class="requisito__quitar" title="Quitar de esta operación"
+										th:attr="aria-label=|Quitar ${requisito.habilitacion.nombre}|">
+									<i class="fas fa-xmark"></i>
+								</button>
+							</form>
+							<span class="tenue" th:if="${#lists.isEmpty(requisitos[operacion.id])}">
+								Sin requisitos configurados
+							</span>
+						</div>
+					</div>
+					<form th:action="@{/operaciones/requisitos}" method="post" class="asignar-form">
+						<input type="hidden" name="operacionId" th:value="${operacion.id}">
+						<select name="habilitacionId" required>
+							<option value="">Añadir aptitud</option>
+							<option th:each="aptitud : ${habilitaciones}" th:value="${aptitud.id}"
+									th:text="${aptitud.nombre}">Aptitud</option>
+						</select>
+						<button type="submit" class="boton boton--fantasma boton--chico">
+							<i class="fas fa-link"></i> Asociar
+						</button>
+					</form>
+					<!--
+						Todo lo que se da de alta se tiene que poder quitar: una operación
+						que ya no se usa no puede quedarse en el catálogo para siempre.
+						Al eliminarla se lleva sus requisitos y desaparece de las
+						programaciones que la citaban.
+					-->
+					<form th:action="@{/operaciones/{id}/eliminar(id=${operacion.id})}"
+						  method="post" class="form-linea"
+						  th:attr="data-confirm=|¿Eliminar la operación ${operacion.nombre}?|,data-confirm-peligro='true'">
+						<button type="submit" class="boton boton--peligro boton--chico"
+								th:title="'Eliminar la operación ' + ${operacion.nombre}">
+							<i class="fas fa-trash-can"></i>
+						</button>
+					</form>
+				</div>
+			</div>
+
+			<span class="vacio-nota" th:if="${#lists.isEmpty(operaciones)}">
+				Aún no hay operaciones configuradas. Cree la primera con el formulario de arriba.
+			</span>
+
+			<!-- Estado del buscador: solo aparece cuando el filtro deja la lista vacía. -->
+			<span class="vacio-nota" data-buscar-vacio style="display:none">
+				Ninguna operación coincide con lo que escribió.
+			</span>
+
+		</div>
+	</div>
+
+</div>
+</body>
+</html>

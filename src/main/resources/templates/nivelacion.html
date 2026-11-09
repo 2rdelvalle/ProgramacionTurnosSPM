@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="es" th:replace="~{fragments/layout :: pagina('Nivelación', 'nivelacion', ~{::contenido})}">
+<body>
+<div th:fragment="contenido" class="niv">
+
+	<!--
+		Panel de nivelación: la sobrecarga de horas extra por área (gráfica de
+		barras con la línea del límite del 100 %) y el detalle por colaborador.
+
+		Es la misma información de la pantalla de Horas extra, leída como
+		porcentaje frente al máximo legal: por encima del 100 % exige
+		nivelación. La barra de cada área es la carga del área completa; el
+		porcentaje de cada persona puede pasar de 100 cuando rompe un tope.
+		Los filtros de área, cargo, nombre y mes acotan lo que se ve, pero no
+		mueven el máximo legal.
+
+		Estilo: mismo sistema de horas-extra-nivelacion.html y colaboradores.html.
+		Todas las reglas van prefijadas con .niv.
+	-->
+	<style>
+		/* =================================================================
+		   Nivelación · estilos locales
+		   ================================================================= */
+		.niv {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			--a-rojo: #c0392b;
+			--a-ambar: #c9811f;
+			--a-verde: #2d7a55;
+			animation: none;
+		}
+		.niv > .hero-inicio,
+		.niv > .tarjeta { margin-bottom: 1.25rem; }
+
+		/* ---- Portada ---- */
+		.niv .hero-inicio,
+		.niv .hero-inicio * { animation: none; }
+		.niv .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.niv .hero-inicio::before,
+		.niv .hero-inicio::after { content: none; }
+		.niv .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.niv .hero-inicio__contenido { max-width: 46rem; }
+		.niv .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+			text-transform: uppercase;
+		}
+		.niv .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.niv .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+
+		/* ---- Tarjeta y cabecera ---- */
+		.niv .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+			overflow: hidden;
+		}
+		.niv .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.niv .tarjeta__cabecera {
+			justify-content: flex-start;
+			padding: 1.375rem 1.5rem;
+			gap: 1rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.niv .sec-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.25rem;
+		}
+		.niv .sec-icono--azul { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+		.niv .sec-icono--oro { background: #e09837; box-shadow: 0 3px 10px rgba(224, 152, 55, .3); }
+		.niv .sec-icono--verde { background: #2d7a55; box-shadow: 0 3px 10px rgba(45, 122, 85, .25); }
+		.niv .tarjeta__titulo-grupo { flex: 1 1 16rem; }
+		.niv .tarjeta__titulo-grupo h2 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+		}
+		.niv .tarjeta__cabecera h2::before,
+		.niv .tarjeta__titulo-grupo h2::before { display: none; }
+		.niv .tarjeta__titulo-grupo p {
+			margin-top: .25rem;
+			max-width: 62ch;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+		.niv .tarjeta__cuerpo { padding: 1.5rem; }
+
+		/* ---- Filtros ---- */
+		.niv .filtros {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: flex-end;
+			gap: 1rem;
+			padding: 1.25rem 1.5rem;
+			border-bottom: 1px solid var(--a-borde);
+			background: #fbfdff;
+		}
+		.niv .filtros .campo { margin-bottom: 0; min-width: 11rem; flex: 1 1 11rem; }
+		.niv .filtros__fin { margin-left: auto; display: flex; gap: .5rem; }
+		.niv .campo__etiqueta {
+			margin-bottom: .375rem;
+			color: var(--a-navy);
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+		.niv input[type="search"],
+		.niv input[type="month"],
+		.niv select {
+			width: 100%;
+			padding: .625rem .875rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background-color: #fff;
+			font-size: .9375rem;
+			font-weight: 500;
+			color: var(--a-texto);
+		}
+		.niv input[type="search"]:focus,
+		.niv input[type="month"]:focus,
+		.niv select:focus {
+			border-color: var(--a-azul);
+			box-shadow: 0 0 0 3px rgba(23, 68, 117, .14);
+			outline: none;
+		}
+		.niv .boton {
+			padding: .6875rem 1.25rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.niv .boton::after { display: none; }
+		.niv .boton:hover { background: var(--a-azul-hover); border-color: var(--a-azul-hover); transform: none; }
+
+		/* ---- Tarjetas de cifras ---- */
+		.niv .cifras {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 1rem;
+			margin-bottom: 1.25rem;
+		}
+		.niv .cifra {
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+			padding: 1.125rem 1.375rem;
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+		}
+		.niv .cifra__icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 2.75rem;
+			height: 2.75rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.125rem;
+		}
+		.niv .cifra--alerta .cifra__icono { background: #e5484d; box-shadow: 0 3px 10px rgba(229, 72, 77, .28); }
+		.niv .cifra--personas .cifra__icono { background: #e09837; box-shadow: 0 3px 10px rgba(224, 152, 55, .28); }
+		.niv .cifra--promedio .cifra__icono { background: var(--a-verde); box-shadow: 0 3px 10px rgba(45, 122, 85, .25); }
+		.niv .cifra__texto { min-width: 0; }
+		.niv .cifra__valor {
+			display: block;
+			font-size: 1.625rem;
+			font-weight: 800;
+			line-height: 1.1;
+			color: var(--a-navy);
+			font-variant-numeric: tabular-nums;
+		}
+		.niv .cifra__valor small { font-size: .9375rem; font-weight: 700; color: var(--a-tenue); }
+		.niv .cifra__etiqueta { display: block; margin-top: .125rem; font-size: .9375rem; font-weight: 700; color: var(--a-navy); }
+		.niv .cifra__sub { display: block; margin-top: .125rem; font-size: .8125rem; color: var(--a-tenue); }
+
+		/* ---- Gráfica de barras ---- */
+		.niv .grafica { padding: 1.5rem; }
+		.niv .grafica__leyenda {
+			display: flex;
+			justify-content: flex-end;
+			align-items: center;
+			gap: .5rem;
+			margin-bottom: 1rem;
+			font-size: .8125rem;
+			font-weight: 600;
+			color: var(--a-tenue);
+		}
+		.niv .grafica__leyenda-marca {
+			width: 1.5rem;
+			height: 0;
+			border-top: 2px dashed var(--a-ambar);
+		}
+		.niv .grafica__filas { display: flex; flex-direction: column; gap: 1.125rem; }
+		.niv .grafica__fila {
+			display: grid;
+			grid-template-columns: 9rem 1fr 4.5rem 9.5rem;
+			align-items: center;
+			gap: 1rem;
+		}
+		.niv .grafica__nombre {
+			font-size: .875rem;
+			font-weight: 600;
+			color: var(--a-navy);
+			text-align: right;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+		.niv .grafica__centro { min-width: 0; }
+		.niv .grafica__detalle {
+			margin-top: .375rem;
+			font-size: .75rem;
+			color: var(--a-tenue);
+			font-variant-numeric: tabular-nums;
+		}
+		.niv .grafica__pista {
+			position: relative;
+			height: 1.125rem;
+			border-radius: 999px;
+			background: #eef3f9;
+		}
+		.niv .grafica__pista::after {
+			content: "";
+			position: absolute;
+			top: 0;
+			bottom: 0;
+			left: var(--linea, 80%);
+			width: 0;
+			border-left: 2px dashed var(--a-ambar);
+			opacity: .8;
+		}
+		.niv .grafica__barra {
+			display: block;
+			height: 100%;
+			min-width: 2px;
+			border-radius: 999px;
+		}
+		.niv .grafica__barra--alta { background: linear-gradient(90deg, #e5484d, #c0392b); }
+		.niv .grafica__barra--media { background: linear-gradient(90deg, #f0b64b, #dd912c); }
+		.niv .grafica__barra--baja { background: linear-gradient(90deg, #4d94d6, #174475); }
+		.niv .grafica__valor {
+			font-size: .9375rem;
+			font-weight: 800;
+			color: var(--a-navy);
+			font-variant-numeric: tabular-nums;
+		}
+		.niv .grafica__estado { justify-self: start; }
+
+		/* ---- Etiquetas ---- */
+		.niv .etiqueta {
+			padding: .375rem .75rem;
+			border: 0;
+			border-radius: 999px;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .02em;
+			white-space: nowrap;
+		}
+		.niv .etiqueta::before { content: none; display: none; animation: none; }
+		.niv .etiqueta--ok { background: #e3f2ea; color: var(--a-verde); }
+		.niv .etiqueta--alerta { background: #fdf0d9; color: var(--a-ambar); }
+		.niv .etiqueta--error { background: #fdeaea; color: var(--a-rojo); }
+
+		/* ---- Tabla ---- */
+		.niv .tabla-envoltura {
+			margin: 1.25rem 1.5rem 1.5rem;
+			border: 1px solid #dfe8f3;
+			border-radius: 12px;
+			background: #fff;
+			overflow-x: auto;
+			-webkit-overflow-scrolling: touch;
+		}
+		.niv .tabla thead th {
+			padding: .875rem 1.125rem;
+			background: var(--a-suave);
+			color: #2f4a70;
+			border-bottom: 1px solid #e3ebf4;
+			font-size: .75rem;
+			font-weight: 600;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+			text-align: left;
+		}
+		.niv .tabla thead th.tabla__num { text-align: right; }
+		.niv .tabla tbody td {
+			padding: 1rem 1.125rem;
+			border-bottom: 1px solid #edf2f8;
+			vertical-align: middle;
+			color: var(--a-texto);
+		}
+		.niv .tabla tbody tr { animation: none; }
+		.niv .tabla tbody tr:nth-child(even) { background: transparent; }
+		.niv .tabla tbody tr:hover { background: #f7fafd; }
+		.niv .tabla tbody tr:last-child td { border-bottom: 0; }
+		.niv .tabla__num { text-align: right; font-variant-numeric: tabular-nums; }
+		.niv .tabla__principal { color: var(--a-navy); font-weight: 700; }
+		.niv .tabla__secundario { display: block; font-size: .75rem; color: var(--a-tenue); font-weight: 500; }
+		.niv .persona { display: flex; align-items: center; gap: .625rem; }
+		.niv .inicial {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 2.25rem;
+			height: 2.25rem;
+			border-radius: 50%;
+			background: var(--a-circulo);
+			color: #fff;
+			font-size: .875rem;
+			font-weight: 700;
+		}
+
+		/* ---- Mini-barra de la tabla ---- */
+		.niv .mini {
+			display: flex;
+			align-items: center;
+			gap: .625rem;
+			justify-content: flex-end;
+		}
+		.niv .mini__pista {
+			position: relative;
+			width: 5rem;
+			height: .5rem;
+			border-radius: 999px;
+			background: #eef3f9;
+			flex: none;
+		}
+		.niv .mini__pista::after {
+			content: "";
+			position: absolute;
+			top: -.25rem;
+			bottom: -.25rem;
+			left: 80%;
+			width: 0;
+			border-left: 2px dashed var(--a-ambar);
+			opacity: .7;
+		}
+		.niv .mini__barra { display: block; height: 100%; border-radius: 999px; }
+		.niv .mini__barra--alta { background: #c0392b; }
+		.niv .mini__barra--media { background: #dd912c; }
+		.niv .mini__barra--baja { background: #3f7fb5; }
+		.niv .mini__valor { font-size: .875rem; font-weight: 700; color: var(--a-navy); }
+
+		/* ---- Estado vacío ---- */
+		.niv .tabla--vacia td {
+			white-space: normal;
+			line-height: 1.6;
+			text-align: center;
+			padding: 2.5rem 1rem;
+			color: var(--a-tenue);
+			font-size: .8125rem;
+		}
+		.niv .tabla tr.tabla--vacia:hover { background: transparent; }
+		.niv .vacio-icono { display: block; margin-bottom: .625rem; color: #1f4b7a; font-size: 2rem; }
+		.niv .tabla--vacia strong { display: block; margin-bottom: .375rem; color: var(--a-navy); font-size: .9375rem; font-weight: 700; }
+
+		/* ---- Móvil ---- */
+		@media (max-width: 900px) {
+			.niv .cifras { grid-template-columns: 1fr; }
+			.niv .filtros { flex-direction: column; align-items: stretch; }
+			.niv .filtros .campo,
+			.niv .filtros__fin { width: 100%; flex-basis: 100%; margin-left: 0; }
+			.niv .filtros__fin .boton { width: 100%; justify-content: center; }
+			.niv .grafica__fila { grid-template-columns: 7rem 1fr 4rem; row-gap: .375rem; }
+			.niv .grafica__estado { grid-column: 2 / -1; justify-self: start; }
+		}
+		@media (max-width: 768px) {
+			.niv .hero-inicio { padding: 1.25rem; min-height: 0; }
+			.niv .hero-inicio h1 { font-size: 1.5rem; }
+			.niv .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.niv .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.niv .grafica { padding: 1rem; }
+			.niv .tabla-envoltura { margin: 1rem 1rem 1.25rem; }
+			.niv input[type="search"],
+			.niv input[type="month"],
+			.niv select { font-size: 16px; }
+			.niv .grafica__nombre { text-align: left; }
+		}
+		@media (max-width: 480px) {
+			.niv .hero-icono { display: none; }
+		}
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-chart-column"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">NIVELACIÓN DE CARGA LABORAL Y HORAS EXTRA</span>
+			<h1>Nivelación</h1>
+			<p>Monitoreo de las horas extra por área y colaborador frente a los topes legales
+				(diario y semanal). Quien alcanza o excede su máximo del mes pide nivelación; la
+				zona de atención empieza al 80 %.</p>
+		</div>
+	</section>
+
+	<!-- ======== FILTROS ======== -->
+	<div class="tarjeta">
+		<form class="filtros" th:action="@{/nivelacion}" method="get">
+			<div class="campo">
+				<label class="campo__etiqueta" for="filtro-area">Área</label>
+				<select id="filtro-area" name="area">
+					<option value="">Todas las áreas</option>
+					<option th:each="area : ${areas}" th:value="${area.id}" th:text="${area.nombre}"
+							th:selected="${area.id == areaSeleccionada}">Área</option>
+				</select>
+			</div>
+			<div class="campo">
+				<label class="campo__etiqueta" for="filtro-cargo">Cargo</label>
+				<select id="filtro-cargo" name="cargo">
+					<option value="">Todos los cargos</option>
+					<option th:each="cargo : ${cargos}" th:value="${cargo.id}" th:text="${cargo.nombre}"
+							th:selected="${cargo.id == cargoSeleccionado}">Cargo</option>
+				</select>
+			</div>
+			<div class="campo">
+				<label class="campo__etiqueta" for="filtro-q">Colaborador</label>
+				<input id="filtro-q" type="search" name="q" th:value="${busqueda}"
+					   placeholder="Nombre o cédula…" autocomplete="off">
+			</div>
+			<div class="campo">
+				<label class="campo__etiqueta" for="filtro-mes">Mes</label>
+				<input id="filtro-mes" type="month" name="mes" th:value="${panel.periodo}">
+			</div>
+			<div class="filtros__fin">
+				<button type="submit" class="boton">
+					<i class="fas fa-filter"></i> Filtrar resultados
+				</button>
+			</div>
+		</form>
+	</div>
+
+	<!-- ======== TARJETAS DE CIFRAS ======== -->
+	<div class="cifras">
+		<div class="cifra cifra--alerta">
+			<span class="cifra__icono" aria-hidden="true"><i class="fas fa-triangle-exclamation"></i></span>
+			<div class="cifra__texto">
+				<span class="cifra__valor" th:text="${panel.areasEnAlerta}">0</span>
+				<span class="cifra__etiqueta" th:text="${panel.areasEnAlerta == 1 ? 'Área' : 'Áreas'}">Áreas</span>
+				<span class="cifra__sub">Con personal al tope legal o por encima</span>
+			</div>
+		</div>
+		<div class="cifra cifra--personas">
+			<span class="cifra__icono" aria-hidden="true"><i class="fas fa-user-group"></i></span>
+			<div class="cifra__texto">
+				<span class="cifra__valor" th:text="${panel.personasEnAlerta}">0</span>
+				<span class="cifra__etiqueta" th:text="${panel.personasEnAlerta == 1 ? 'persona' : 'personas'}">personas</span>
+				<span class="cifra__sub">Al tope legal o por encima</span>
+			</div>
+		</div>
+		<div class="cifra cifra--promedio">
+			<span class="cifra__icono" aria-hidden="true"><i class="fas fa-clock"></i></span>
+			<div class="cifra__texto">
+				<span class="cifra__valor"
+					  th:text="${#numbers.formatDecimal(panel.horasDelMes, 1, 'COMMA', 2, 'POINT')} + ' h'">0.00 h</span>
+				<span class="cifra__etiqueta">Horas extra del mes</span>
+				<span class="cifra__sub"
+					  th:text="${panel.etiqueta} + ' · máximo legal ' + ${#numbers.formatDecimal(panel.capacidadMes, 1, 'COMMA', 0, 'POINT')} + ' h por persona'">octubre de 2026</span>
+			</div>
+		</div>
+	</div>
+
+	<!-- ======== GRÁFICA POR ÁREA ======== -->
+	<div class="tarjeta">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--azul" aria-hidden="true"><i class="fas fa-chart-simple"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Gráfica de nivelación por área</h2>
+				<p>Cada barra es la carga del área completa: sus horas extra del mes sobre el máximo
+					legal de todas sus personas. La línea marca el 80 %. Las personas que rompen un
+					tope se cuentan aparte, en la etiqueta de cada área.</p>
+			</div>
+		</div>
+
+		<div class="grafica" th:if="${not #lists.isEmpty(panel.areas)}">
+			<div class="grafica__leyenda">
+				<span class="grafica__leyenda-marca"></span> Cerca del tope (80 %)
+			</div>
+			<div class="grafica__filas">
+				<div class="grafica__fila" th:each="area : ${panel.areas}">
+					<span class="grafica__nombre" th:text="${area.nombre}" th:title="${area.nombre}">Área</span>
+					<div class="grafica__centro">
+						<div class="grafica__pista">
+							<span class="grafica__barra"
+								  th:classappend="${'grafica__barra--' + area.severidadCarga()}"
+								  th:style="'width:' + ${area.ancho()} + '%'"
+								  th:title="${area.conHoras} + ' de ' + ${area.personas} + ' con horas · máximo legal ' + ${#numbers.formatDecimal(panel.capacidadMes, 1, 'COMMA', 0, 'POINT')} + ' h por persona'"></span>
+						</div>
+						<div class="grafica__detalle">
+							<span th:text="${#numbers.formatDecimal(area.horas, 1, 'COMMA', 2, 'POINT')} + ' h · ' + ${area.conHoras} + ' de ' + ${area.personas} + ' con horas'">0 h · 0 de 0 con horas</span><span
+									th:if="${area.personasEnAlerta > 0}"
+									th:text="' · ' + ${area.personasEnAlerta} + ' al tope o por encima'"> · 0 al tope o por encima</span>
+						</div>
+					</div>
+					<span class="grafica__valor" th:text="${area.porcentaje} + ' %'">0 %</span>
+					<span class="etiqueta grafica__estado"
+						  th:classappend="${'etiqueta--' + (area.severidad() == 'alta' ? 'error' : (area.severidad() == 'media' ? 'alerta' : 'ok'))}"
+						  th:text="${area.etiqueta()}">En rango</span>
+				</div>
+			</div>
+		</div>
+
+		<div class="tabla-envoltura" th:if="${#lists.isEmpty(panel.areas)}">
+			<table class="tabla">
+				<tbody>
+				<tr class="tabla--vacia">
+					<td>
+						<i class="fas fa-chart-column vacio-icono" aria-hidden="true"></i>
+						<strong>Sin datos para graficar</strong>
+						<span>No hay horas extra ejecutadas en el mes con los filtros elegidos.</span>
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+	<!-- ======== DETALLE POR COLABORADOR ======== -->
+	<div class="tarjeta">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--oro" aria-hidden="true"><i class="fas fa-table-list"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Detalle por colaborador</h2>
+				<p>Las horas extra del mes y su porcentaje frente al máximo legal mensual (100 % es el tope).
+					Si la persona rompe un tope diario o semanal, el motivo aparece bajo el estado.</p>
+			</div>
+			<span class="etiqueta etiqueta--gris" th:text="${#lists.size(panel.colaboradores)} + ' en total'">0 en total</span>
+		</div>
+
+		<div class="tabla-envoltura">
+			<table class="tabla">
+				<thead>
+				<tr>
+					<th>Colaborador</th>
+					<th>Cargo</th>
+					<th>Área</th>
+					<th class="tabla__num">Horas extra</th>
+					<th class="tabla__num">% Nivelación</th>
+					<th>Estado</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr th:each="fila : ${panel.colaboradores}">
+					<td>
+						<div class="persona">
+							<span class="inicial" aria-hidden="true"
+								  th:text="${#strings.toUpperCase(#strings.substring(fila.nombreCompleto, 0, 1))}">N</span>
+							<span class="tabla__principal" th:text="${fila.nombreCompleto}">Nombre</span>
+						</div>
+					</td>
+					<td th:text="${fila.cargo}">Cargo</td>
+					<td th:text="${fila.area}">Área</td>
+					<td class="tabla__num">
+						<span class="tabla__principal"
+							  th:text="${#numbers.formatDecimal(fila.horasEjecutadas, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+						<span class="tabla__secundario"
+							  th:text="'de ' + ${#numbers.formatDecimal(fila.capacidad, 1, 'COMMA', 0, 'POINT')} + ' h máx. del mes'">de 56 h máx. del mes</span>
+					</td>
+					<td class="tabla__num">
+						<div class="mini">
+							<span class="mini__pista">
+								<span class="mini__barra" th:classappend="${'mini__barra--' + fila.severidad()}"
+									  th:style="'width:' + ${fila.ancho()} + '%'"></span>
+							</span>
+							<span class="mini__valor" th:text="${fila.porcentaje} + ' %'">0 %</span>
+						</div>
+					</td>
+					<td>
+						<span class="etiqueta"
+							  th:classappend="${'etiqueta--' + (fila.severidad() == 'alta' ? 'error' : (fila.severidad() == 'media' ? 'alerta' : 'ok'))}"
+							  th:text="${fila.estado()}">En rango</span>
+						<span class="tabla__secundario" th:if="${fila.motivo != null}"
+							  th:text="${fila.motivo}">12/oct: 8.00 h (tope 2)</span>
+					</td>
+				</tr>
+				<tr th:if="${#lists.isEmpty(panel.colaboradores)}" class="tabla--vacia">
+					<td colspan="6">
+						<i class="fas fa-chart-column vacio-icono" aria-hidden="true"></i>
+						<strong>Sin colaboradores para mostrar</strong>
+						<span>No hay horas extra ejecutadas en el mes con los filtros elegidos.</span>
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="es" th:replace="~{fragments/layout :: pagina('Ajustar propuesta', 'revision', ~{::contenido})}">
+
+<body>
+<div th:fragment="contenido" class="ajuste">
+
+	<!--
+		Esta pantalla usa los componentes del sistema visual: hero-inicio,
+		tarjeta, alerta, campo, boton, panel-identidad, bloque-form,
+		form-actions-bar y sec-icono, con la paleta sobria de
+		colaboradores.html y transporte.html.
+
+		Colores por función:
+		- Tarjeta del ajuste → cálido (acción principal: aprobar con ajuste).
+		- Bloque de motivo del ajuste → bloque-form--oro (mismo color, refuerza).
+		- Resto de bloques → azul por defecto.
+
+		En móvil:
+		- El hero se apila en una columna.
+		- El panel de identidad pasa a una columna con la meta debajo.
+		- Las rejillas de campos pasan a una columna.
+		- Los campos suben a 16px para que iOS no haga zoom al enfocar.
+		- El pie se apila y cada botón ocupa todo el ancho.
+	-->
+	<style>
+		/* =================================================================
+		   Ajuste de propuesta · estilos locales
+		   ================================================================= */
+		.ajuste {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+		.ajuste > .hero-inicio,
+		.ajuste > .tarjeta,
+		.ajuste > .panel-identidad,
+		.ajuste > .bloque-form { margin-bottom: 1.25rem; }
+
+		/* ---- Portada ---- */
+		.ajuste .hero-inicio,
+		.ajuste .hero-inicio * { animation: none; }
+		.ajuste .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.ajuste .hero-inicio::before,
+		.ajuste .hero-inicio::after { content: none; }
+		.ajuste .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.ajuste .hero-inicio__contenido { max-width: 44rem; }
+		.ajuste .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+			text-transform: uppercase;
+		}
+		.ajuste .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.ajuste .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+
+		/* ---- Panel de identidad ---- */
+		.ajuste .panel-identidad {
+			position: relative;
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) auto;
+			gap: 1.25rem;
+			align-items: center;
+			padding: 1.25rem 1.375rem;
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #f8fafd;
+			overflow: hidden;
+		}
+		.ajuste .panel-identidad::before { content: none; }
+		.ajuste .panel-identidad__marca {
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+			min-width: 0;
+		}
+		.ajuste .panel-identidad__avatar {
+			flex: none;
+			width: 3.5rem;
+			height: 3.5rem;
+			display: grid;
+			place-items: center;
+			border-radius: 50%;
+			background: #2c5f94;
+			color: #fff;
+			font-size: 1.375rem;
+			font-weight: 600;
+			box-shadow: none;
+			text-transform: uppercase;
+			letter-spacing: .02em;
+		}
+		.ajuste .panel-identidad__info h3 {
+			margin: 0;
+			font-size: 1.0625rem;
+			font-weight: 700;
+			color: var(--a-navy);
+			line-height: 1.3;
+			letter-spacing: -.005em;
+		}
+		.ajuste .panel-identidad__info p {
+			margin: .1875rem 0 0;
+			font-size: .875rem;
+			font-weight: 500;
+			color: var(--a-tenue);
+			line-height: 1.5;
+		}
+		.ajuste .panel-identidad__meta {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(8rem, auto));
+			gap: 1rem 1.25rem;
+			margin: 0;
+			padding-left: 1.25rem;
+			border-left: 1px solid var(--a-borde);
+		}
+		.ajuste .panel-identidad__meta > div { min-width: 0; }
+		.ajuste .panel-identidad__meta dt {
+			margin-bottom: .25rem;
+			font-size: .6875rem;
+			font-weight: 700;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+			color: var(--a-tenue);
+			white-space: nowrap;
+		}
+		.ajuste .panel-identidad__meta dd {
+			margin: 0;
+			font-size: .875rem;
+			font-weight: 700;
+			color: var(--a-navy);
+			line-height: 1.4;
+		}
+		.ajuste .panel-identidad__meta dd small {
+			display: block;
+			margin-top: .125rem;
+			font-size: .75rem;
+			font-weight: 500;
+			color: var(--a-tenue);
+		}
+
+		/* ---- Tarjeta y cabecera ---- */
+		.ajuste .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+			overflow: hidden;
+		}
+		.ajuste .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.ajuste .tarjeta__cabecera {
+			justify-content: flex-start;
+			padding: 1.375rem 1.5rem;
+			gap: 1rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.ajuste .tarjeta__titulo-grupo { flex: 1 1 16rem; }
+		.ajuste .tarjeta__titulo-grupo h2 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+		}
+		.ajuste .tarjeta__cabecera h2::before,
+		.ajuste .tarjeta__titulo-grupo h2::before { display: none; }
+		.ajuste .tarjeta__titulo-grupo p {
+			margin-top: .25rem;
+			max-width: 62ch;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+		.ajuste .tarjeta__cuerpo { padding: 1.5rem; }
+
+		/* Acento cálido: es la acción de aprobar con ajuste */
+		.ajuste .tarjeta--decision { border-color: #f1d8b2; }
+		.ajuste .tarjeta--decision .tarjeta__cabecera {
+			background: #fdf8f0;
+			border-bottom-color: #f1d8b2;
+		}
+
+		/* ---- Íconos de sección ---- */
+		.ajuste .sec-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.25rem;
+		}
+		.ajuste .sec-icono--oro { background: #e09837; box-shadow: 0 3px 10px rgba(224, 152, 55, .3); }
+		.ajuste .sec-icono--azul { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+
+		/* ---- Etiquetas ---- */
+		.ajuste .etiqueta {
+			padding: .375rem .875rem;
+			border: 0;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+			white-space: nowrap;
+		}
+		.ajuste .etiqueta::before { content: none; display: none; animation: none; }
+		.ajuste .etiqueta--ok { background: #dff3e6; color: #1f6b43; }
+		.ajuste .etiqueta--alerta { background: #fdf0d9; color: #9a5a0a; }
+		.ajuste .etiqueta--error { background: #fdecec; color: #b42318; }
+		.ajuste .etiqueta--info { background: #e6effa; color: #24406a; }
+		.ajuste .etiqueta--gris { background: #eceff3; color: var(--a-tenue); }
+		.ajuste .etiqueta--chico { padding: .1875rem .5rem; font-size: .625rem; }
+
+		/* ---- Botones ---- */
+		.ajuste .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.ajuste .boton::after { display: none; }
+		.ajuste .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.ajuste .boton--primario,
+		.ajuste .boton--primario:hover {
+			border-color: var(--a-accion);
+			background: var(--a-accion);
+			box-shadow: 0 3px 10px rgba(221, 145, 44, .28);
+		}
+		.ajuste .boton--primario:hover {
+			border-color: var(--a-accion-hover);
+			background: var(--a-accion-hover);
+			box-shadow: 0 4px 12px rgba(221, 145, 44, .36);
+		}
+		.ajuste .boton--fantasma {
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.ajuste .boton--fantasma:hover {
+			border: 1px solid #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+
+		/* ---- Campos ---- */
+		.ajuste .campo__etiqueta,
+		.ajuste .campo:focus-within .campo__etiqueta {
+			margin-bottom: .375rem;
+			color: var(--a-navy);
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+		.ajuste .campo__ayuda { color: var(--a-tenue); line-height: 1.45; }
+		.ajuste input[type="text"],
+		.ajuste input[type="datetime-local"],
+		.ajuste textarea {
+			width: 100%;
+			padding: .625rem .875rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background-color: #fff;
+			font-size: .9375rem;
+			font-weight: 500;
+			color: var(--a-texto);
+		}
+		.ajuste input[readonly] {
+			background: var(--a-suave);
+			color: var(--a-navy);
+			cursor: default;
+		}
+		.ajuste input:hover:not([readonly]), .ajuste textarea:hover { border-color: #b9c9dc; }
+		.ajuste input[type="text"]:focus,
+		.ajuste input[type="datetime-local"]:focus,
+		.ajuste textarea:focus {
+			border-color: var(--a-azul);
+			box-shadow: 0 0 0 3px rgba(23, 68, 117, .14);
+			outline: none;
+		}
+		.ajuste textarea { min-height: 5rem; resize: vertical; line-height: 1.6; }
+
+		/* ---- Bloque-form ---- */
+		.ajuste .bloque-form {
+			border: 1px solid var(--a-borde);
+			border-radius: 12px;
+			background: #f9fbfd;
+			box-shadow: none;
+			overflow: hidden;
+		}
+		.ajuste .bloque-form__cabecera {
+			display: flex;
+			align-items: center;
+			gap: .875rem;
+			padding: 1rem 1.125rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.ajuste .bloque-form__icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 2rem;
+			height: 2rem;
+			border-radius: 50%;
+			background: var(--a-circulo);
+			color: #fff;
+			font-size: .875rem;
+			box-shadow: none;
+		}
+		.ajuste .bloque-form__cabecera > div:not(.bloque-form__icono) { min-width: 0; flex: 1; }
+		.ajuste .bloque-form__cabecera h3 {
+			margin: 0;
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: .01em;
+			color: var(--a-navy);
+			line-height: 1.3;
+		}
+		.ajuste .bloque-form__cabecera p {
+			margin: .1875rem 0 0;
+			font-size: .75rem;
+			color: var(--a-tenue);
+			font-weight: 500;
+			line-height: 1.5;
+			max-width: 52ch;
+		}
+		.ajuste .bloque-form__cuerpo { padding: 1.25rem 1.125rem; }
+		.ajuste .bloque-form__cuerpo .campo { margin-bottom: 0; }
+
+		/* Variante cálida: motivo del ajuste */
+		.ajuste .bloque-form--oro { border-color: #f1d8b2; }
+		.ajuste .bloque-form--oro .bloque-form__cabecera {
+			background: #fdf8f0;
+			border-bottom-color: #f1d8b2;
+		}
+		.ajuste .bloque-form--oro .bloque-form__icono { background: #e09837; }
+
+		/* ---- Rejilla de campos ---- */
+		.ajuste .rejilla-2 {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 1rem 1.125rem;
+		}
+
+		/* ---- Chips de hora rápida ---- */
+		.ajuste .chips-horas {
+			display: flex;
+			flex-wrap: wrap;
+			gap: .375rem;
+			margin-top: .5rem;
+		}
+		.ajuste .chip-hora {
+			display: inline-block;
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			border-radius: 999px;
+			padding: .1875rem .625rem;
+			font-size: .6875rem;
+			font-weight: 700;
+			line-height: 1.5;
+			text-decoration: none;
+			cursor: pointer;
+		}
+		.ajuste .chip-hora:hover,
+		.ajuste .chip-hora:focus-visible {
+			border-color: #b6cfe9;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			outline: none;
+		}
+		.ajuste .chip-hora--mas {
+			border-style: dashed;
+			color: var(--a-tenue);
+		}
+
+		/* ---- Alertas ---- */
+		.ajuste .alerta {
+			display: flex;
+			align-items: flex-start;
+			gap: .625rem;
+			margin-bottom: 1.25rem;
+			padding: .875rem 1rem;
+			border: 1px solid;
+			border-left-width: 3px;
+			border-radius: 10px;
+			font-size: .875rem;
+			font-weight: 500;
+			line-height: 1.55;
+			box-shadow: none;
+			animation: none;
+		}
+		.ajuste .alerta--info {
+			background: #eef6ff;
+			border-color: #cfe0f2;
+			border-left-color: var(--a-azul);
+			color: #1b2b3f;
+		}
+		.ajuste .alerta strong { display: block; margin-bottom: .125rem; font-weight: 700; color: var(--a-navy); }
+		.ajuste .alerta__icono { flex-shrink: 0; color: var(--a-azul); font-size: .9375rem; line-height: 1.55; }
+
+		/* ---- Bloque de motivo (lectura) ---- */
+		.ajuste .motivo-lectura {
+			font-size: .875rem;
+			color: var(--a-texto);
+			line-height: 1.6;
+			font-weight: 500;
+		}
+
+		/* ---- Form actions ---- */
+		.ajuste .form-actions-bar {
+			display: flex;
+			align-items: center;
+			justify-content: flex-end;
+			gap: .75rem;
+			flex-wrap: wrap;
+			padding-top: 1.25rem;
+			margin-top: 1.25rem;
+			border-top: 1px solid var(--a-borde);
+			background: none;
+		}
+		.ajuste .form-actions-bar__inicio {
+			margin-right: auto;
+			display: flex;
+			align-items: center;
+			gap: .5rem;
+			flex-wrap: wrap;
+		}
+
+		/* ---- Errores ---- */
+		.ajuste .campo--error {
+			border-color: #b42318 !important;
+			background: #fef4f4;
+			box-shadow: 0 0 0 3px rgba(180, 35, 24, .12) !important;
+		}
+		.ajuste .campo__error {
+			display: block;
+			margin-top: .375rem;
+			font-size: .75rem;
+			font-weight: 600;
+			color: #b42318;
+		}
+		.ajuste .campo__error::before { content: none; }
+
+		/* =================================================================
+		   Móvil
+		   ================================================================= */
+		@media (max-width: 768px) {
+			.ajuste .hero-inicio { padding: 1.25rem; min-height: 0; }
+			.ajuste .hero-inicio h1 { font-size: 1.5rem; }
+			.ajuste .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.ajuste .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.ajuste .tarjeta__cuerpo { padding: 1rem; }
+			.ajuste .bloque-form__cuerpo { padding: 1rem; }
+
+			.ajuste .panel-identidad {
+				grid-template-columns: minmax(0, 1fr);
+				gap: 1rem;
+				padding: 1rem;
+			}
+			.ajuste .panel-identidad__meta {
+				padding: 1rem 0 0;
+				border-left: 0;
+				border-top: 1px solid var(--a-borde);
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+			}
+			.ajuste .panel-identidad__avatar {
+				width: 2.75rem;
+				height: 2.75rem;
+				font-size: 1rem;
+			}
+			.ajuste .panel-identidad__info h3 { font-size: 1rem; }
+
+			.ajuste .rejilla-2 { grid-template-columns: 1fr; }
+
+			.ajuste .campo input,
+			.ajuste .campo textarea { font-size: 16px; }
+
+			.ajuste .form-actions-bar {
+				flex-direction: column-reverse;
+				align-items: stretch;
+			}
+			.ajuste .form-actions-bar .boton { width: 100%; justify-content: center; }
+			.ajuste .form-actions-bar__inicio { margin-right: 0; }
+		}
+
+		@media (max-width: 480px) {
+			.ajuste .hero-icono { display: none; }
+		}
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-sliders"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">APROBACIÓN CON AJUSTE</span>
+			<h1>Ajustar propuesta</h1>
+			<p>
+				Corrija las horas y apruebe. La propuesta original se conserva: el ajuste
+				queda aparte, con su motivo, que es lo que permite reconstruir después por
+				qué alguien salió antes.
+			</p>
+		</div>
+	</section>
+
+	<!-- ======== PANEL DE IDENTIDAD ======== -->
+	<section class="panel-identidad">
+		<div class="panel-identidad__marca">
+			<div class="panel-identidad__avatar" aria-hidden="true"
+				 th:text="${#strings.toUpperCase(#strings.substring(programacion.colaborador.nombreCompleto, 0, 1))}">N</div>
+			<div class="panel-identidad__info">
+				<h3 th:text="${programacion.colaborador.nombreCompleto}">Colaborador</h3>
+				<p th:text="'Documento ' + ${programacion.colaborador.documento} + ' · ' + ${programacion.area.nombre}">
+					Documento · Área
+				</p>
+			</div>
+		</div>
+		<dl class="panel-identidad__meta">
+			<div>
+				<dt>Propuesto por</dt>
+				<dd th:text="${programacion.solicitante != null ? programacion.solicitante.nombreCompleto : '—'}">
+					—
+				</dd>
+			</div>
+			<div>
+				<dt>Propuesto</dt>
+				<dd>
+					<span th:text="${#temporals.format(programacion.inicioProgramado, 'dd/MM HH:mm')}
+							+ ' → ' + ${#temporals.format(programacion.finProgramado, 'dd/MM HH:mm')}">
+						tramo
+					</span>
+					<small th:text="${#numbers.formatDecimal(programacion.horasProgramadas, 1, 'COMMA', 2, 'POINT')} + ' h'">
+						0 h
+					</small>
+				</dd>
+			</div>
+		</dl>
+	</section>
+
+	<!-- ======== REGLAS DE COMPATIBILIDAD ======== -->
+	<!--
+		El revisor necesita saber si la persona cumple las reglas antes de ajustar.
+		Antes esta pantalla no mostraba nada de la aptitud ni la disponibilidad, y se
+		ajustaba a ciegas. Estos valores ya están en la propuesta: solo se leen.
+	-->
+	<div class="bloque-form" style="margin-bottom: 1rem;">
+		<div class="bloque-form__cabecera">
+			<div class="bloque-form__icono"><i class="fas fa-clipboard-check"></i></div>
+			<div>
+				<h3>Reglas de compatibilidad</h3>
+				<p>Lo que el sistema evaluó al proponer a esta persona.</p>
+			</div>
+		</div>
+		<div class="bloque-form__cuerpo">
+			<div class="rejilla-2">
+				<label class="campo">
+					<span class="campo__etiqueta">Aptitud</span>
+					<input type="text" readonly
+						   th:value="${programacion.incumpleAptitud} ? 'No cumple la aptitud de la operación' : 'Cumple la aptitud'">
+				</label>
+				<label class="campo">
+					<span class="campo__etiqueta">Nivelación</span>
+					<input type="text" readonly
+						   th:value="${programacion.requeriaNivelacion} ? 'Requiere nivelación' : 'No requiere nivelación'">
+				</label>
+				<label class="campo">
+					<span class="campo__etiqueta">Emergencia</span>
+					<input type="text" readonly
+						   th:value="${programacion.esEmergencia} ? 'Sí, es una emergencia' : 'No es emergencia'">
+				</label>
+				<label class="campo" th:if="${programacion.esEmergencia}">
+					<span class="campo__etiqueta">Evento</span>
+					<input type="text" th:value="${programacion.referenciaEvento}" readonly>
+				</label>
+			</div>
+			<label class="campo" th:if="${programacion.motivoExcepcionCandidato != null}"
+				   style="margin-top: 1rem;">
+				<span class="campo__etiqueta">Motivo de la excepción</span>
+				<input type="text" th:value="${programacion.motivoExcepcionCandidato}" readonly>
+			</label>
+		</div>
+	</div>
+
+	<!-- ======== AJUSTE ======== -->
+	<div class="tarjeta tarjeta--decision">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--oro" aria-hidden="true"><i class="fas fa-sliders"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Ajuste de la propuesta</h2>
+				<p>Corrija las horas. El valor original queda intacto en la bitácora.</p>
+			</div>
+		</div>
+
+		<div class="tarjeta__cuerpo">
+
+			<!-- Aviso: el ajuste no sobrescribe lo original -->
+			<div class="alerta alerta--info">
+				<span class="alerta__icono"><i class="fas fa-lock"></i></span>
+				<div>
+					<strong>Esto no borra lo que propuso el coordinador</strong>
+					Se guarda el ajuste como un movimiento aparte con su motivo. Ambos quedan
+					en la bitácora de auditoría.
+				</div>
+			</div>
+
+			<!-- Motivo original del coordinador -->
+			<div class="bloque-form" style="margin-bottom: 1rem;">
+				<div class="bloque-form__cabecera">
+					<div class="bloque-form__icono"><i class="fas fa-comment-dots"></i></div>
+					<div>
+						<h3>Motivo del coordinador</h3>
+						<p>Lo que el proponente escribió al enviar. Solo lectura.</p>
+					</div>
+				</div>
+				<div class="bloque-form__cuerpo">
+					<div class="motivo-lectura" th:text="${programacion.motivo}">motivo</div>
+				</div>
+			</div>
+
+			<!-- Formulario de ajuste -->
+			<form th:action="@{/programaciones/{id}/ajustar(id=${programacion.id})}"
+				  th:object="${formulario}" method="post">
+
+				<!-- Bloque 1: nuevo tramo -->
+				<div class="bloque-form">
+					<div class="bloque-form__cabecera">
+						<div class="bloque-form__icono"><i class="fas fa-clock"></i></div>
+						<div>
+							<h3>Nuevo tramo</h3>
+							<p>Ajuste las horas de inicio y fin. Deben ser posteriores a la fecha de la propuesta.</p>
+						</div>
+					</div>
+					<div class="bloque-form__cuerpo">
+						<div class="rejilla-2">
+							<label class="campo">
+								<span class="campo__etiqueta">Inicio ajustado</span>
+								<input type="datetime-local" th:field="*{inicio}" th:errorclass="campo--error">
+								<span class="chips-horas" th:if="${!#lists.isEmpty(horariosRapidos)}"
+									  title="Horas guardadas en Turnos y horarios">
+								<button type="button" class="chip-hora" th:each="rapido : ${horariosRapidos}"
+										th:attr="data-hora=${#temporals.format(rapido.hora, 'HH:mm')}"
+										th:title="${rapido.etiqueta}" th:text="${rapido.etiqueta}">15:40</button>
+								<a class="chip-hora chip-hora--mas" th:href="@{/turnos}" target="_blank"
+								   rel="noopener" title="Agregar o quitar horas rápidas">+ Agregar</a>
+							</span>
+								<span class="campo__error" th:if="${#fields.hasErrors('inicio')}" th:errors="*{inicio}">
+								Error
+							</span>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Fin ajustado</span>
+								<input type="datetime-local" th:field="*{fin}" th:errorclass="campo--error">
+								<span class="chips-horas" th:if="${!#lists.isEmpty(horariosRapidos)}"
+									  title="Horas guardadas en Turnos y horarios">
+								<button type="button" class="chip-hora" th:each="rapido : ${horariosRapidos}"
+										th:attr="data-hora=${#temporals.format(rapido.hora, 'HH:mm')}"
+										th:title="${rapido.etiqueta}" th:text="${rapido.etiqueta}">23:56</button>
+								<a class="chip-hora chip-hora--mas" th:href="@{/turnos}" target="_blank"
+								   rel="noopener" title="Agregar o quitar horas rápidas">+ Agregar</a>
+							</span>
+								<span class="campo__error" th:if="${#fields.hasErrors('fin')}" th:errors="*{fin}">
+								Error
+							</span>
+							</label>
+						</div>
+					</div>
+				</div>
+
+				<!-- Bloque 2: motivo del ajuste -->
+				<div class="bloque-form bloque-form--oro">
+					<div class="bloque-form__cabecera">
+						<div class="bloque-form__icono"><i class="fas fa-pen"></i></div>
+						<div>
+							<h3>Motivo del ajuste</h3>
+							<p>Es lo primero que se lee cuando alguien pregunta por qué cambió su horario. Sin esto el ajuste no se puede defender.</p>
+						</div>
+					</div>
+					<div class="bloque-form__cuerpo">
+						<label class="campo">
+							<span class="campo__etiqueta">Por qué se ajusta</span>
+							<textarea th:field="*{motivo}" rows="3" th:errorclass="campo--error"
+									  placeholder="Por qué se cambia lo que propuso el coordinador"></textarea>
+							<span class="campo__error" th:if="${#fields.hasErrors('motivo')}" th:errors="*{motivo}">
+								Error
+							</span>
+						</label>
+					</div>
+				</div>
+
+				<!-- Bloque 3: comentario opcional -->
+				<div class="bloque-form">
+					<div class="bloque-form__cabecera">
+						<div class="bloque-form__icono"><i class="fas fa-comment"></i></div>
+						<div>
+							<h3>Comentario para el personal</h3>
+							<p>Opcional. Se muestra al colaborador al notificarle el cambio.</p>
+						</div>
+					</div>
+					<div class="bloque-form__cuerpo">
+						<label class="campo">
+							<span class="campo__etiqueta">Comentario</span>
+							<input type="text" th:field="*{comentario}" th:errorclass="campo--error"
+								   placeholder="Opcional">
+							<span class="campo__error" th:if="${#fields.hasErrors('comentario')}" th:errors="*{comentario}">
+								Error
+							</span>
+						</label>
+					</div>
+				</div>
+
+				<div class="form-actions-bar">
+					<div class="form-actions-bar__inicio">
+						<a th:href="@{/programaciones/revision}" class="boton boton--fantasma">
+							<i class="fas fa-xmark"></i> Cancelar
+						</a>
+					</div>
+					<button type="submit" class="boton boton--primario">
+						<i class="fas fa-sliders"></i> Aprobar con ajuste
+					</button>
+				</div>
+
+			</form>
+
+		</div>
+	</div>
+
+	<script th:src="@{/js/chips-horas.js}" defer></script>
+
+</div>
+</body>
+
+</html>

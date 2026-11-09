@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+	  th:replace="~{fragments/layout :: pagina('Auditoría', 'auditoria', ~{::contenido})}">
+<body>
+<div th:fragment="contenido" class="audit">
+
+	<!--
+		Esta pantalla usa los componentes del sistema (hero-inicio, tarjeta,
+		tabla, etiqueta) con la paleta sobria de colaboradores.html y
+		transporte.html.
+
+		En móvil la tabla se convierte en una tarjeta por movimiento: la
+		fecha encabeza la tarjeta, el actor va con avatar y la acción sale
+		como etiqueta de color según su tipo.
+	-->
+	<style>
+		/* =================================================================
+		   Auditoría · estilos locales
+		   ================================================================= */
+		.audit {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+		.audit > .hero-inicio,
+		.audit > .tarjeta { margin-bottom: 1.25rem; }
+
+		/* ---- Portada ---- */
+		.audit .hero-inicio,
+		.audit .hero-inicio * { animation: none; }
+		.audit .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.audit .hero-inicio::before,
+		.audit .hero-inicio::after { content: none; }
+		.audit .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.audit .hero-inicio__contenido { max-width: 44rem; }
+		.audit .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+			text-transform: uppercase;
+		}
+		.audit .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.audit .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+
+		/* Contador del hero: píldora sobria sobre el fondo */
+		.audit .hero-inicio__stats {
+			display: inline-flex;
+			align-items: center;
+			gap: .5rem;
+			margin-top: 1rem;
+			padding: .375rem .875rem;
+			border-radius: 50px;
+			background: rgba(255, 255, 255, .08);
+			border: 1px solid rgba(255, 255, 255, .16);
+			font-size: .75rem;
+			font-weight: 700;
+			color: rgba(255, 255, 255, .88);
+			letter-spacing: .02em;
+		}
+		.audit .hero-inicio__stats strong {
+			color: var(--a-oro-claro);
+			font-size: .875rem;
+			font-weight: 800;
+		}
+
+		/* ---- Tarjeta y cabecera ---- */
+		.audit .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+		}
+		.audit .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.audit .tarjeta__cabecera {
+			justify-content: flex-start;
+			padding: 1.375rem 1.5rem;
+			gap: 1rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.audit .tarjeta__titulo-grupo { flex: 1 1 16rem; }
+		.audit .tarjeta__titulo-grupo h2 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+		}
+		.audit .tarjeta__cabecera h2::before,
+		.audit .tarjeta__titulo-grupo h2::before { display: none; }
+		.audit .tarjeta__titulo-grupo p {
+			margin-top: .25rem;
+			max-width: 62ch;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+		.audit .tarjeta__pie {
+			padding: 1rem 1.5rem;
+			background: #f8fafd;
+			border-top: 1px solid var(--a-borde);
+			color: var(--a-tenue);
+			font-size: .875rem;
+			font-weight: 600;
+			display: flex;
+			flex-direction: column;
+			gap: .25rem;
+		}
+
+		/* Acento azul: la tarjeta es un listado de movimientos */
+		.audit .tarjeta--bitacora { border-color: var(--a-borde); }
+
+		/* ---- Ícono de sección ---- */
+		.audit .sec-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.25rem;
+		}
+		.audit .sec-icono--azul { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+
+		/* ---- Etiquetas ---- */
+		.audit .etiqueta {
+			padding: .375rem .875rem;
+			border: 0;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+			white-space: nowrap;
+		}
+		.audit .etiqueta::before { content: none; display: none; animation: none; }
+		.audit .etiqueta--info { background: #e6effa; color: #24406a; }
+		.audit .etiqueta--gris { background: #eceff3; color: var(--a-tenue); }
+		.audit .etiqueta--ok { background: #dff3e6; color: #1f6b43; }
+		.audit .etiqueta--alerta { background: #fdf0d9; color: #9a5a0a; }
+		.audit .etiqueta--error { background: #fdecec; color: #b42318; }
+		.audit .tarjeta__cabecera > .etiqueta { align-self: center; }
+
+		/* ---- Actor: avatar + nombre ---- */
+		.audit .actor {
+			display: flex;
+			align-items: center;
+			gap: .625rem;
+			min-width: 0;
+		}
+		.audit .avatar {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 2.5rem;
+			height: 2.5rem;
+			border-radius: 50%;
+			background: #2c5f94;
+			color: #fff;
+			font-size: .8125rem;
+			font-weight: 600;
+			box-shadow: none;
+			text-transform: uppercase;
+		}
+		.audit .avatar--sistema { background: #7a8aa0; }
+		.audit .actor__nombre {
+			font-weight: 700;
+			color: var(--a-navy);
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		/* ---- Entidad ---- */
+		.audit .entidad {
+			display: block;
+			font-weight: 600;
+			color: var(--a-texto);
+		}
+		.audit .entidad__id {
+			display: block;
+			margin-top: .125rem;
+			font-size: .6875rem;
+			font-weight: 800;
+			letter-spacing: .06em;
+			color: var(--a-tenue);
+		}
+
+		/* ---- Acción: etiqueta con ícono ---- */
+		.audit .accion {
+			display: inline-flex;
+			align-items: center;
+			gap: .375rem;
+			white-space: nowrap;
+		}
+		.audit .accion i { font-size: .75rem; }
+
+		/* ---- Fecha ---- */
+		.audit .fecha {
+			display: block;
+			white-space: nowrap;
+			font-variant-numeric: tabular-nums;
+			font-weight: 700;
+			color: var(--a-navy);
+		}
+		.audit .fecha__hora {
+			display: block;
+			margin-top: .125rem;
+			font-size: .75rem;
+			color: var(--a-tenue);
+			font-weight: 500;
+			font-variant-numeric: tabular-nums;
+		}
+		.audit .tenue { color: var(--a-tenue); }
+
+		/* ---- Tabla dentro de recuadro ---- */
+		.audit .tabla-envoltura {
+			margin: 1.25rem 1.5rem 1.5rem;
+			border: 1px solid #dfe8f3;
+			border-radius: 12px;
+			background: #fff;
+			overflow-x: auto;
+			-webkit-overflow-scrolling: touch;
+		}
+		.audit .tabla thead th {
+			padding: .875rem 1.125rem;
+			background: var(--a-suave);
+			color: #2f4a70;
+			border-bottom: 1px solid #e3ebf4;
+			font-size: .75rem;
+			font-weight: 600;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+		}
+		.audit .tabla thead tr th:first-child { border-left: 0; }
+		.audit .tabla tbody td {
+			padding: 1rem 1.125rem;
+			border-bottom: 1px solid #edf2f8;
+			vertical-align: middle;
+			color: var(--a-texto);
+		}
+		.audit .tabla tbody tr { animation: none; }
+		.audit .tabla tbody tr:nth-child(even) { background: transparent; }
+		.audit .tabla tbody tr:hover { background: #f7fafd; }
+		.audit .tabla tbody tr:hover td:first-child { box-shadow: none; }
+		.audit .tabla tbody tr:last-child td { border-bottom: 0; }
+
+		/* ---- Estado vacío ---- */
+		.audit .tabla--vacia td {
+			white-space: normal;
+			line-height: 1.6;
+			text-align: center;
+			padding: 2rem 1rem 2.25rem;
+			color: var(--a-tenue);
+			font-size: .75rem;
+		}
+		.audit .tabla tr.tabla--vacia:hover { background: transparent; }
+		.audit .vacio-icono { display: block; margin-bottom: .625rem; color: #1f4b7a; font-size: 2rem; }
+		.audit .tabla--vacia strong { display: block; margin-bottom: .375rem; color: var(--a-navy); font-size: .875rem; font-weight: 700; }
+
+		/* =================================================================
+		   Móvil: una tarjeta por movimiento
+		   ================================================================= */
+		@media (max-width: 768px) {
+			.audit .hero-inicio { padding: 1.25rem; min-height: 0; }
+			.audit .hero-inicio h1 { font-size: 1.5rem; }
+			.audit .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.audit .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.audit .tarjeta__pie { padding: 1rem; }
+			.audit .tabla-envoltura { margin: 1rem 1rem 1.25rem; }
+
+			.audit .tabla tbody tr { display: flex; flex-direction: column; }
+			.audit .tabla tbody td {
+				display: block;
+				text-align: left;
+				padding: .5rem .875rem;
+			}
+			.audit .tabla tbody td::before {
+				content: attr(data-label);
+				display: block;
+				margin-bottom: .25rem;
+				font-size: .625rem;
+				font-weight: 800;
+				letter-spacing: .06em;
+				text-transform: uppercase;
+				color: var(--a-tenue);
+			}
+
+			/* La fecha sube como encabezado de la tarjeta */
+			.audit .tabla tbody td.celda-fecha {
+				order: -1;
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: .75rem;
+				padding: .875rem;
+				text-align: left;
+				background: var(--a-suave);
+				border-bottom: 1px solid var(--a-borde);
+			}
+			.audit .tabla tbody td.celda-fecha::before { content: none; }
+			.audit .tabla tbody td.celda-fecha .fecha { font-size: .9375rem; }
+			.audit .tabla tbody td.celda-fecha .fecha__hora { margin-top: 0; }
+
+			/* Avatar un poco más grande para tacto */
+			.audit .avatar { width: 2.5rem; height: 2.5rem; font-size: .8125rem; }
+
+			.audit .tabla tbody tr.tabla--vacia td { display: block; text-align: center; }
+			.audit .tabla tbody tr.tabla--vacia td::before { content: none; }
+		}
+		@media (max-width: 480px) {
+			.audit .hero-icono { display: none; }
+			.audit .hero-inicio__stats { font-size: .6875rem; padding: .3125rem .75rem; }
+		}
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-clipboard-list"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">REGISTRO DE MOVIMIENTOS</span>
+			<h1>Bitácora de auditoría</h1>
+			<p th:if="${principalActual.tieneAlcanceUniversal()}">
+				Quién hizo qué, sobre qué entidad, con el valor anterior y el nuevo, el motivo y la
+				fecha. Los valores sensibles se guardan ocultos.
+			</p>
+			<p th:unless="${principalActual.tieneAlcanceUniversal()}">
+				Solo ve los movimientos hechos por usted. La bitácora completa es de
+				Talento Humano, Administración y Auditoría.
+			</p>
+			<span class="hero-inicio__stats" th:if="${total > 0}">
+				<i class="fas fa-list-check"></i>
+				<strong th:text="${total}">0</strong> entrada(s) registrada(s)
+			</span>
+		</div>
+	</section>
+
+	<!-- ======== MOVIMIENTOS ======== -->
+	<div class="tarjeta tarjeta--bitacora">
+
+		<!-- Cabecera con icono azul: listado de movimientos -->
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--azul" aria-hidden="true"><i class="fas fa-clipboard-list"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Movimientos registrados</h2>
+				<p>Quién hizo qué, sobre qué entidad y con qué motivo. Las 100 entradas más recientes.</p>
+			</div>
+			<span class="etiqueta" th:if="${total > 0}"
+				  th:text="${total} + ' entrada(s)'">0</span>
+		</div>
+
+		<div class="tabla-envoltura">
+			<table class="tabla">
+				<thead>
+				<tr>
+					<th>Fecha</th>
+					<th>Actor</th>
+					<th>Acción</th>
+					<th>Entidad</th>
+					<th>Motivo</th>
+					<th>Valores</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr th:each="entrada : ${entradas}">
+
+					<td class="celda-fecha" data-label="Fecha">
+							<span class="fecha"
+								  th:text="${#temporals.format(entrada.fecha, 'dd/MM/yy')}">fecha</span>
+						<span class="fecha__hora"
+							  th:text="${#temporals.format(entrada.fecha, 'HH:mm:ss')}">hora</span>
+					</td>
+
+					<td data-label="Actor">
+						<div class="actor">
+								<span class="avatar"
+									  th:classappend="${entrada.actorUsername == null} ? 'avatar--sistema' : ''"
+									  th:text="${entrada.actorUsername != null and !entrada.actorUsername.isEmpty()
+												? #strings.toUpperCase(#strings.substring(entrada.actorUsername, 0, 1))
+												: 'S'}"
+									  aria-hidden="true">U</span>
+							<span class="actor__nombre"
+								  th:text="${entrada.actorUsername} ?: 'sistema'">usuario</span>
+						</div>
+					</td>
+
+					<td data-label="Acción">
+							<span class="etiqueta accion"
+								  th:classappend="${entrada.accion == 'ACCESO_FUERA_DE_ALCANCE'} ? 'etiqueta--error'
+												: (${entrada.accion == 'CONSULTAR_DATO_SENSIBLE'} ? 'etiqueta--alerta' : 'etiqueta--gris')">
+								<i class="fas"
+								   th:classappend="${entrada.accion == 'ACCESO_FUERA_DE_ALCANCE'} ? 'fa-triangle-exclamation'
+												 : (${entrada.accion == 'CONSULTAR_DATO_SENSIBLE'} ? 'fa-eye' : 'fa-circle-info')"></i>
+								<span th:text="${entrada.accion}">ACCION</span>
+							</span>
+					</td>
+
+					<td data-label="Entidad">
+						<span class="entidad" th:text="${entrada.entidad}">tabla</span>
+						<span class="entidad__id" th:if="${entrada.entidadId != null}"
+							  th:text="'#' + ${entrada.entidadId}">#1</span>
+					</td>
+
+					<td class="tenue" data-label="Motivo"
+						th:text="${entrada.motivo} ?: '—'">motivo</td>
+
+					<td data-label="Valores">
+							<span th:if="${entrada.tieneValores()}" class="etiqueta etiqueta--ok">
+								<i class="fas fa-check"></i> sí
+							</span>
+						<span th:unless="${entrada.tieneValores()}" class="tenue">—</span>
+					</td>
+				</tr>
+
+				<tr th:if="${#lists.isEmpty(entradas)}" class="tabla--vacia">
+					<td colspan="6" data-label="Aviso">
+						<i class="fas fa-clipboard-list vacio-icono" aria-hidden="true"></i>
+						<strong>La bitácora está vacía</strong>
+						Las decisiones que se registren aparecerán acá.
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="tarjeta__pie" th:if="${!#lists.isEmpty(entradas)}">
+			<span th:text="${#lists.size(entradas)} + ' movimiento(s) visible(s)'">0</span>
+			<span>
+				Salen las 100 entradas más recientes. Los valores de salario y celular aparecen
+				ocultos: la auditoría guarda el hecho de la consulta, nunca el dato.
+			</span>
+		</div>
+	</div>
+
+</div>
+</body>
+</html>

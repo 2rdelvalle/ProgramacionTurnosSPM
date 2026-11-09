@@ -1,0 +1,1875 @@
+<!DOCTYPE html>
+<html lang="es" th:replace="~{fragments/layout :: pagina('Proponer extendido', 'nueva', ~{::contenido})}">
+
+<body>
+<div th:fragment="contenido" class="prop-form">
+
+	<!--
+		Proponer extendido. Estilo: mismo sistema de transporte.html y
+		colaboradores.html; todas las reglas van prefijadas con .prop-form y
+		anulan las de app.css.
+
+		Orden de lectura de cada ficha (de lo que más se usa a lo opcional):
+		  1 · Persona y fecha   (área, persona, fecha, operación)
+		  2 · Horario           (tipo, horas con atajos, horas calculadas;
+		                         "termina otro día" va plegado: es poco usual)
+		  3 · Motivo            (+ excepción si la pide lote.js)
+		  Emergencia            (interruptor; el evento aparece al activarlo)
+		En escritorio 1 y 2 van lado a lado; en móvil, apilados.
+
+		Ganchos que usan lote.js, chips-horas.js y el script de abajo. NO
+		quitarlos ni renombrarlos: #formulario-lote, #fichas, #agregar-ficha,
+		#pista-agregar, #guardar-lote, .ficha[data-indice],
+		[data-parte=numero|horario-habitual|aviso-duracion|emergencia|guardar],
+		[data-accion=quitar], [data-excepcion], [data-referencia],
+		[data-compatibilidad], [data-buscar-select], .chips-horas, .chip-hora
+		(con data-hora) y las clases .ficha--emergencia y
+		.agregar__pista--listo. Los .chips-horas siguen dentro del mismo
+		<label> que su campo de hora (ocultarChips los busca ahí).
+
+		Novedades de esta versión (ver también el script del final):
+		- Bajo "Persona" aparece la ficha de la persona elegida: cargo y
+		  horario con su jornada (mañana / tarde / noche). Ganchos nuevos:
+		  [data-parte=persona-info|cargo|cargo-fila|horario|horario-fila|
+		  turno|jornada]. Los datos salen de infoColaboradorPorId (cargo,
+		  turno, jornada) y de horarioTurnoPorColaborador (horas).
+		- Nuevo tipo INGRESO, al lado de EXTENDIDO: para ingresar a alguien
+		  en otro horario. No depende de su turno: inicio y fin libres, sin
+		  aviso contra la duración de su jornada. Ganchos nuevos:
+		  [data-parte=ingreso|ingreso-texto|etiqueta-inicio|etiqueta-fin].
+		  La opción aparece sola cuando tiposProgramacion trae INGRESO.
+		- El bloque informativo de INGRESO incluye un botón de cierre manual
+		  para descartar la alerta visual cuando no sea requerida.
+
+		Reglas de negocio que se conservan igual:
+		- Área congelada si el usuario solo tiene una (hidden + texto).
+		- Calendarios sin días anteriores a hoy; la ficha de arranque trae hoy.
+		- EXTENDIDO fija el inicio en la salida del turno (readOnly, sí se
+		  envía); ingreso, sábado, domingo y festivo dejan inicio y fin libres.
+		- El aviso de duración no bloquea el guardado.
+	-->
+	<style>
+		/* ---- Variables ---- */
+		.prop-form {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+		.prop-form > .hero-inicio,
+		.prop-form > .tarjeta,
+		.prop-form > .rejilla-2,
+		.prop-form > .panel-identidad { margin-bottom: 1.25rem; }
+
+		/* ---- Portada ---- */
+		.prop-form .hero-inicio,
+		.prop-form .hero-inicio * { animation: none; }
+		.prop-form .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.prop-form .hero-inicio::before,
+		.prop-form .hero-inicio::after { content: none; }
+		.prop-form .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.prop-form .hero-inicio__contenido { max-width: 44rem; }
+		.prop-form .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+		}
+		.prop-form .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.prop-form .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+
+		/* ---- Tarjeta y cabecera ---- */
+		.prop-form .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-top: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+		}
+		.prop-form .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.prop-form .tarjeta__cabecera {
+			justify-content: flex-start;
+			padding: 1.375rem 1.5rem;
+			gap: 1rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.prop-form .sec-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.25rem;
+		}
+		.prop-form .sec-icono--azul,
+		.prop-form .sec-icono--cian { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+		.prop-form .sec-icono--oro { background: #e09837; box-shadow: 0 3px 10px rgba(224, 152, 55, .3); }
+		.prop-form .sec-icono--verde { background: #2d7a55; box-shadow: 0 3px 10px rgba(45, 122, 85, .25); }
+		.prop-form .tarjeta__titulo-grupo { flex: 1 1 16rem; }
+		.prop-form .tarjeta__titulo-grupo h2 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+		}
+		.prop-form .tarjeta__cabecera h2::before,
+		.prop-form .tarjeta__titulo-grupo h2::before { display: none; }
+		.prop-form .tarjeta__titulo-grupo p {
+			margin-top: .25rem;
+			max-width: 62ch;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+		.prop-form .tarjeta__cabecera > .etiqueta { align-self: center; }
+		.prop-form .tarjeta__cuerpo { padding: 1.5rem; }
+		.prop-form .tarjeta--nueva { border-color: #f1d8b2; }
+		.prop-form .tarjeta--nueva .tarjeta__cabecera { background: #fdf8f0; border-bottom-color: #f1d8b2; }
+
+		/* ---- Tarjeta plegable ---- */
+		.prop-form .detalle__flecha { margin-left: auto; background: var(--a-suave); color: var(--a-navy); }
+		.prop-form .detalle__cabecera:hover .detalle__flecha { background: var(--a-accion); color: #fff; }
+		.prop-form details:not([open]) > .tarjeta__cabecera { border-bottom: 0; }
+
+		/* ---- Botones ---- */
+		.prop-form .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.prop-form .boton::after { display: none; }
+		.prop-form .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.prop-form .boton--primario,
+		.prop-form .boton--primario:hover {
+			border-color: var(--a-accion);
+			background: var(--a-accion);
+			box-shadow: 0 3px 10px rgba(221, 145, 44, .28);
+		}
+		.prop-form .boton--primario:hover {
+			border-color: var(--a-accion-hover);
+			background: var(--a-accion-hover);
+			box-shadow: 0 4px 12px rgba(221, 145, 44, .36);
+		}
+		.prop-form .boton--chico { padding: .5rem .875rem; font-size: .75rem; }
+		.prop-form .boton--contorno {
+			border: 1px solid #cfe0f2;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.prop-form .boton--contorno:hover:not(:disabled) {
+			border: 1px solid #b6cfe9;
+			background: #e9f1fa;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.prop-form .boton--fantasma {
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.prop-form .boton--fantasma:hover {
+			border: 1px solid #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.prop-form .boton--peligro {
+			border: 1px solid #f0c4c4;
+			background: #fff;
+			color: #b42318;
+			box-shadow: none;
+		}
+		.prop-form .boton--peligro:hover {
+			border: 1px solid #e6a8a8;
+			background: #fdf3f3;
+			color: #b42318;
+			box-shadow: none;
+		}
+		.prop-form .boton:disabled { opacity: .5; box-shadow: none; }
+
+		/* ---- Campos ---- */
+		.prop-form .campo__etiqueta,
+		.prop-form .campo:focus-within .campo__etiqueta {
+			margin-bottom: .375rem;
+			color: var(--a-navy);
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+		.prop-form .campo__ayuda { color: var(--a-tenue); line-height: 1.45; }
+		.prop-form input[type="text"],
+		.prop-form input[type="tel"],
+		.prop-form input[type="number"],
+		.prop-form input[type="search"],
+		.prop-form input[type="date"],
+		.prop-form select {
+			padding: .625rem .875rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background-color: #fff;
+			font-size: .9375rem;
+			font-weight: 500;
+			color: var(--a-texto);
+		}
+		.prop-form select { padding-right: 2.5rem; }
+		.prop-form input:hover, .prop-form select:hover { border-color: #b9c9dc; }
+		.prop-form input[type="text"]:focus,
+		.prop-form input[type="tel"]:focus,
+		.prop-form input[type="number"]:focus,
+		.prop-form input[type="search"]:focus,
+		.prop-form input[type="date"]:focus,
+		.prop-form select:focus {
+			border-color: var(--a-azul);
+			box-shadow: 0 0 0 3px rgba(23, 68, 117, .14);
+		}
+
+		/* ---- Formulario ---- */
+		.prop-form .bloque-form {
+			margin-bottom: 1.25rem;
+			border: 1px solid var(--a-borde);
+			border-radius: 12px;
+			background: #f9fbfd;
+			box-shadow: none;
+		}
+		.prop-form .bloque-form__cabecera { display: none; }
+		.prop-form .bloque-form__cuerpo { padding: 1.25rem; }
+		.prop-form .bloque-form__cuerpo .campo { margin-bottom: 0; }
+		.prop-form .rejilla-2-campos {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 1rem 1.25rem;
+		}
+		.prop-form .campo--ancho { grid-column: 1 / -1; }
+		.prop-form .form-actions-bar {
+			display: flex;
+			justify-content: flex-end;
+			padding: 0;
+			margin: 0;
+			background: none;
+			border: 0;
+		}
+		.prop-form .rejilla-2 {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 1.25rem;
+			align-items: start;
+		}
+
+		/* ---- Etiquetas ---- */
+		.prop-form .etiqueta {
+			padding: .375rem .875rem;
+			border: 0;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+		}
+		.prop-form .etiqueta::before { content: none; display: none; animation: none; }
+		.prop-form .etiqueta--gris { background: #eceff3; color: var(--a-tenue); }
+		.prop-form .etiqueta--alerta { background: #fdf0d9; color: #9a5a0a; }
+		.prop-form .pasajeros {
+			display: inline-flex;
+			align-items: center;
+			padding: .375rem .875rem;
+			border-radius: 999px;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			font-variant-numeric: tabular-nums;
+		}
+
+		/* ---- Tabla ---- */
+		.prop-form .tabla-envoltura {
+			margin: 1.25rem 1.5rem 1.5rem;
+			border: 1px solid #dfe8f3;
+			border-radius: 12px;
+			background: #fff;
+		}
+		.prop-form .tabla thead th {
+			padding: .875rem 1.125rem;
+			background: var(--a-suave);
+			color: #2f4a70;
+			border-bottom: 1px solid #e3ebf4;
+			font-size: .75rem;
+			font-weight: 600;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+		}
+		.prop-form .tabla thead tr th:first-child { border-left: 0; }
+		.prop-form .tabla thead th.tabla__num { text-align: right; }
+		.prop-form .tabla thead th.tabla__acciones { text-align: center; }
+		.prop-form .tabla tbody td {
+			padding: 1rem 1.125rem;
+			border-bottom: 1px solid #edf2f8;
+			vertical-align: middle;
+			color: var(--a-texto);
+		}
+		.prop-form .tabla tbody tr { animation: none; }
+		.prop-form .tabla tbody tr:nth-child(even) { background: transparent; }
+		.prop-form .tabla tbody tr:hover { background: #f7fafd; }
+		.prop-form .tabla tbody tr:hover td:first-child { box-shadow: none; }
+		.prop-form .tabla tbody tr:last-child td { border-bottom: 0; }
+		.prop-form .tabla__principal { color: var(--a-navy); font-weight: 700; }
+		.prop-form .tabla__secundario { color: var(--a-tenue); font-weight: 500; }
+		.prop-form .placa {
+			display: block;
+			font-weight: 700;
+			font-size: .875rem;
+			color: var(--a-navy);
+			letter-spacing: .01em;
+		}
+		.prop-form .hora {
+			display: inline-block;
+			color: var(--a-navy);
+			font-weight: 700;
+			font-size: .9375rem;
+			font-variant-numeric: tabular-nums;
+		}
+		.prop-form .acciones-fila {
+			display: flex;
+			flex-wrap: wrap;
+			gap: .5rem;
+			align-items: center;
+			justify-content: center;
+		}
+
+		/* ---- Lista vacía ---- */
+		.prop-form .tabla--vacia td {
+			white-space: normal;
+			line-height: 1.6;
+			text-align: center;
+			padding: 2rem 1rem 2.25rem;
+			color: var(--a-tenue);
+			font-size: .75rem;
+		}
+		.prop-form .tabla tr.tabla--vacia:hover { background: transparent; }
+		.prop-form .vacio-icono { display: block; margin-bottom: .625rem; color: #1f4b7a; font-size: 2rem; }
+		.prop-form .tabla--vacia strong { color: var(--a-navy); font-size: .875rem; font-weight: 700; }
+
+		/* ---- Móvil ---- */
+		@media (max-width: 900px) {
+			.prop-form .rejilla-2 { grid-template-columns: 1fr; }
+		}
+		@media (max-width: 768px) {
+			.prop-form .campo input,
+			.prop-form .campo select { font-size: 16px; }
+			.prop-form .hero-inicio { padding: 1.25rem; min-height: 0; }
+			.prop-form .hero-inicio h1 { font-size: 1.5rem; }
+			.prop-form .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.prop-form .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.prop-form .tarjeta__cuerpo { padding: 1rem; }
+			.prop-form .bloque-form__cuerpo { padding: 1rem; }
+			.prop-form .rejilla-2-campos { grid-template-columns: 1fr; }
+			.prop-form .form-actions-bar { flex-direction: column-reverse; align-items: stretch; }
+			.prop-form .form-actions-bar .boton { width: 100%; justify-content: center; }
+			.prop-form .form-actions-bar__inicio { margin-right: 0; }
+			.prop-form .tabla-envoltura { margin: 1rem 1rem 1.25rem; }
+
+			.prop-form .tabla tbody tr { display: flex; flex-direction: column; }
+			.prop-form .tabla tbody td.celda-cab {
+				order: -1;
+				display: block;
+				padding: .875rem;
+				text-align: left;
+				background: var(--a-suave);
+				border-bottom: 1px solid var(--a-borde);
+			}
+			.prop-form .tabla tbody td.celda-cab::before { content: none; }
+			.prop-form .acciones-fila { justify-content: flex-end; }
+
+			.prop-form .tabla tbody tr.tabla--vacia td { display: block; text-align: center; }
+			.prop-form .tabla tbody tr.tabla--vacia td::before { content: none; }
+		}
+		@media (max-width: 480px) {
+			.prop-form .hero-icono { display: none; }
+		}
+
+		/* =====================================================================
+		   Proponer extendido · específico de esta pantalla
+		   ===================================================================== */
+		.prop-form [hidden] { display: none !important; }
+		.prop-form .formulario,
+		.prop-form .fichas,
+		.prop-form .ficha,
+		.prop-form .agregar,
+		.prop-form .form-actions-bar { max-width: none; width: 100%; margin-left: 0; margin-right: 0; }
+
+		/* ---- Avisos compactos ---- */
+		.prop-form .alerta {
+			align-items: flex-start;
+			gap: .75rem;
+			margin-bottom: 1.25rem;
+			padding: .875rem 1.125rem;
+			border-radius: 12px;
+			box-shadow: none;
+			font-size: .8125rem;
+			line-height: 1.5;
+		}
+		.prop-form .alerta strong { display: inline; margin-right: .25rem; font-weight: 700; }
+		.prop-form .alerta--info { background: #f3f7fb; border: 1px solid #d9e6f3; color: #2f4a70; }
+		.prop-form .alerta--info strong { color: var(--a-navy); }
+		.prop-form .alerta--ok { background: #eef8f2; border: 1px solid #cfe8da; color: #245f43; }
+
+		/* ---- Hero: acción secundaria en cristal ---- */
+		.prop-form .hero-inicio__acciones { margin-top: .875rem; }
+		.prop-form .hero-inicio__acciones .boton--fantasma {
+			border: 1px solid rgba(255, 255, 255, .28);
+			background: rgba(255, 255, 255, .08);
+			color: #fff;
+		}
+		.prop-form .hero-inicio__acciones .boton--fantasma:hover {
+			border: 1px solid rgba(255, 255, 255, .4);
+			background: rgba(255, 255, 255, .16);
+			color: #fff;
+		}
+
+		/* ---- Preparar rápido: barra, no tarjeta ---- */
+		.prop-form .atajo-barra {
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+			flex-wrap: wrap;
+			margin-bottom: 1.5rem;
+			padding: 1rem 1.25rem;
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+		}
+		.prop-form .atajo-barra .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+		.prop-form .atajo-barra__texto { flex: 1 1 18rem; }
+		.prop-form .atajo-barra__texto strong { display: block; color: var(--a-navy); font-size: 1rem; font-weight: 700; }
+		.prop-form .atajo-barra__texto span { display: block; margin-top: .125rem; color: var(--a-tenue); font-size: .8125rem; line-height: 1.45; }
+
+		/* ---- Ficha ---- */
+		.prop-form .fichas { display: flex; flex-direction: column; gap: 1.5rem; margin-bottom: 1.25rem; }
+		.prop-form .ficha,
+		.prop-form .bloque-form--ficha {
+			margin: 0;
+			border: 1px solid var(--a-borde);
+			border-left: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+			overflow: visible;
+		}
+		.prop-form .ficha--emergencia { border-color: #eab76a; box-shadow: 0 0 0 3px rgba(224, 152, 55, .14); }
+		.prop-form .ficha > .bloque-form__cabecera {
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+			padding: 1.125rem 1.5rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+			border-radius: var(--radio) var(--radio) 0 0;
+		}
+		.prop-form .ficha > .bloque-form__cabecera > div:nth-child(2) { flex: 1 1 auto; min-width: 0; }
+		.prop-form .ficha > .bloque-form__cabecera h3 {
+			margin: 0;
+			color: var(--a-navy);
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+		}
+		.prop-form .ficha > .bloque-form__cabecera p { margin: .125rem 0 0; color: var(--a-tenue); font-size: .8125rem; }
+		.prop-form .ficha > .bloque-form__cabecera .boton { flex: none; }
+		.prop-form .bloque-form__icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 2.75rem;
+			height: 2.75rem;
+			border-radius: 50%;
+			background: var(--a-circulo);
+			color: #fff;
+			font-size: 1rem;
+			box-shadow: 0 3px 10px rgba(25, 71, 121, .22);
+		}
+		.prop-form .ficha > .bloque-form__cuerpo {
+			display: flex;
+			flex-direction: column;
+			gap: 1.25rem;
+			padding: 1.5rem;
+		}
+
+		/* ---- Paneles numerados dentro de la ficha ---- */
+		.prop-form .ficha-cols {
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+			gap: 1.25rem;
+			align-items: start;
+		}
+		.prop-form .panel {
+			display: flex;
+			flex-direction: column;
+			gap: 1.125rem;
+			padding: 1.25rem;
+			border: 1px solid var(--a-borde);
+			border-radius: 12px;
+			background: #f9fbfd;
+		}
+		.prop-form .panel__titulo {
+			display: flex;
+			align-items: center;
+			gap: .625rem;
+			margin: 0;
+			color: var(--a-navy);
+			font-size: .9375rem;
+			font-weight: 700;
+		}
+		.prop-form .panel__num {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 1.5rem;
+			height: 1.5rem;
+			border-radius: 50%;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 800;
+		}
+		.prop-form .panel .campo { margin: 0; }
+
+		/* ---- Campos ---- */
+		.prop-form input[type="time"],
+		.prop-form textarea {
+			padding: .625rem .875rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background-color: #fff;
+			font-size: .9375rem;
+			font-weight: 500;
+			color: var(--a-texto);
+		}
+		.prop-form textarea { width: 100%; min-height: 5.5rem; line-height: 1.5; resize: vertical; }
+		.prop-form input[type="time"]:focus,
+		.prop-form textarea:focus { border-color: var(--a-azul); box-shadow: 0 0 0 3px rgba(23, 68, 117, .14); }
+		.prop-form input[readonly] { background: #eef3f9; color: var(--a-tenue); cursor: not-allowed; }
+		.prop-form .campo--congelado {
+			display: block;
+			padding: .625rem .875rem;
+			border: 1px solid #dfe8f3;
+			border-radius: 10px;
+			background: #eef3f9;
+			color: var(--a-navy);
+			font-size: .9375rem;
+			font-weight: 700;
+			cursor: not-allowed;
+		}
+		.prop-form .compatibilidad { display: block; margin-top: .375rem; font-size: .75rem; line-height: 1.4; }
+		.prop-form [data-buscar-select] {
+			margin-top: .375rem;
+			padding: .5rem .75rem;
+			background: #fff;
+			font-size: .8125rem;
+		}
+
+		/* ---- Tipo de extendido: fichas de selección ---- */
+		.prop-form .campo .selector-pills,
+		.prop-form .selector-pills {
+			display: grid;
+			grid-auto-flow: column;
+			grid-auto-columns: minmax(0, 1fr);
+			gap: .5rem;
+			width: 100%;
+			padding: 0;
+			border: 0;
+			background: none;
+			box-shadow: none;
+		}
+		.prop-form .selector-pills__pill { position: relative; display: block; margin: 0; cursor: pointer; }
+		.prop-form .selector-pills__pill input {
+			position: absolute;
+			inset: 0;
+			opacity: 0;
+			width: 100%;
+			height: 100%;
+			margin: 0;
+			cursor: pointer;
+		}
+		.prop-form .selector-pills__pill > span {
+			display: block;
+			padding: .625rem .25rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background: #fff;
+			color: var(--a-tenue);
+			font-size: .6875rem;
+			font-weight: 800;
+			letter-spacing: .06em;
+			text-align: center;
+			text-transform: uppercase;
+			box-shadow: none;
+			transition: background .15s ease, border-color .15s ease, color .15s ease;
+		}
+		.prop-form .selector-pills__pill:hover > span { border-color: #b9c9dc; color: var(--a-navy); }
+		.prop-form .selector-pills__pill input:checked + span {
+			border-color: var(--a-azul);
+			background: var(--a-azul);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+		}
+		.prop-form .selector-pills__pill input:focus-visible + span { outline: 2px solid var(--a-azul); outline-offset: 2px; }
+
+		/* ---- Horas ---- */
+		.prop-form .rango-horas {
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+			gap: .5rem .75rem;
+			align-items: start;
+		}
+		.prop-form .rango-horas__flecha { margin-top: 2.4rem; color: #8aa0bb; font-size: .875rem; }
+		.prop-form .chips-horas { display: flex; flex-wrap: wrap; gap: .3125rem; margin-top: .5rem; }
+		.prop-form .chip-hora {
+			padding: .1875rem .625rem;
+			border: 1px solid #dce5ef;
+			border-radius: 999px;
+			background: #fff;
+			color: var(--a-tenue);
+			font-size: .6875rem;
+			font-weight: 600;
+			line-height: 1.5;
+			cursor: pointer;
+			text-decoration: none;
+			transition: border-color .15s ease, color .15s ease, background .15s ease;
+		}
+		.prop-form .chip-hora:hover,
+		.prop-form .chip-hora:focus-visible {
+			border-color: var(--a-azul);
+			background: #e6effa;
+			color: var(--a-azul);
+			outline: none;
+		}
+		.prop-form .chip-hora--mas { border-style: dashed; color: #8aa0bb; }
+
+		/* ---- Notas de horario ---- */
+		.prop-form .horario-habitual,
+		.prop-form .aviso-horas,
+		.prop-form .aviso-duracion {
+			display: flex;
+			align-items: flex-start;
+			gap: .625rem;
+			margin: 0;
+			padding: .75rem .875rem;
+			border: 1px solid #d9e6f3;
+			border-left: 1px solid #d9e6f3;
+			border-radius: 10px;
+			background: #eef4fb;
+			color: #24406a;
+			font-size: .8125rem;
+			font-weight: 600;
+			line-height: 1.5;
+		}
+		.prop-form .horario-habitual::before,
+		.prop-form .aviso-horas::before,
+		.prop-form .aviso-duracion::before {
+			font-family: "Font Awesome 6 Free";
+			font-weight: 900;
+			flex: none;
+			margin-top: .125rem;
+			color: var(--a-azul);
+		}
+		.prop-form .horario-habitual::before { content: "\f017"; }
+		.prop-form .aviso-horas::before { content: "\f1ec"; }
+		.prop-form .aviso-duracion {
+			border-color: #f1d8b2;
+			border-left-color: #f1d8b2;
+			background: #fdf6e7;
+			color: #7a4a0a;
+		}
+		.prop-form .aviso-duracion::before { content: "\f071"; color: #c9811f; }
+
+		/* ---- Casilla de horario rotativo (solo EXTENDIDO) ---- */
+		.prop-form .toggle-rotativo {
+			display: flex;
+			align-items: flex-start;
+			gap: .625rem;
+			margin: 0;
+			padding: .75rem .875rem;
+			border: 1px solid #d9e6f3;
+			border-radius: 10px;
+			background: #f8fafd;
+			cursor: pointer;
+		}
+		.prop-form .toggle-rotativo:hover { border-color: #b9c9dc; }
+		.prop-form .toggle-rotativo input {
+			flex: none;
+			width: 1.125rem;
+			height: 1.125rem;
+			margin-top: .125rem;
+			accent-color: var(--a-azul);
+			cursor: pointer;
+		}
+		.prop-form .toggle-rotativo strong {
+			display: block;
+			color: var(--a-navy);
+			font-size: .8125rem;
+			font-weight: 700;
+		}
+		.prop-form .toggle-rotativo__ayuda {
+			display: block;
+			margin-top: .125rem;
+			color: var(--a-tenue);
+			font-size: .75rem;
+			font-weight: 500;
+			line-height: 1.45;
+		}
+
+		/* ---- Termina otro día (opcional, plegado) ---- */
+		.prop-form .mas-opciones { border-top: 1px dashed #d5e0ed; padding-top: .875rem; }
+		.prop-form .mas-opciones > summary {
+			display: flex;
+			align-items: center;
+			gap: .5rem;
+			color: var(--a-azul);
+			font-size: .8125rem;
+			font-weight: 700;
+			cursor: pointer;
+			list-style: none;
+		}
+		.prop-form .mas-opciones > summary::-webkit-details-marker { display: none; }
+		.prop-form .mas-opciones > summary::after {
+			content: "\f078";
+			font-family: "Font Awesome 6 Free";
+			font-weight: 900;
+			margin-left: auto;
+			font-size: .6875rem;
+			transition: transform .15s ease;
+		}
+		.prop-form .mas-opciones[open] > summary::after { transform: rotate(180deg); }
+		.prop-form .mas-opciones > .campo { margin-top: .875rem; }
+
+		/* ---- Ficha de la persona elegida: cargo y horario ---- */
+		.prop-form .persona-info {
+			display: flex;
+			flex-direction: column;
+			gap: .75rem;
+			margin-top: -.375rem;
+			padding: .875rem 1rem;
+			border: 1px solid #d9e6f3;
+			border-radius: 10px;
+			background: #eef4fb;
+		}
+		.prop-form .persona-info__fila { display: flex; align-items: center; gap: .75rem; min-width: 0; }
+		.prop-form .persona-info__icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 2rem;
+			height: 2rem;
+			border: 1px solid #d9e6f3;
+			border-radius: 50%;
+			background: #fff;
+			color: var(--a-azul);
+			font-size: .8125rem;
+		}
+		.prop-form .persona-info__dato { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+		.prop-form .persona-info__etiqueta {
+			color: var(--a-tenue);
+			font-size: .6875rem;
+			font-weight: 700;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+		}
+		.prop-form .persona-info__dato strong {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			color: var(--a-navy);
+			font-size: .9375rem;
+			font-weight: 700;
+			font-variant-numeric: tabular-nums;
+		}
+		.prop-form .persona-info__turno { color: var(--a-tenue); font-size: .75rem; font-weight: 500; }
+		.prop-form .jornada {
+			flex: none;
+			display: inline-flex;
+			align-items: center;
+			gap: .375rem;
+			padding: .3125rem .75rem;
+			border-radius: 999px;
+			font-size: .75rem;
+			font-weight: 700;
+			line-height: 1.3;
+		}
+		.prop-form .jornada--manana { background: #fdf0d9; color: #8a5208; }
+		.prop-form .jornada--tarde { background: #e3ecf8; color: #24406a; }
+		.prop-form .jornada--noche { background: #1b3556; color: #fff; }
+		.prop-form .jornada--mixta { background: #eceff3; color: #3f5068; }
+
+		/* ---- Tipo INGRESO: horario propio, independiente del turno ---- */
+		.prop-form .ingreso-bloque {
+			position: relative;
+			display: flex;
+			align-items: flex-start;
+			gap: .75rem;
+			padding: .75rem 2.25rem .75rem .875rem;
+			border: 1px solid #cfe0f2;
+			border-radius: 10px;
+			background: #f3f7fc;
+			transition: opacity .2s ease, transform .2s ease;
+		}
+		.prop-form .ingreso-bloque__icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 2rem;
+			height: 2rem;
+			border-radius: 50%;
+			background: var(--a-circulo);
+			color: #fff;
+			font-size: .8125rem;
+		}
+		.prop-form .ingreso-bloque strong { display: block; color: var(--a-navy); font-size: .875rem; font-weight: 700; }
+		.prop-form .ingreso-bloque span:not(.ingreso-bloque__icono) { display: block; margin-top: .125rem; color: var(--a-tenue); font-size: .8125rem; line-height: 1.45; }
+		.prop-form .ingreso-bloque__cerrar {
+			position: absolute;
+			top: .5rem;
+			right: .5rem;
+			display: grid;
+			place-items: center;
+			width: 1.5rem;
+			height: 1.5rem;
+			padding: 0;
+			border: 0;
+			border-radius: 50%;
+			background: transparent;
+			color: var(--a-tenue);
+			font-size: .875rem;
+			cursor: pointer;
+			transition: background .15s ease, color .15s ease;
+		}
+		.prop-form .ingreso-bloque__cerrar:hover {
+			background: #e2ecf7;
+			color: var(--a-navy);
+		}
+		.prop-form .rango-horas--ingreso .campo__etiqueta { color: var(--a-azul); }
+
+		/* ---- Excepción y emergencia ---- */
+		.prop-form .bloque-form--oro {
+			margin: 0;
+			border: 1px solid #f1d8b2;
+			border-radius: 12px;
+			background: #fdf8f0;
+			box-shadow: none;
+		}
+		.prop-form .bloque-form--oro > .bloque-form__cabecera {
+			display: flex;
+			align-items: center;
+			gap: .875rem;
+			padding: .875rem 1.125rem;
+			border-bottom: 1px solid #f1d8b2;
+		}
+		.prop-form .bloque-form--oro > .bloque-form__cabecera h3 { margin: 0; color: #7a4a0a; font-size: .9375rem; font-weight: 700; }
+		.prop-form .bloque-form--oro > .bloque-form__cabecera p { margin: .125rem 0 0; color: #8a6428; font-size: .8125rem; line-height: 1.45; }
+		.prop-form .bloque-form--oro .bloque-form__icono {
+			width: 2.25rem;
+			height: 2.25rem;
+			background: #e09837;
+			font-size: .875rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.prop-form .bloque-form--oro > .bloque-form__cuerpo { display: flex; flex-direction: column; gap: 1rem; padding: 1.125rem; }
+		.prop-form .bloque-form--oro .campo { margin: 0; }
+
+		.prop-form .emergencia {
+			display: flex;
+			align-items: center;
+			gap: .875rem;
+			margin: 0;
+			cursor: pointer;
+		}
+		.prop-form .emergencia__icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 2.25rem;
+			height: 2.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: .875rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.prop-form .emergencia__texto { flex: 1 1 auto; min-width: 0; }
+		.prop-form .emergencia__texto strong { display: block; color: #7a4a0a; font-size: .9375rem; font-weight: 700; }
+		.prop-form .emergencia__texto small { display: block; margin-top: .125rem; color: #8a6428; font-size: .8125rem; line-height: 1.45; }
+		.prop-form .emergencia input[type="checkbox"] {
+			appearance: none;
+			-webkit-appearance: none;
+			flex: none;
+			position: relative;
+			width: 2.75rem;
+			height: 1.5rem;
+			margin: 0;
+			padding: 0;
+			border: 0;
+			border-radius: 999px;
+			background: #d5e0ed;
+			cursor: pointer;
+			transition: background .15s ease;
+		}
+		.prop-form .emergencia input[type="checkbox"]::after {
+			content: "";
+			position: absolute;
+			top: .1875rem;
+			left: .1875rem;
+			width: 1.125rem;
+			height: 1.125rem;
+			border-radius: 50%;
+			background: #fff;
+			box-shadow: 0 1px 3px rgba(11, 25, 41, .25);
+			transition: transform .15s ease;
+		}
+		.prop-form .emergencia input[type="checkbox"]:checked { background: #dd912c; }
+		.prop-form .emergencia input[type="checkbox"]:checked::after { transform: translateX(1.25rem); }
+		.prop-form .emergencia input[type="checkbox"]:focus-visible { outline: 2px solid var(--a-azul); outline-offset: 2px; }
+
+		/* ---- Agregar otro ---- */
+		.prop-form .agregar { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+		.prop-form .agregar .boton {
+			border: 1.5px dashed #b9c9dc;
+			background: #fff;
+			color: var(--a-azul);
+			box-shadow: none;
+		}
+		.prop-form .agregar .boton:hover:not(:disabled) { border-color: var(--a-azul); background: #f3f7fc; color: var(--a-azul); box-shadow: none; }
+		.prop-form .agregar .boton:disabled { opacity: .55; cursor: not-allowed; }
+		.prop-form .agregar__pista { margin: 0; color: var(--a-tenue); font-size: .8125rem; font-style: normal; }
+		.prop-form .agregar__pista--listo { color: #2d7a55; font-weight: 600; }
+
+		/* ---- Barra de acciones (fija al pie en escritorio) ---- */
+		.prop-form .form-actions-bar {
+			position: sticky;
+			bottom: .75rem;
+			z-index: 5;
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+			flex-wrap: wrap;
+			padding: .875rem 1.25rem;
+			border: 1px solid var(--a-borde);
+			border-radius: 14px;
+			background: #fff;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .12);
+		}
+		.prop-form .form-actions-bar__inicio { margin-right: auto; }
+		.prop-form .enviar-check {
+			display: flex;
+			align-items: center;
+			gap: .5rem;
+			margin: 0;
+			padding: 0;
+			color: var(--a-texto);
+			font-size: .875rem;
+			font-weight: 600;
+			cursor: pointer;
+		}
+		.prop-form .enviar-check input { width: 1.0625rem; height: 1.0625rem; accent-color: var(--a-azul); }
+
+		/* ---- Móvil (extra) ---- */
+		@media (max-width: 900px) {
+			.prop-form .ficha-cols { grid-template-columns: 1fr; }
+		}
+		@media (max-width: 768px) {
+			.prop-form .atajo-barra .boton { width: 100%; }
+			.prop-form .ficha > .bloque-form__cabecera { flex-wrap: wrap; padding: 1rem; }
+			.prop-form .ficha > .bloque-form__cabecera .boton { width: 100%; justify-content: center; }
+			.prop-form .ficha > .bloque-form__cuerpo { padding: 1rem; }
+			.prop-form .panel { padding: 1rem; }
+			.prop-form .selector-pills { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+			.prop-form .rango-horas { grid-template-columns: 1fr; }
+			.prop-form .rango-horas__flecha { display: none; }
+			.prop-form .agregar { flex-direction: column; align-items: stretch; }
+			.prop-form .agregar .boton { width: 100%; justify-content: center; }
+			.prop-form .agregar__pista { text-align: center; }
+			.prop-form .form-actions-bar { position: static; box-shadow: none; padding: 1rem; }
+			.prop-form .form-actions-bar__inicio { width: 100%; }
+			.prop-form .form-actions-bar__inicio .boton { width: 100%; justify-content: center; }
+			.prop-form .enviar-check { width: 100%; justify-content: center; }
+		}
+
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-user-clock"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">SOLICITUD DE EXTENDIDO</span>
+			<h1 th:text="${tituloFormulario}">Proponer extendido</h1>
+			<p>
+				Registre a quién se le extiende el turno y por qué. Puede agregar
+				varias personas en el mismo envío: llene la primera, pulse
+				<i class="fas fa-plus"></i> y siga con la siguiente. Quedan como
+				borrador hasta que las envíe a revisión.
+			</p>
+			<div class="hero-inicio__acciones" sec:authorize="hasRole('COORD_OPERACIONES')">
+				<a th:href="@{/operaciones}" class="boton boton--fantasma">
+					<i class="fas fa-gears"></i> Configurar operaciones y aptitudes
+				</a>
+			</div>
+		</div>
+	</section>
+
+	<!-- ======== AVISOS ======== -->
+	<div class="alerta alerta--info aviso" sec:authorize="!hasRole('TALENTO_HUMANO')">
+		<span class="alerta__icono"><i class="fas fa-circle-info"></i></span>
+		<div>
+			<strong>La propuesta no es la aprobación.</strong>
+			Al enviarla, Talento Humano la revisa y puede aprobarla, ajustarla o
+			rechazarla. Lo que escriba aquí queda registrado como propuesta original.
+		</div>
+	</div>
+
+	<div class="alerta alerta--ok aviso" th:if="${notaPreparacion}" role="status">
+		<span class="alerta__icono"><i class="fas fa-circle-check"></i></span>
+		<div>
+			<strong>Formulario preparado.</strong>
+			<span th:text="${notaPreparacion}">N fichas preparadas.</span>
+		</div>
+	</div>
+
+	<!--
+		Preparar rápido: la selección masiva es la única vía para cargar varias
+		fichas de una vez. Solo se muestra a quien puede usarla.
+	-->
+	<div class="atajo-barra" sec:authorize="hasAnyRole('COORD_OPERACIONES','COORD_AREA','TALENTO_HUMANO','ADMIN')">
+		<span class="sec-icono sec-icono--azul" aria-hidden="true"><i class="fas fa-wand-magic-sparkles"></i></span>
+		<div class="atajo-barra__texto">
+			<strong>Asignar masivamente</strong>
+			<span>¿Son varias personas con el mismo horario? Elíjalas, ponga la fecha y
+				las horas una sola vez, y el formulario llega con una ficha por persona.</span>
+		</div>
+		<a class="boton boton--contorno" th:href="@{/programaciones/masivo}">
+			<i class="fas fa-users-gear"></i> Abrir la selección
+		</a>
+	</div>
+
+	<!-- ======== FORMULARIO ======== -->
+	<form th:action="@{${accion}}" th:object="${formulario}" method="post"
+		  class="formulario" id="formulario-lote">
+
+		<div class="fichas" id="fichas">
+
+			<article class="ficha bloque-form bloque-form--ficha"
+					 th:each="ficha, it : *{extendidos}"
+					 th:attr="data-indice=${it.index}">
+
+				<header class="bloque-form__cabecera">
+					<div class="bloque-form__icono"><i class="fas fa-user-clock"></i></div>
+					<div>
+						<h3 data-parte="numero">Propuesta <span th:text="${it.count}">1</span></h3>
+						<p>Complete los datos del extendido. Puede elegir cualquier persona del área.</p>
+					</div>
+					<button type="button" class="boton boton--peligro boton--chico"
+							th:attr="data-accion=quitar" hidden>
+						<i class="fas fa-trash-can"></i> Quitar
+					</button>
+				</header>
+
+				<div class="bloque-form__cuerpo">
+
+					<div class="ficha-cols">
+
+						<!-- ===== 1 · PERSONA Y FECHA ===== -->
+						<section class="panel">
+							<p class="panel__titulo"><span class="panel__num">1</span> Persona y fecha</p>
+
+							<label class="campo">
+								<span class="campo__etiqueta">Área</span>
+
+								<!-- Una sola área: congelada. El hidden mantiene el name
+								     extendidos[N].areaId que necesitan lote.js y Spring. -->
+								<th:block th:if="${#lists.size(areas) == 1}">
+									<input type="hidden" th:field="*{extendidos[__${it.index}__].areaId}">
+									<div class="campo--congelado" th:text="${areas[0].nombre}">Operaciones</div>
+								</th:block>
+
+								<!-- Varias áreas: selector normal -->
+								<select th:unless="${#lists.size(areas) == 1}"
+										th:field="*{extendidos[__${it.index}__].areaId}"
+										th:errorclass="campo--error" required>
+									<option value="">Seleccione…</option>
+									<option th:each="area : ${areas}" th:value="${area.id}"
+											th:text="${area.nombre}">Área</option>
+								</select>
+
+								<span class="campo__error"
+									  th:if="${#fields.hasErrors('extendidos[' + __${it.index}__ + '].areaId')}"
+									  th:errors="*{extendidos[__${it.index}__].areaId}">Error</span>
+							</label>
+
+							<label class="campo">
+								<span class="campo__etiqueta">Persona</span>
+								<select th:field="*{extendidos[__${it.index}__].colaboradorId}"
+										th:errorclass="campo--error" required>
+									<option value="">Seleccione…</option>
+									<optgroup th:each="area : ${areas}" th:label="${area.nombre}">
+										<option th:each="persona : ${colaboradores}"
+												th:if="${persona.area.id == area.id}"
+												th:value="${persona.id}"
+												th:text="${persona.nombreCompleto} + ' · ' + ${persona.documento}">Persona</option>
+									</optgroup>
+								</select>
+								<span class="compatibilidad" data-compatibilidad>Seleccione área, operación y fecha para ordenar candidatos.</span>
+								<span class="campo__error"
+									  th:if="${#fields.hasErrors('extendidos[' + __${it.index}__ + '].colaboradorId')}"
+									  th:errors="*{extendidos[__${it.index}__].colaboradorId}">Error</span>
+							</label>
+
+							<!--
+								Ficha de la persona elegida: cargo y horario con su jornada.
+								La llena el script del final al elegir persona o fecha. Cada
+								fila se oculta sola si el dato no existe (persona sin cargo
+								o sin horario registrado).
+							-->
+							<div class="persona-info" data-parte="persona-info" role="status" hidden>
+								<div class="persona-info__fila" data-parte="cargo-fila" hidden>
+									<span class="persona-info__icono" aria-hidden="true"><i class="fas fa-id-badge"></i></span>
+									<div class="persona-info__dato">
+										<span class="persona-info__etiqueta">Cargo</span>
+										<strong data-parte="cargo">—</strong>
+									</div>
+								</div>
+								<div class="persona-info__fila" data-parte="horario-fila" hidden>
+									<span class="persona-info__icono" aria-hidden="true"><i class="fas fa-clock"></i></span>
+									<div class="persona-info__dato">
+										<span class="persona-info__etiqueta">Horario</span>
+										<strong data-parte="horario">—</strong>
+										<span class="persona-info__turno" data-parte="turno" hidden></span>
+									</div>
+									<span class="jornada" data-parte="jornada" hidden>
+										<i class="fas fa-sun" aria-hidden="true"></i>
+										<span data-parte="jornada-texto">Mañana</span>
+									</span>
+								</div>
+							</div>
+
+							<label class="campo">
+								<span class="campo__etiqueta">Fecha</span>
+								<input type="date" th:field="*{extendidos[__${it.index}__].fecha}"
+									   th:attr="min=${hoy}"
+									   th:errorclass="campo--error" required>
+								<span class="campo__error"
+									  th:if="${#fields.hasErrors('extendidos[' + __${it.index}__ + '].fecha')}"
+									  th:errors="*{extendidos[__${it.index}__].fecha}">Error</span>
+							</label>
+
+							<label class="campo">
+								<span class="campo__etiqueta">Operación</span>
+								<select th:field="*{extendidos[__${it.index}__].tipoOperacionId}">
+									<option value="">Sin operación asociada</option>
+									<option th:each="tipo : ${tiposOperacion}" th:value="${tipo.id}"
+											th:text="${tipo.nombre}">Op</option>
+								</select>
+								<input type="search" placeholder="Escriba para filtrar…" autocomplete="off"
+									   data-buscar-select aria-label="Filtrar la lista de operaciones">
+							</label>
+						</section>
+
+						<!-- ===== 2 · HORARIO ===== -->
+						<section class="panel">
+							<p class="panel__titulo"><span class="panel__num">2</span> Horario</p>
+
+							<!-- Tipo: grupo de pills en vez de <select> -->
+							<div class="campo">
+								<span class="campo__etiqueta">Tipo de extendido</span>
+								<div class="selector-pills selector-pills--ancho">
+									<label class="selector-pills__pill" th:each="uno : ${tiposProgramacion}">
+										<input type="radio"
+											   th:field="*{extendidos[__${it.index}__].tipo}"
+											   th:value="${uno}">
+										<span th:text="${uno}">TIPO</span>
+									</label>
+								</div>
+								<span class="campo__error"
+									  th:if="${#fields.hasErrors('extendidos[' + __${it.index}__ + '].tipo')}"
+									  th:errors="*{extendidos[__${it.index}__].tipo}">Error</span>
+							</div>
+
+							<!--
+								Horario rotativo: la persona no tiene un turno fijo,
+								así que el EXTENDIDO deja de arrastrar el inicio a la
+								salida del turno registrado y los dos campos quedan
+								libres, como en los festivos. El JS la muestra solo
+								cuando el tipo es EXTENDIDO.
+							-->
+							<label class="toggle-rotativo" data-parte="rotativo-fila" hidden>
+								<input type="checkbox"
+									   th:field="*{extendidos[__${it.index}__].horarioRotativo}"
+									   data-parte="rotativo">
+								<span>
+									<strong>Tipo colaborador con horario rotativo</strong>
+									<span class="toggle-rotativo__ayuda">Sin turno fijo: la hora de inicio queda libre para digitarla.</span>
+								</span>
+							</label>
+
+							<!--
+								Modo de horas según el tipo, que fija y explica el JS de
+								abajo: en EXTENDIDO el inicio se pone solo en la salida del
+								turno y queda cerrado (la jornada no se propone, se
+								extiende); en sábado, domingo y festivo los dos campos
+								quedan libres porque no hay jornada base que descontar.
+							-->
+							<p class="horario-habitual"
+							   data-parte="horario-habitual"
+							   role="status"
+							   hidden></p>
+
+							<!--
+								INGRESO: la persona entra en un horario propio, distinto de su
+								turno. Aparece al elegir ese tipo y explica que las horas de
+								abajo no se descuentan de su jornada.
+							-->
+							<div class="ingreso-bloque" data-parte="ingreso" role="status" hidden>
+								<span class="ingreso-bloque__icono" aria-hidden="true"><i class="fas fa-door-open"></i></span>
+								<div>
+									<strong>Ingreso en otro horario</strong>
+									<span data-parte="ingreso-texto">Ingreso para colaboradores con turno rotativo o en un horario especial. Indique desde qué hora y hasta qué hora ingresa.</span>
+								</div>
+								<button type="button" class="ingreso-bloque__cerrar" data-accion="cerrar-ingreso" title="Descartar este aviso" aria-label="Cerrar aviso">
+									<i class="fas fa-xmark"></i>
+								</button>
+							</div>
+
+							<!-- Horas -->
+							<div class="rango-horas">
+								<label class="campo">
+									<span class="campo__etiqueta" data-parte="etiqueta-inicio">Hora de inicio</span>
+									<input type="time" th:field="*{extendidos[__${it.index}__].horaInicio}"
+										   th:errorclass="campo--error" required>
+									<span class="chips-horas" th:if="${!#lists.isEmpty(horariosRapidos)}"
+										  title="Horas guardadas en Turnos y horarios">
+										<button type="button" class="chip-hora" th:each="rapido : ${horariosRapidos}"
+												th:attr="data-hora=${#temporals.format(rapido.hora, 'HH:mm')}"
+												th:title="${rapido.etiqueta}" th:text="${rapido.etiqueta}">15:40</button>
+										<a class="chip-hora chip-hora--mas" th:href="@{/turnos}" target="_blank"
+										   rel="noopener" title="Agregar o quitar horas rápidas">+ Agregar</a>
+									</span>
+									<span class="campo__error"
+										  th:if="${#fields.hasErrors('extendidos[' + __${it.index}__ + '].horaInicio')}"
+										  th:errors="*{extendidos[__${it.index}__].horaInicio}">Error</span>
+								</label>
+								<span class="rango-horas__flecha" aria-hidden="true"><i class="fas fa-arrow-right"></i></span>
+								<label class="campo">
+									<span class="campo__etiqueta" data-parte="etiqueta-fin">Hora de fin</span>
+									<input type="time" th:field="*{extendidos[__${it.index}__].horaFin}"
+										   th:errorclass="campo--error" required>
+									<span class="chips-horas" th:if="${!#lists.isEmpty(horariosRapidos)}"
+										  title="Horas guardadas en Turnos y horarios">
+										<button type="button" class="chip-hora" th:each="rapido : ${horariosRapidos}"
+												th:attr="data-hora=${#temporals.format(rapido.hora, 'HH:mm')}"
+												th:title="${rapido.etiqueta}" th:text="${rapido.etiqueta}">23:56</button>
+										<a class="chip-hora chip-hora--mas" th:href="@{/turnos}" target="_blank"
+										   rel="noopener" title="Agregar o quitar horas rápidas">+ Agregar</a>
+									</span>
+									<span class="campo__error"
+										  th:if="${#fields.hasErrors('extendidos[' + __${it.index}__ + '].horaFin')}"
+										  th:errors="*{extendidos[__${it.index}__].horaFin}">Error</span>
+								</label>
+							</div>
+
+							<!--
+								Horas calculadas, con reparo suave cuando el tramo se pasa
+								de la duración del turno. Lo llena el JS de abajo sin
+								importar el tipo. NO bloquea el guardado.
+							-->
+							<div class="aviso-duracion"
+								 data-parte="aviso-duracion"
+								 role="status"
+								 hidden></div>
+
+							<!--
+								Día en que termina: opcional, solo para turnos de más de un
+								día. Va plegado porque casi nunca se usa; se abre solo si ya
+								trae valor o si el servidor devolvió un error en ese campo.
+							-->
+							<details class="mas-opciones"
+									 th:open="${#fields.hasErrors('extendidos[' + __${it.index}__ + '].fechaFin')} or ${ficha.fechaFin != null}">
+								<summary><i class="fas fa-calendar-plus"></i> El turno termina otro día (opcional)</summary>
+								<label class="campo">
+									<span class="campo__etiqueta">Termina el día</span>
+									<input type="date" th:field="*{extendidos[__${it.index}__].fechaFin}"
+										   th:attr="min=${hoy}"
+										   th:errorclass="campo--error">
+									<span class="campo__ayuda">Si se deja vacía y la hora de fin no es posterior a la de inicio, el turno termina al día siguiente.</span>
+									<span class="campo__error"
+										  th:if="${#fields.hasErrors('extendidos[' + __${it.index}__ + '].fechaFin')}"
+										  th:errors="*{extendidos[__${it.index}__].fechaFin}">Error</span>
+								</label>
+							</details>
+						</section>
+
+					</div>
+
+					<!-- ===== 3 · MOTIVO ===== -->
+					<section class="panel">
+						<p class="panel__titulo"><span class="panel__num">3</span> Motivo</p>
+						<label class="campo">
+							<span class="campo__etiqueta">Por qué se necesita que esta persona se quede</span>
+							<textarea th:field="*{extendidos[__${it.index}__].motivo}" rows="3"
+									  th:errorclass="campo--error" required
+									  placeholder="Por qué se necesita que esta persona se quede"></textarea>
+							<span class="campo__error"
+								  th:if="${#fields.hasErrors('extendidos[' + __${it.index}__ + '].motivo')}"
+								  th:errors="*{extendidos[__${it.index}__].motivo}">Error</span>
+						</label>
+					</section>
+
+					<!--
+						Bloque de excepción: lo abre lote.js cuando la persona
+						elegida necesita una explicación. El bloque nunca se borra
+						del DOM, ni aunque siga oculto: si el servidor lo rechaza,
+						el mensaje queda escrito adentro y por eso el mismo script
+						lo vuelve a mostrar.
+					-->
+					<div class="bloque-form bloque-form--oro" data-excepcion hidden>
+						<div class="bloque-form__cabecera">
+							<div class="bloque-form__icono"><i class="fas fa-triangle-exclamation"></i></div>
+							<div>
+								<h3>Motivo de la excepción</h3>
+								<p>Esta persona no cumple todos los requisitos de la operación o requiere nivelación. Explique por qué se elige.</p>
+							</div>
+						</div>
+						<div class="bloque-form__cuerpo">
+							<label class="campo">
+								<span class="campo__etiqueta">Por qué se elige a esta persona</span>
+								<textarea th:field="*{extendidos[__${it.index}__].motivoExcepcionCandidato}"
+										  rows="2" th:errorclass="campo--error"
+										  placeholder="No cumple la aptitud de la operación, o requiere nivelación"></textarea>
+								<span class="campo__error"
+									  th:if="${#fields.hasErrors('extendidos[' + __${it.index}__ + '].motivoExcepcionCandidato')}"
+									  th:errors="*{extendidos[__${it.index}__].motivoExcepcionCandidato}">Error</span>
+							</label>
+						</div>
+					</div>
+
+					<!--
+						Emergencia: el interruptor siempre está visible; el campo
+						del evento lo destapa lote.js cuando se activa.
+					-->
+					<div class="bloque-form bloque-form--oro">
+						<div class="bloque-form__cuerpo">
+							<label class="emergencia">
+								<span class="emergencia__icono" aria-hidden="true"><i class="fas fa-bolt"></i></span>
+								<span class="emergencia__texto">
+									<strong>Es una emergencia operativa</strong>
+									<small>Actívelo si el extendido responde a una emergencia. Hay que registrar el evento que la originó.</small>
+								</span>
+								<input type="checkbox" th:field="*{extendidos[__${it.index}__].esEmergencia}"
+									   data-parte="emergencia">
+							</label>
+
+							<label class="campo" data-referencia hidden>
+								<span class="campo__etiqueta">Evento que originó la emergencia</span>
+								<input type="text" maxlength="100"
+									   th:field="*{extendidos[__${it.index}__].referenciaEvento}"
+									   th:errorclass="campo--error"
+									   placeholder="Cierre de inventario, derrame en patio…">
+								<span class="campo__error"
+									  th:if="${#fields.hasErrors('extendidos[' + __${it.index}__ + '].referenciaEvento')}"
+									  th:errors="*{extendidos[__${it.index}__].referenciaEvento}">Error</span>
+							</label>
+						</div>
+					</div>
+
+				</div>
+			</article>
+
+		</div>
+
+		<div class="agregar">
+			<button type="button" class="boton boton--contorno" id="agregar-ficha" disabled>
+				<i class="fas fa-plus"></i> Agregar otro extendido
+			</button>
+			<p class="agregar__pista" id="pista-agregar" role="status">
+				Complete la propuesta actual para poder agregar otra.
+			</p>
+		</div>
+
+		<div class="form-actions-bar">
+			<div class="form-actions-bar__inicio">
+				<a th:href="@{/programaciones}" class="boton boton--fantasma">
+					<i class="fas fa-xmark"></i> Cancelar
+				</a>
+			</div>
+			<label class="enviar-check" th:if="${accion == '/programaciones/lote'}"
+				   title="Crea las propuestas y las manda a revisión de Talento Humano en el mismo paso">
+				<input type="checkbox" name="enviar" value="true" checked>
+				Enviar a revisión al guardar
+			</label>
+			<button type="submit" class="boton boton--primario" id="guardar-lote">
+				<i class="fas fa-floppy-disk"></i>
+				<span data-parte="guardar">Guardar propuesta</span>
+			</button>
+		</div>
+
+	</form>
+
+	<script th:src="@{/js/lote.js}" defer></script>
+	<script th:src="@{/js/chips-horas.js}" defer></script>
+
+	<!--
+		Modo de horas por tipo y aviso de duración.
+
+		horariosTurno llega del servidor: id de la persona → [entrada, salida
+		normal, salida de lunes y martes (null si no hay)]. Al elegir persona,
+		fecha o tipo se aplica el modo de la ficha, y se dispara input/change
+		sobre los campos solo cuando el valor cambió, para que lote.js
+		reconsulte los candidatos con el tramo nuevo y el aviso se repinte,
+		sin bucles.
+
+		EXTENDIDO (día laborable) no propone la jornada, la extiende: el
+		inicio se fija en la salida del turno —readOnly, pero sí se envía,
+		que un disabled no viajaría y el servidor lo rechazaría por vacío— y
+		solo queda preguntar hasta qué hora, de modo que horas extra = fin −
+		salida. Sábado, domingo y festivo no tienen jornada base: los dos
+		campos quedan libres y las horas son fin − inicio. INGRESO funciona
+		igual que ellos pero además no se compara con la jornada de la
+		persona: es un horario propio. Sin horario
+		registrado, el EXTENDIDO también se digita a mano. El aviso pinta
+		esas horas en cada caso y agrega el reparo naranja únicamente cuando
+		el tramo se pasa de la duración del turno de la persona.
+	-->
+	<script th:inline="javascript">
+		var horariosTurno = /*[[${horarioTurnoPorColaborador}]]*/ {};
+		/* id de la persona → { cargo, turno, jornada } (jornada: MANANA, TARDE, NOCHE o MIXTA).
+		   Lo arma el servidor; si no llega, la ficha usa solo las horas de horariosTurno. */
+		var infoColaborador = /*[[${infoColaboradorPorId}]]*/ {};
+		(function () {
+			'use strict';
+			var form = document.getElementById('formulario-lote');
+			if (!form) return;
+
+			var EXTENDIDO = 'EXTENDIDO';
+			var INGRESO = 'INGRESO';
+
+			var ROTULO_JORNADA = { MANANA: 'Mañana', TARDE: 'Tarde', NOCHE: 'Noche', MIXTA: 'Mixta' };
+			var ICONO_JORNADA = { MANANA: 'fa-sun', TARDE: 'fa-cloud-sun', NOCHE: 'fa-moon', MIXTA: 'fa-circle-half-stroke' };
+
+			function minutosDe(texto) {
+				if (!texto) return 0;
+				var partes = texto.split(':');
+				if (partes.length < 2) return 0;
+				return parseInt(partes[0], 10) * 60 + parseInt(partes[1], 10);
+			}
+
+			function formatoHoras(min) {
+				var h = Math.floor(min / 60);
+				var m = min % 60;
+				if (h === 0) return m + ' min';
+				if (m === 0) return h + ' h';
+				return h + ' h ' + m + ' min';
+			}
+
+			/** El horario de la persona elegida, o null si no tiene. */
+			function horarioDe(ficha) {
+				var persona = ficha.querySelector('[name$=".colaboradorId"]');
+				if (!horariosTurno || !persona || !persona.value) return null;
+				var datos = horariosTurno[persona.value];
+				return datos && datos.length >= 2 ? datos : null;
+			}
+
+			/** Salida del turno para el día que trae la ficha (lunes y martes tienen la suya). */
+			function salidaDe(datos, ficha) {
+				var campoFecha = ficha.querySelector('[name$=".fecha"]');
+				var dia = 0;
+				if (campoFecha && campoFecha.value) {
+					dia = new Date(campoFecha.value + 'T00:00:00').getDay();
+				}
+				return (datos[2] && (dia === 1 || dia === 2)) ? datos[2] : datos[1];
+			}
+
+			function poner(campo, valor) {
+				if (!campo || valor === null || valor === undefined || campo.value === valor) return;
+				campo.value = valor;
+				campo.dispatchEvent(new Event('input', { bubbles: true }));
+				campo.dispatchEvent(new Event('change', { bubbles: true }));
+			}
+
+			/** El tipo marcado en la ficha; cadena vacía mientras no se elija. */
+			function tipoDe(ficha) {
+				var marcado = ficha.querySelector('[name$=".tipo"]:checked');
+				return marcado ? marcado.value : '';
+			}
+
+			/** Si la ficha marcó que la persona trabaja en horario rotativo. */
+			function rotativoDe(ficha) {
+				var caja = ficha.querySelector('[name$=".horarioRotativo"]');
+				return !!(caja && caja.checked);
+			}
+
+			/** Los chips de hora junto a un campo: solo tienen sentido si el campo se puede escribir. */
+			function ocultarChips(campo, ocultos) {
+				var contenedor = campo.parentNode ? campo.parentNode.querySelector('.chips-horas') : null;
+				if (contenedor) contenedor.hidden = ocultos;
+			}
+
+			/*
+			 * Jornada según la hora de entrada. Es el mismo criterio que usa el
+			 * servidor cuando manda "jornada": 05:00–11:59 mañana, 12:00–17:59
+			 * tarde, el resto noche. Solo se usa si el servidor no la envía.
+			 */
+			function jornadaPorEntrada(entrada) {
+				if (!entrada) return null;
+				var m = minutosDe(entrada);
+				if (m >= 5 * 60 && m < 12 * 60) return 'MANANA';
+				if (m >= 12 * 60 && m < 18 * 60) return 'TARDE';
+				return 'NOCHE';
+			}
+
+			function infoDe(ficha) {
+				var persona = ficha.querySelector('[name$=".colaboradorId"]');
+				if (!infoColaborador || !persona || !persona.value) return null;
+				return infoColaborador[persona.value] || null;
+			}
+
+			function mostrar(elemento, visible) {
+				if (elemento) elemento.hidden = !visible;
+			}
+
+			/** Ficha de la persona: cargo y horario con su jornada. */
+			function pintarPersona(ficha) {
+				var caja = ficha.querySelector('[data-parte="persona-info"]');
+				if (!caja) return;
+				var persona = ficha.querySelector('[name$=".colaboradorId"]');
+				if (!persona || !persona.value) {
+					caja.hidden = true;
+					return;
+				}
+
+				var extra = infoDe(ficha);
+				var datos = horarioDe(ficha);
+
+				var cargo = extra && extra.cargo ? extra.cargo : '';
+				var filaCargo = caja.querySelector('[data-parte="cargo-fila"]');
+				var textoCargo = caja.querySelector('[data-parte="cargo"]');
+				if (textoCargo) textoCargo.textContent = cargo;
+				mostrar(filaCargo, !!cargo);
+
+				var filaHorario = caja.querySelector('[data-parte="horario-fila"]');
+				var textoHorario = caja.querySelector('[data-parte="horario"]');
+				var textoTurno = caja.querySelector('[data-parte="turno"]');
+				var etiquetaJornada = caja.querySelector('[data-parte="jornada"]');
+				var rotulo = caja.querySelector('[data-parte="jornada-texto"]');
+				var icono = etiquetaJornada ? etiquetaJornada.querySelector('i') : null;
+
+				if (datos) {
+					var entrada = datos[0];
+					var salida = salidaDe(datos, ficha);
+					textoHorario.textContent = entrada + ' – ' + salida;
+					var turno = extra && extra.turno ? extra.turno : '';
+					textoTurno.textContent = turno;
+					textoTurno.hidden = !turno;
+
+					var clave = (extra && extra.jornada) || jornadaPorEntrada(entrada);
+					if (etiquetaJornada && clave && ROTULO_JORNADA[clave]) {
+						etiquetaJornada.className = 'jornada jornada--' + clave.toLowerCase();
+						rotulo.textContent = ROTULO_JORNADA[clave];
+						if (icono) icono.className = 'fas ' + ICONO_JORNADA[clave];
+						etiquetaJornada.hidden = false;
+					} else if (etiquetaJornada) {
+						etiquetaJornada.hidden = true;
+					}
+					mostrar(filaHorario, true);
+				} else {
+					// Sin horario registrado: se dice, para que no parezca un fallo
+					textoHorario.textContent = 'Sin horario registrado';
+					textoTurno.hidden = true;
+					if (etiquetaJornada) etiquetaJornada.hidden = true;
+					mostrar(filaHorario, true);
+				}
+
+				caja.hidden = false;
+			}
+
+			/** Bloque y etiquetas del tipo INGRESO. */
+			function pintarIngreso(ficha) {
+				var esIngreso = tipoDe(ficha) === INGRESO;
+				var bloque = ficha.querySelector('[data-parte="ingreso"]');
+				var texto = ficha.querySelector('[data-parte="ingreso-texto"]');
+				var etiquetaInicio = ficha.querySelector('[data-parte="etiqueta-inicio"]');
+				var etiquetaFin = ficha.querySelector('[data-parte="etiqueta-fin"]');
+				var rango = ficha.querySelector('.rango-horas');
+
+				if (bloque) {
+					if (esIngreso && !bloque.dataset.descartado) {
+						bloque.hidden = false;
+					} else {
+						bloque.hidden = true;
+					}
+				}
+				if (rango) rango.classList.toggle('rango-horas--ingreso', esIngreso);
+				if (etiquetaInicio) etiquetaInicio.textContent = esIngreso ? 'Hora de ingreso' : 'Hora de inicio';
+				if (etiquetaFin) etiquetaFin.textContent = esIngreso ? 'Hora de salida' : 'Hora de fin';
+
+				if (esIngreso && texto) {
+					var datos = horarioDe(ficha);
+					texto.textContent = datos
+							? 'Ingreso para colaboradores con turno rotativo o en un horario especial. Su horario habitual es ' + datos[0] + ' – ' + salidaDe(datos, ficha)
+							+ ', pero este ingreso es aparte: indique desde qué hora y hasta qué hora entra.'
+							: 'Ingreso para colaboradores con turno rotativo o en un horario especial. Indique desde qué hora y hasta qué hora ingresa. No depende del turno de la persona.';
+				}
+			}
+
+			/*
+			 * Modo de horas del tipo elegido. Ver el comentario de arriba:
+			 * EXTENDIDO fija el inicio en la salida del turno, los demás tipos
+			 * dejan los dos campos libres.
+			 */
+			function modoHoras(ficha) {
+				var inicio = ficha.querySelector('[name$=".horaInicio"]');
+				var fin = ficha.querySelector('[name$=".horaFin"]');
+				var informativo = ficha.querySelector('[data-parte="horario-habitual"]');
+				var filaRotativo = ficha.querySelector('[data-parte="rotativo-fila"]');
+				if (!inicio || !fin) return;
+
+				var datos = horarioDe(ficha);
+				var extiende = tipoDe(ficha) === EXTENDIDO;
+				var rotativo = rotativoDe(ficha);
+
+				// La casilla de horario rotativo solo tiene sentido en EXTENDIDO:
+				// en los demás tipos el inicio ya está libre.
+				if (filaRotativo) filaRotativo.hidden = !extiende;
+
+				// INGRESO, sábado, domingo, festivo y el EXTENDIDO de quien rota
+				// turnos: campos libres, porque no hay una salida fija que fijar.
+				// Para INGRESO además no hay nota de horario habitual: el bloque
+				// propio la dice.
+				if (extiende && datos && !rotativo) {
+					var salida = salidaDe(datos, ficha);
+					poner(inicio, salida);
+					inicio.dataset.fija = '1';
+					inicio.readOnly = true;
+					inicio.title = 'Fija en la salida del turno: a este extendido solo se le cambia la hora de fin.';
+					ocultarChips(inicio, true);
+					if (informativo) {
+						informativo.hidden = false;
+						informativo.textContent = 'Horario habitual: ' + datos[0] + ' – ' + salida
+								+ '. El inicio queda en su salida; solo indique hasta qué hora se extiende.';
+					}
+					return;
+				}
+
+				if (inicio.dataset.fija === '1') {
+					inicio.dataset.fija = '';
+					poner(inicio, '');
+				}
+				inicio.readOnly = false;
+				inicio.title = '';
+				ocultarChips(inicio, false);
+				if (informativo) {
+					informativo.hidden = !extiende;
+					informativo.textContent = extiende
+							? (rotativo
+									? 'Horario rotativo: sin turno fijo. Escriba la hora de inicio y la de fin.'
+									: 'Esta persona no tiene horario registrado: escriba la hora de inicio y la de fin.')
+							: '';
+				}
+			}
+
+			function revisar(ficha) {
+				var aviso = ficha.querySelector('[data-parte="aviso-duracion"]');
+				var inicio = ficha.querySelector('[name$=".horaInicio"]');
+				var fin = ficha.querySelector('[name$=".horaFin"]');
+				if (!aviso || !inicio || !fin) return;
+
+				var m1 = minutosDe(inicio.value);
+				var m2 = minutosDe(fin.value);
+				// Se mira el texto y no los minutos: las 00:00 son una hora válida
+				if (!inicio.value || !fin.value) {
+					aviso.hidden = true;
+					aviso.textContent = '';
+					return;
+				}
+				// Mismo criterio que el servidor: si el fin no le sigue al
+				// inicio, la propuesta termina al día siguiente.
+				var cruce = m2 <= m1;
+				if (cruce) m2 += 24 * 60;
+				var duracion = m2 - m1;
+
+				var tipo = tipoDe(ficha);
+				var extiende = tipo === EXTENDIDO;
+				var esIngreso = tipo === INGRESO;
+				var texto = (extiende ? 'Horas extra: ' : (esIngreso ? 'Horas del ingreso: ' : 'Horas del tramo: '))
+						+ formatoHoras(duracion) + ' (' + inicio.value + ' → ' + fin.value
+						+ (cruce ? ', termina al día siguiente' : '') + ').';
+
+				// El ingreso y el horario rotativo son independientes del turno
+				// registrado: no se comparan con su duración.
+				var datos = (esIngreso || rotativoDe(ficha)) ? null : horarioDe(ficha);
+				var conReparo = false;
+				if (datos) {
+					var entrada = minutosDe(datos[0]);
+					var salida = minutosDe(salidaDe(datos, ficha));
+					var minTurno = salida > entrada ? salida - entrada : salida + 24 * 60 - entrada;
+					if (minTurno > 0 && duracion > minTurno) {
+						texto += ' Supera la duración del turno de la persona (' + formatoHoras(minTurno)
+								+ '): esto es solo un aviso, revíselo antes de guardar.';
+						conReparo = true;
+					}
+				}
+				aviso.className = conReparo ? 'aviso-duracion' : 'aviso-horas';
+				aviso.hidden = false;
+				aviso.textContent = texto;
+			}
+
+			form.addEventListener('click', function (evento) {
+				var botonCerrar = evento.target.closest('[data-accion="cerrar-ingreso"]');
+				if (botonCerrar) {
+					var bloque = botonCerrar.closest('[data-parte="ingreso"]');
+					if (bloque) {
+						bloque.dataset.descartado = '1';
+						bloque.hidden = true;
+					}
+				}
+			});
+
+			form.addEventListener('input', function (evento) {
+				var ficha = evento.target.closest('.ficha');
+				if (ficha) revisar(ficha);
+			});
+			form.addEventListener('change', function (evento) {
+				var ficha = evento.target.closest('.ficha');
+				if (!ficha) return;
+				// Solo pintan: no tocan valores, así que no hay riesgo de bucles
+				pintarPersona(ficha);
+				pintarIngreso(ficha);
+				if (evento.target.matches('[name$=".tipo"]')) {
+					modoHoras(ficha);
+					revisar(ficha);
+					return;
+				}
+				if (evento.target.matches('[name$=".horarioRotativo"]')) {
+					modoHoras(ficha);
+					revisar(ficha);
+					return;
+				}
+				if (evento.target.matches('[name$=".colaboradorId"]')) {
+					var inicio = ficha.querySelector('[name$=".horaInicio"]');
+					var antes = inicio ? inicio.value : '';
+					modoHoras(ficha);
+					/*
+					 * Si el modo no cambió nada (la persona se eligió antes
+					 * que el tipo), los candidatos igual hay que reconsultarlos:
+					 * sin este disparo el aviso se quedaría con el texto de
+					 * inicio. El disparo va por la fecha, que es el campo que
+					 * lote.js escucha para recargar.
+					 */
+					if (inicio && inicio.value === antes) {
+						var fecha = ficha.querySelector('[name$=".fecha"]');
+						if (fecha) fecha.dispatchEvent(new Event('change', { bubbles: true }));
+					}
+					revisar(ficha);
+					return;
+				}
+				if (evento.target.matches('[name$=".fecha"]')) {
+					modoHoras(ficha);
+				}
+				revisar(ficha);
+			});
+
+			// Las fichas que el servidor ya traía (la de arranque o un
+			// repintado tras error) arrancan en su modo: EXTENDIDO elegido
+			// vuelve a fijar el inicio en la salida del turno.
+			Array.prototype.forEach.call(form.querySelectorAll('.ficha'), function (ficha) {
+				modoHoras(ficha);
+				pintarPersona(ficha);
+				pintarIngreso(ficha);
+				revisar(ficha);
+			});
+
+			// Las fichas que lote.js agrega después arrancan limpias: la ficha
+			// de persona y el bloque de ingreso se repintan con sus valores.
+			var contenedorFichas = document.getElementById('fichas');
+			if (contenedorFichas && window.MutationObserver) {
+				new MutationObserver(function (cambios) {
+					cambios.forEach(function (cambio) {
+						Array.prototype.forEach.call(cambio.addedNodes, function (nodo) {
+							if (nodo.nodeType === 1 && nodo.classList.contains('ficha')) {
+								pintarPersona(nodo);
+								pintarIngreso(nodo);
+							}
+						});
+					});
+				}).observe(contenedorFichas, { childList: true });
+			}
+		})();
+	</script>
+
+</div>
+</body>
+
+</html>

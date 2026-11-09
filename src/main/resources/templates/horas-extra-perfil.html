@@ -1,0 +1,946 @@
+﻿<!DOCTYPE html>
+<html lang="es" th:replace="~{fragments/layout :: pagina('Perfil del colaborador', 'horas-extra', ~{::contenido})}">
+<body>
+<div th:fragment="contenido" class="perf">
+
+	<!--
+		El historial completo de una persona en una sola pantalla: identidad,
+		KPIs del rango, gráficas en CSS puro (misma paleta que el resto, sin
+		librerías externas) y la línea de tiempo con todo lo que hizo cada día:
+		motivo de la programación, horas ejecutadas, vehículo en el que se subió
+		y la notificación que se le envió.
+
+		Los KPIs y las gráficas responden a las fechas (desde/hasta); el
+		buscador solo acota la línea de tiempo, para no cambiar los totales
+		con una búsqueda. Sin filtros se ve todo: nada se pierde.
+
+		SMS y WhatsApp: "Enviar SMS" deja el mensaje en la cola (la bandeja
+		muestra su estado); "WhatsApp" abre wa.me con el mismo texto armado,
+		que es la vía gratuita de avisar a la persona.
+
+		Estilo: mismo sistema de colaboradores.html y transporte.html.
+		Todas las reglas van prefijadas con .perf.
+	-->
+	<style>
+		/* =================================================================
+		   Horas extra · perfil del colaborador
+		   ================================================================= */
+		.perf {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+		.perf .tarjeta {
+			animation: none;
+			margin-bottom: 1.25rem;
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			overflow: hidden;
+		}
+		.perf .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.perf .tarjeta:last-child { margin-bottom: 0; }
+		.perf .tarjeta__cabecera {
+			justify-content: flex-start;
+			padding: 1.375rem 1.5rem;
+			gap: 1rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.perf .tarjeta__titulo-grupo { flex: 1 1 16rem; }
+		.perf .tarjeta__titulo-grupo h2 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+		}
+		.perf .tarjeta__cabecera h2::before,
+		.perf .tarjeta__titulo-grupo h2::before { display: none; }
+		.perf .tarjeta__titulo-grupo p {
+			margin-top: .25rem;
+			max-width: 62ch;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+		.perf .tarjeta__cuerpo { padding: 1.5rem; }
+
+		/* ---- Portada ---- */
+		.perf .hero-inicio,
+		.perf .hero-inicio * { animation: none; }
+		.perf .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			margin-bottom: 1.25rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.perf .hero-inicio::before,
+		.perf .hero-inicio::after { content: none; }
+		.perf .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.perf .hero-inicio__contenido { max-width: 46rem; flex: 1 1 auto; min-width: 0; }
+		.perf .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+			text-transform: uppercase;
+		}
+		.perf .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.perf .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+		.perf .hero-inicio__acciones {
+			position: relative;
+			z-index: 1;
+			display: flex;
+			align-items: center;
+			gap: .625rem;
+			flex-wrap: wrap;
+		}
+
+		/* ---- Íconos de sección ---- */
+		.perf .sec-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.25rem;
+		}
+		.perf .sec-icono--azul { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+
+		/* ---- Botones ---- */
+		.perf .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.perf .boton::after { display: none; }
+		.perf .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.perf .boton--chico { padding: .5rem .875rem; font-size: .75rem; }
+		.perf .boton--contorno {
+			border: 1px solid #cfe0f2;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.perf .boton--contorno:hover:not(:disabled) {
+			border: 1px solid #b6cfe9;
+			background: #e9f1fa;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.perf .boton--fantasma {
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.perf .boton--fantasma:hover {
+			border: 1px solid #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.perf .hero-inicio .boton--fantasma {
+			background: rgba(255, 255, 255, .08);
+			border-color: rgba(255, 255, 255, .22);
+			color: #fff;
+		}
+		.perf .hero-inicio .boton--fantasma:hover {
+			background: rgba(255, 255, 255, .16);
+			border-color: rgba(255, 255, 255, .4);
+		}
+
+		/* ---- Campos ---- */
+		.perf .campo__etiqueta,
+		.perf .campo:focus-within .campo__etiqueta {
+			margin-bottom: .375rem;
+			color: var(--a-navy);
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+		.perf input[type="date"],
+		.perf input[type="search"] {
+			padding: .625rem .875rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background-color: #fff;
+			font-size: .9375rem;
+			font-weight: 500;
+			color: var(--a-texto);
+		}
+		.perf input[type="date"]:focus,
+		.perf input[type="search"]:focus {
+			border-color: var(--a-azul);
+			box-shadow: 0 0 0 3px rgba(23, 68, 117, .14);
+		}
+
+		/* ---- Filtros dentro del cuerpo de una tarjeta ---- */
+		.perf .filtros {
+			display: flex;
+			align-items: flex-end;
+			flex-wrap: wrap;
+			gap: 1rem .875rem;
+			padding: 0;
+			border: 0;
+			background: transparent;
+			box-shadow: none;
+		}
+		.perf .filtros .campo { flex: 1 1 11rem; margin-bottom: 0; }
+		.perf .filtros .campo--buscar { flex: 2 1 14rem; }
+		.perf .filtros__fin { margin-left: auto; display: flex; gap: .5rem; flex-wrap: wrap; }
+
+		/* ---- Etiquetas ---- */
+		.perf .etiqueta {
+			display: inline-flex;
+			align-items: center;
+			gap: .375rem;
+			padding: .375rem .875rem;
+			border: 0;
+			border-radius: 999px;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+			white-space: nowrap;
+		}
+		.perf .etiqueta::before { content: none; display: none; animation: none; }
+		.perf .etiqueta--info { background: #e6effa; color: #24406a; }
+		.perf .etiqueta--gris { background: #eceff3; color: var(--a-tenue); }
+		.perf .etiqueta--ok { background: #dff3e6; color: #1f6b43; }
+		.perf .etiqueta--alerta { background: #fdf0d9; color: #9a5a0a; }
+		.perf .etiqueta--error { background: #fdecec; color: #b42318; }
+
+		/* ---- Ficha de identidad (dl/dt/dd) ---- */
+		.perf-datos {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+			gap: 1rem 1.5rem;
+			margin: 0;
+		}
+		.perf-datos dt {
+			font-size: .6875rem;
+			font-weight: 700;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+			color: var(--a-tenue);
+		}
+		.perf-datos dd {
+			margin: .25rem 0 0;
+			font-weight: 700;
+			color: var(--a-navy);
+			overflow-wrap: anywhere;
+		}
+
+		/* ---- KPIs ---- */
+		.perf__kpis {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+			gap: 1rem;
+			margin-bottom: 1.25rem;
+		}
+		.perf .kpi {
+			position: relative;
+			padding: 1.125rem 1.25rem;
+			margin: 0;
+			background: #fff;
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			overflow: hidden;
+			animation: none;
+		}
+		.perf .kpi::before { content: none; }
+		.perf .kpi:hover { transform: none; box-shadow: 0 2px 10px rgba(30, 58, 95, .05); }
+		.perf .kpi__rotulo {
+			display: flex;
+			align-items: center;
+			gap: .5rem;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .02em;
+			color: var(--a-tenue);
+			text-transform: none;
+		}
+		.perf .kpi__rotulo i {
+			display: inline-grid;
+			place-items: center;
+			width: 1.75rem;
+			height: 1.75rem;
+			flex: none;
+			border-radius: 50%;
+			background: var(--a-circulo);
+			color: #fff;
+			font-size: .75rem;
+		}
+		.perf .kpi__valor {
+			margin-top: .625rem;
+			font-size: 1.875rem;
+			font-weight: 700;
+			line-height: 1.1;
+			color: var(--a-navy);
+			font-variant-numeric: tabular-nums;
+			letter-spacing: -.02em;
+		}
+		.perf .kpi__detalle {
+			margin-top: .25rem;
+			font-size: .75rem;
+			font-weight: 500;
+			color: var(--a-tenue);
+		}
+		.perf .kpi--ok .kpi__valor { color: #1f6b43; }
+		.perf .kpi--alerta .kpi__valor { color: #9a5a0a; }
+		.perf .kpi--error .kpi__valor { color: #b42318; }
+
+		/* ---- Gráficas: barras verticales ---- */
+		.perf-graficas {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+			gap: 1.5rem;
+		}
+		.gfj-caja h3 {
+			margin: 0 0 .875rem;
+			font-size: .875rem;
+			font-weight: 700;
+			color: var(--a-navy);
+		}
+		.gfj-caja h3 small {
+			display: block;
+			font-weight: 500;
+			font-size: .75rem;
+			color: var(--a-tenue);
+			margin-top: .125rem;
+		}
+		.gfj {
+			display: flex;
+			align-items: stretch;
+			gap: .375rem;
+			height: 10rem;
+			overflow-x: auto;
+			padding-bottom: .25rem;
+		}
+		.gfj__col { flex: 1 0 1.5rem; min-width: 0; display: flex; flex-direction: column; }
+		.gfj__val {
+			font-size: .5625rem;
+			font-weight: 700;
+			color: var(--a-navy);
+			text-align: center;
+			margin-bottom: .25rem;
+			font-variant-numeric: tabular-nums;
+		}
+		.gfj__area { flex: 1; display: flex; align-items: flex-end; justify-content: center; min-height: 0; }
+		.gfj__barra {
+			width: 72%;
+			max-width: 1.75rem;
+			border-radius: .25rem .25rem 0 0;
+			background: var(--a-circulo);
+			box-shadow: none;
+		}
+		.gfj__rot {
+			font-size: .5625rem;
+			color: var(--a-tenue);
+			text-align: center;
+			margin-top: .25rem;
+			white-space: nowrap;
+		}
+
+		/* ---- Gráfica horizontal (tipos) ---- */
+		.gfj-h { display: flex; flex-direction: column; gap: .75rem; }
+		.gfj-h__fila {
+			display: grid;
+			grid-template-columns: 8.5rem 1fr 3.5rem;
+			align-items: center;
+			gap: .625rem;
+		}
+		.gfj-h__rot { font-size: .75rem; font-weight: 600; color: var(--a-texto); }
+		.gfj-h__track {
+			height: .875rem;
+			border-radius: 100px;
+			background: var(--a-suave);
+			overflow: hidden;
+			box-shadow: none;
+		}
+		.gfj-h__fill {
+			display: block;
+			height: 100%;
+			border-radius: 100px;
+			background: var(--a-circulo);
+		}
+		.gfj-h__val {
+			font-size: .75rem;
+			font-weight: 700;
+			color: var(--a-navy);
+			text-align: right;
+			font-variant-numeric: tabular-nums;
+		}
+
+		/* ---- Línea de tiempo ---- */
+		.perf .linea-tiempo {
+			margin: 0;
+			padding: 0;
+			list-style: none;
+		}
+		.perf .linea-tiempo li {
+			position: relative;
+			padding: 0 0 1rem 0;
+			border-left: 0;
+			animation: none;
+		}
+		.perf .linea-tiempo li::before { content: none; }
+		.perf .linea-tiempo li:last-child { padding-bottom: 0; }
+
+		/* ---- Tarjeta por programación ---- */
+		.perf-item {
+			background: #f8fafd;
+			border: 1px solid var(--a-borde);
+			border-radius: 12px;
+			padding: 1rem 1.125rem;
+			margin-bottom: .75rem;
+		}
+		.perf-item:last-child { margin-bottom: 0; }
+		.perf-item__cab {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: .5rem;
+			margin-bottom: .5rem;
+		}
+		.perf-item__hora {
+			font-size: .8125rem;
+			font-weight: 700;
+			color: var(--a-navy);
+		}
+		.perf-item__hora i { color: var(--a-tenue); margin-right: .25rem; }
+		.perf-item__desc {
+			font-size: .8125rem;
+			color: var(--a-texto);
+			margin: .25rem 0 .5rem;
+			line-height: 1.55;
+		}
+		.perf-item__desc strong { color: var(--a-navy); }
+		.perf-item__ajuste {
+			font-size: .75rem;
+			color: #9a5a0a;
+			margin-bottom: .5rem;
+			font-weight: 600;
+		}
+		.perf-item__datos {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+			gap: .625rem 1.25rem;
+			font-size: .75rem;
+		}
+		.perf-item__dato {
+			display: flex;
+			gap: .5rem;
+			align-items: flex-start;
+			color: var(--a-texto);
+			line-height: 1.55;
+		}
+		.perf-item__dato i {
+			color: var(--a-circulo);
+			margin-top: .1875rem;
+			width: 1rem;
+			text-align: center;
+			flex: none;
+			font-size: .75rem;
+		}
+		.perf-item__dato strong { color: var(--a-navy); }
+		.perf-item__dato .tenue { color: var(--a-tenue); font-style: italic; }
+		.perf-item__dato .etiqueta { padding: .125rem .5rem; font-size: .6875rem; }
+		.perf-item__acciones {
+			display: flex;
+			flex-wrap: wrap;
+			gap: .5rem;
+			margin-top: .875rem;
+			align-items: center;
+		}
+		.perf-item__acciones form { margin: 0; }
+		.perf-wa { display: inline-flex; align-items: center; gap: .375rem; }
+		.perf-wa i { font-size: .9375rem; }
+
+		/* ---- Estado vacío ---- */
+		.perf .vacio {
+			padding: 1.75rem 1rem;
+			text-align: center;
+			color: var(--a-tenue);
+			font-size: .75rem;
+			line-height: 1.6;
+		}
+		.perf .vacio strong {
+			display: block;
+			margin-bottom: .375rem;
+			color: var(--a-navy);
+			font-size: .875rem;
+			font-weight: 700;
+		}
+
+		/* ---- Tabla dentro de recuadro (horas directas) ---- */
+		.perf .tabla-envoltura {
+			border: 1px solid #dfe8f3;
+			border-radius: 12px;
+			background: #fff;
+			overflow-x: auto;
+			-webkit-overflow-scrolling: touch;
+		}
+		.perf .tabla { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .8125rem; }
+		.perf .tabla thead th {
+			padding: .875rem 1.125rem;
+			background: var(--a-suave);
+			color: #2f4a70;
+			border-bottom: 1px solid #e3ebf4;
+			font-size: .75rem;
+			font-weight: 600;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+			text-align: left;
+			white-space: nowrap;
+		}
+		.perf .tabla thead tr th:first-child { border-left: 0; }
+		.perf .tabla thead th.tabla__num { text-align: right; }
+		.perf .tabla tbody td {
+			padding: 1rem 1.125rem;
+			border-bottom: 1px solid #edf2f8;
+			vertical-align: middle;
+			color: var(--a-texto);
+			text-align: left;
+		}
+		.perf .tabla tbody td.tabla__num { text-align: right; font-variant-numeric: tabular-nums; }
+		.perf .tabla tbody tr { animation: none; }
+		.perf .tabla tbody tr:nth-child(even) { background: transparent; }
+		.perf .tabla tbody tr:hover { background: #f7fafd; }
+		.perf .tabla tbody tr:hover td:first-child { box-shadow: none; }
+		.perf .tabla tbody tr:last-child td { border-bottom: 0; }
+
+		/* =================================================================
+		   Móvil
+		   ================================================================= */
+		@media (max-width: 768px) {
+			.perf .hero-inicio {
+				flex-wrap: wrap;
+				padding: 1.25rem;
+				min-height: 0;
+			}
+			.perf .hero-inicio h1 { font-size: 1.5rem; }
+			.perf .hero-inicio__acciones { width: 100%; }
+			.perf .hero-inicio__acciones .boton { flex: 1 1 auto; justify-content: center; }
+			.perf .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.perf .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.perf .tarjeta__cuerpo { padding: 1rem; }
+
+			.perf .filtros { flex-direction: column; align-items: stretch; }
+			.perf .filtros .campo,
+			.perf .filtros__fin { width: 100%; min-width: 0; flex-basis: 100%; margin-left: 0; }
+			.perf .filtros__fin .boton { flex: 1; justify-content: center; }
+
+			.perf .campo input { font-size: 16px; }
+
+			.gfj-h__fila { grid-template-columns: 6.5rem 1fr 3rem; }
+			.perf-item__datos { grid-template-columns: 1fr; }
+
+			.perf .perf__kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .625rem; }
+			.perf .kpi { padding: .875rem .875rem; }
+			.perf .kpi__valor { font-size: 1.5rem; }
+
+			/* Tabla → tarjeta por fila */
+			.perf .tabla tbody tr { display: flex; flex-direction: column; }
+			.perf .tabla tbody td {
+				display: block;
+				text-align: left;
+				padding: .5rem .875rem;
+				border-bottom: 1px dashed #edf2f8;
+			}
+			.perf .tabla tbody td::before {
+				content: attr(data-label);
+				display: block;
+				margin-bottom: .25rem;
+				font-size: .625rem;
+				font-weight: 800;
+				letter-spacing: .06em;
+				text-transform: uppercase;
+				color: var(--a-tenue);
+			}
+			.perf .tabla tbody td.tabla__num { text-align: left; }
+			.perf .tabla tbody td:last-child { border-bottom: 0; }
+
+			.perf .perf-item__acciones .boton,
+			.perf .perf-item__acciones form { width: 100%; }
+			.perf .perf-item__acciones .boton { justify-content: center; }
+		}
+
+		@media (max-width: 480px) {
+			.perf .hero-icono { display: none; }
+			.perf .perf__kpis { grid-template-columns: minmax(0, 1fr); }
+		}
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-id-badge"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">PERFIL DE HORAS EXTRA</span>
+			<h1 th:text="${perfil.nombreCompleto}">Nombre del colaborador</h1>
+			<p>
+				<span th:text="${perfil.area}">Área</span>
+				<span th:if="${perfil.cargo != null}"> · <span th:text="${perfil.cargo}">Cargo</span></span>
+				<span th:if="${perfil.turno != null}"> · Turno <span th:text="${perfil.turno}">Turno</span></span>
+				· Historial completo: programaciones, horas ejecutadas, vehículos y notificaciones.
+			</p>
+		</div>
+		<div class="hero-inicio__acciones">
+			<a class="boton boton--chico boton--fantasma" th:href="@{/horas-extra/nivelacion}">
+				<i class="fas fa-arrow-left"></i> Horas extra
+			</a>
+		</div>
+	</section>
+
+	<!-- ======== IDENTIDAD ======== -->
+	<div class="tarjeta">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--azul" aria-hidden="true"><i class="fas fa-address-card"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Datos del colaborador</h2>
+				<p>Quién es, dónde trabaja y cómo contactarlo.</p>
+			</div>
+		</div>
+		<div class="tarjeta__cuerpo">
+			<dl class="perf-datos">
+				<div><dt>Documento</dt><dd th:text="${perfil.documento ?: '—'}">000000</dd></div>
+				<div><dt>Área</dt><dd th:text="${perfil.area}">Área</dd></div>
+				<div><dt>Cargo</dt><dd th:text="${perfil.cargo ?: '—'}">Cargo</dd></div>
+				<div><dt>Turno</dt><dd th:text="${perfil.turno ?: '—'}">Turno</dd></div>
+				<div><dt>Celular</dt><dd th:text="${perfil.celular ?: 'Sin registro'}">3000000000</dd></div>
+				<div><dt>Fecha de ingreso</dt>
+					<dd th:text="${perfil.fechaIngreso != null ? #temporals.format(perfil.fechaIngreso, 'dd/MM/yyyy') : '—'}">01/01/2026</dd>
+				</div>
+				<div><dt>Salario base</dt>
+					<dd th:if="${perfil.salarioBase != null}"
+						th:text="'$' + ${#numbers.formatDecimal(perfil.salarioBase, 1, 'COMMA', 0, 'POINT')}">$0</dd>
+					<dd th:unless="${perfil.salarioBase != null}">Sin registro</dd>
+				</div>
+			</dl>
+		</div>
+	</div>
+
+	<!-- ======== KPIs ======== -->
+	<div class="perf__kpis">
+		<div class="kpi">
+			<div class="kpi__rotulo"><i class="fas fa-clock"></i> Horas extra</div>
+			<div class="kpi__valor" th:text="${#numbers.formatDecimal(perfil.horasExtra, 1, 'COMMA', 2, 'POINT')}">0.00</div>
+			<div class="kpi__detalle">ejecutadas en el rango</div>
+		</div>
+		<div class="kpi">
+			<div class="kpi__rotulo"><i class="fas fa-calendar-day"></i> Días trabajados</div>
+			<div class="kpi__valor" th:text="${perfil.diasConHoras}">0</div>
+			<div class="kpi__detalle">días con horas extra</div>
+		</div>
+		<div class="kpi">
+			<div class="kpi__rotulo"><i class="fas fa-list-check"></i> Programaciones</div>
+			<div class="kpi__valor" th:text="${perfil.programaciones}">0</div>
+			<div class="kpi__detalle">turnos en el historial</div>
+		</div>
+		<div class="kpi" th:if="${perfil.valorHorasExtra != null}">
+			<div class="kpi__rotulo"><i class="fas fa-coins"></i> Valor h. extra</div>
+			<div class="kpi__valor"
+				 th:text="'$' + ${#numbers.formatDecimal(perfil.valorHorasExtra, 1, 'COMMA', 2, 'POINT')}">$0.00</div>
+			<div class="kpi__detalle">con los parámetros vigentes</div>
+		</div>
+		<div class="kpi" th:if="${perfil.supuestoSueldo != null}">
+			<div class="kpi__rotulo"><i class="fas fa-hand-holding-dollar"></i> Supuesto sueldo</div>
+			<div class="kpi__valor"
+				 th:text="'$' + ${#numbers.formatDecimal(perfil.supuestoSueldo, 1, 'COMMA', 2, 'POINT')}">$0.00</div>
+			<div class="kpi__detalle">salario + valor de las horas</div>
+		</div>
+	</div>
+
+	<!-- ======== FILTROS ======== -->
+	<div class="tarjeta">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--azul" aria-hidden="true"><i class="fas fa-filter"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Filtros</h2>
+				<p>Las fechas acotan los totales y las gráficas; el texto busca en el historial (motivo, placa, conductor, destino, fecha).</p>
+			</div>
+		</div>
+		<div class="tarjeta__cuerpo">
+			<form class="filtros" th:action="@{/horas-extra/perfil/{id}(id=${perfil.colaboradorId})}" method="get">
+				<div class="campo">
+					<label class="campo__etiqueta" for="filtro-desde">Desde</label>
+					<input id="filtro-desde" type="date" name="desde" th:value="${desde}">
+				</div>
+				<div class="campo">
+					<label class="campo__etiqueta" for="filtro-hasta">Hasta</label>
+					<input id="filtro-hasta" type="date" name="hasta" th:value="${hasta}">
+				</div>
+				<div class="campo campo--buscar">
+					<label class="campo__etiqueta" for="filtro-q">Buscar en el historial</label>
+					<input id="filtro-q" type="search" name="q" th:value="${q}" placeholder="Motivo, placa, conductor, destino…">
+				</div>
+				<div class="filtros__fin">
+					<button type="submit" class="boton"><i class="fas fa-search"></i> Consultar</button>
+					<a class="boton boton--contorno" th:href="@{/horas-extra/perfil/{id}(id=${perfil.colaboradorId})}">
+						<i class="fas fa-eraser"></i> Ver todo
+					</a>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<!-- ======== GRÁFICAS ======== -->
+	<div class="tarjeta">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--azul" aria-hidden="true"><i class="fas fa-chart-column"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Gráficas del periodo</h2>
+				<p>Cómo se reparten sus horas extra: por día, por tipo y mes a mes.</p>
+			</div>
+		</div>
+		<div class="tarjeta__cuerpo">
+			<div class="perf-graficas">
+				<!-- Horas por día -->
+				<section class="gfj-caja">
+					<h3>Horas por día <small th:text="'últimos ' + ${perfil.horasPorDia.size()} + ' días con horas'">30 días</small></h3>
+					<div class="gfj" th:if="${!perfil.horasPorDia.isEmpty()}">
+						<div class="gfj__col" th:each="punto : ${perfil.horasPorDia}"
+							 th:title="${punto.etiqueta + ': ' + #numbers.formatDecimal(punto.valor, 1, 'COMMA', 2, 'POINT') + ' horas'}">
+							<span class="gfj__val" th:text="${#numbers.formatDecimal(punto.valor, 1, 'COMMA', 1, 'POINT')}">4.0</span>
+							<div class="gfj__area">
+								<div class="gfj__barra" th:style="'height:' + ${punto.porcentaje} + '%'"></div>
+							</div>
+							<span class="gfj__rot" th:text="${punto.etiqueta}">07/10</span>
+						</div>
+					</div>
+					<p class="vacio" th:if="${perfil.horasPorDia.isEmpty()}"><strong>Sin horas</strong>En el rango no hay horas ejecutadas.</p>
+				</section>
+
+				<!-- Horas por tipo -->
+				<section class="gfj-caja">
+					<h3>Por tipo de hora <small>los recargos que aplican</small></h3>
+					<div class="gfj-h" th:if="${!perfil.horasPorTipo.isEmpty()}">
+						<div class="gfj-h__fila" th:each="punto : ${perfil.horasPorTipo}">
+							<span class="gfj-h__rot" th:text="${punto.etiqueta}">Diurnas</span>
+							<span class="gfj-h__track">
+								<span class="gfj-h__fill" th:style="'width:' + ${punto.porcentaje} + '%'"></span>
+							</span>
+							<span class="gfj-h__val" th:text="${#numbers.formatDecimal(punto.valor, 1, 'COMMA', 2, 'POINT')}">6.00</span>
+						</div>
+					</div>
+					<p class="vacio" th:if="${perfil.horasPorTipo.isEmpty()}"><strong>Sin horas</strong>Sin datos por tipo en el rango.</p>
+				</section>
+
+				<!-- Histórico mensual -->
+				<section class="gfj-caja">
+					<h3>Mes a mes <small th:text="'últimos ' + ${perfil.horasPorMes.size()} + ' meses con horas'">12 meses</small></h3>
+					<div class="gfj" th:if="${!perfil.horasPorMes.isEmpty()}">
+						<div class="gfj__col" th:each="punto : ${perfil.horasPorMes}"
+							 th:title="${punto.etiqueta + ': ' + #numbers.formatDecimal(punto.valor, 1, 'COMMA', 2, 'POINT') + ' horas'}">
+							<span class="gfj__val" th:text="${#numbers.formatDecimal(punto.valor, 1, 'COMMA', 1, 'POINT')}">8.0</span>
+							<div class="gfj__area">
+								<div class="gfj__barra" th:style="'height:' + ${punto.porcentaje} + '%'"></div>
+							</div>
+							<span class="gfj__rot" th:text="${punto.etiqueta}">oct 26</span>
+						</div>
+					</div>
+					<p class="vacio" th:if="${perfil.horasPorMes.isEmpty()}"><strong>Sin horas</strong>En el rango no hay horas ejecutadas.</p>
+				</section>
+			</div>
+		</div>
+	</div>
+
+	<!-- ======== HISTORIAL ======== -->
+	<div class="tarjeta">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--azul" aria-hidden="true"><i class="fas fa-timeline"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Historial detallado</h2>
+				<p>Cada programación con su motivo, lo ejecutado, el vehículo y su notificación.</p>
+			</div>
+		</div>
+		<div class="tarjeta__cuerpo">
+			<ol class="linea-tiempo" th:if="${!perfil.historial.isEmpty()}">
+				<li th:each="turno : ${perfil.historial}">
+					<div class="perf-item">
+						<div class="perf-item__cab">
+							<span class="perf-item__hora">
+								<i class="fas fa-clock"></i>
+								<span th:text="${#temporals.format(turno.inicio, 'EEE dd/MM/yyyy HH:mm')}">mar 07/10/2026 18:00</span>
+								— <span th:text="${#temporals.format(turno.fin, 'EEE dd/MM/yyyy HH:mm')}">mié 08/10/2026 02:00</span>
+							</span>
+							<span class="etiqueta etiqueta--info" th:text="${turno.tipo}">Extendido</span>
+							<span class="etiqueta"
+								  th:classappend="${turno.estado == 'RECHAZADA' ? 'etiqueta--error' : (turno.estado == 'AJUSTADA') ? 'etiqueta--alerta' : (turno.estado == 'CERRADA' || turno.estado == 'CANCELADA' || turno.estado == 'BORRADOR') ? 'etiqueta--gris' : 'etiqueta--ok'}"
+								  th:text="${turno.estado}">NOTIFICADA</span>
+							<span class="etiqueta etiqueta--alerta" th:if="${turno.requeriaNivelacion}">Nivelación</span>
+							<span class="etiqueta etiqueta--alerta" th:if="${turno.esEmergencia}">Emergencia</span>
+						</div>
+
+						<p class="perf-item__desc">
+							<strong>Motivo:</strong> <span th:text="${turno.motivo}">Cierre de básculas</span>
+							<span th:if="${turno.referenciaEvento != null}"> · Evento: <span th:text="${turno.referenciaEvento}">Event</span></span>
+						</p>
+						<p class="perf-item__ajuste" th:if="${turno.ajuste != null}">
+							<i class="fas fa-pen"></i> Ajustada por Talento Humano: <span th:text="${turno.ajuste}">motivo</span>
+						</p>
+
+						<div class="perf-item__datos">
+							<div class="perf-item__dato">
+								<i class="fas fa-hourglass-half"></i>
+								<span th:if="${turno.horasEjecutadas != null}">
+									<strong th:text="${#numbers.formatDecimal(turno.horasEjecutadas, 1, 'COMMA', 2, 'POINT')} + ' h ' + ${turno.tipoHoras}">8.00 h Diurnas</strong>
+									<span th:if="${turno.observacionHoras != null}"> — <span th:text="${turno.observacionHoras}">observación</span></span>
+									<span th:if="${turno.registradoPor != null}"> · por <span th:text="${turno.registradoPor}">TH</span></span>
+									<span th:if="${turno.fechaHoras != null}"> · día <span th:text="${#temporals.format(turno.fechaHoras, 'dd/MM/yyyy')}">07/10/2026</span></span>
+								</span>
+								<span th:unless="${turno.horasEjecutadas != null}" class="tenue">Sin horas confirmadas (programó <span
+										th:text="${#numbers.formatDecimal(turno.horasEfectivas, 1, 'COMMA', 2, 'POINT')}">7.00</span> h)</span>
+							</div>
+							<div class="perf-item__dato">
+								<i class="fas fa-car-side"></i>
+								<span th:if="${turno.placa != null}">
+									Vehículo <strong th:text="${turno.placa}">ABC123</strong>
+									<span th:if="${turno.conductor != null}"> · conductor <span th:text="${turno.conductor}">Luis</span></span>
+									<span th:if="${turno.destino != null}"> · destino <span th:text="${turno.destino}">Terminal</span></span>
+									<span th:if="${turno.salida != null}"> · salida <span th:text="${#temporals.format(turno.salida, 'dd/MM HH:mm')}">07/10 22:00</span></span>
+								</span>
+								<span th:unless="${turno.placa != null}" class="tenue">Sin vehículo asignado</span>
+							</div>
+							<div class="perf-item__dato">
+								<i class="fas fa-comment-sms"></i>
+								<span th:if="${turno.smsEstado != null}">
+									<span class="etiqueta"
+										  th:classappend="${turno.smsEstado == 'ENVIADO' ? 'etiqueta--ok' : (turno.smsEstado == 'FALLIDO') ? 'etiqueta--error' : 'etiqueta--info'}"
+										  th:text="${turno.smsEstado}">PENDIENTE</span>
+									<span th:text="${turno.smsMensaje}">mensaje</span>
+								</span>
+								<span th:unless="${turno.smsEstado != null}" class="tenue">Aún sin notificar</span>
+							</div>
+						</div>
+
+						<div class="perf-item__acciones">
+							<form th:if="${turno.notificable}"
+								  th:action="@{/horas-extra/perfil/{id}/notificar(id=${perfil.colaboradorId})}" method="post">
+								<input type="hidden" name="programacionId" th:value="${turno.programacionId}">
+								<input type="hidden" name="desde" th:value="${desde}">
+								<input type="hidden" name="hasta" th:value="${hasta}">
+								<input type="hidden" name="q" th:value="${q}">
+								<button type="submit" class="boton boton--chico">
+									<i class="fas fa-paper-plane"></i> Enviar SMS
+								</button>
+							</form>
+							<a class="boton boton--chico boton--contorno perf-wa" th:if="${turno.whatsapp != null}"
+							   th:href="${turno.whatsapp}" target="_blank" rel="noopener">
+								<i class="fa-brands fa-whatsapp"></i> WhatsApp
+							</a>
+						</div>
+					</div>
+				</li>
+			</ol>
+
+			<div class="vacio" th:if="${perfil.historial.isEmpty()}">
+				<strong>Sin programaciones</strong>
+				No hay turnos para el filtro actual. Use "Ver todo" para ver el historial completo.
+			</div>
+		</div>
+	</div>
+
+	<!-- ======== HORAS SIN PROGRAMACIÓN ======== -->
+	<div class="tarjeta" th:if="${!perfil.horasDirectas.isEmpty()}">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--azul" aria-hidden="true"><i class="fas fa-clock-rotate-left"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Horas registradas sin programación</h2>
+				<p>Horas ejecutadas que no nacieron de un turno: quedan en el total, pero no tienen ni vehículo ni notificación.</p>
+			</div>
+		</div>
+		<div class="tarjeta__cuerpo">
+			<div class="tabla-envoltura">
+				<table class="tabla">
+					<thead>
+					<tr>
+						<th>Fecha</th>
+						<th class="tabla__num">Horas</th>
+						<th>Tipo</th>
+						<th>Observación</th>
+					</tr>
+					</thead>
+					<tbody>
+					<tr th:each="directa : ${perfil.horasDirectas}">
+						<td data-label="Fecha" th:text="${#temporals.format(directa.fecha, 'dd/MM/yyyy')}">07/10/2026</td>
+						<td class="tabla__num" data-label="Horas"
+							th:text="${#numbers.formatDecimal(directa.horas, 1, 'COMMA', 2, 'POINT')}">4.00</td>
+						<td data-label="Tipo" th:text="${directa.tipo}">Diurnas</td>
+						<td data-label="Observación" th:text="${directa.observacion ?: '—'}">—</td>
+					</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+
+</div>
+</body>
+</html>

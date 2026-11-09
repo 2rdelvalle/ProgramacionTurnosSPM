@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="es" th:replace="~{fragments/layout :: pagina('Por aprobar', 'revision', ~{::contenido})}">
+
+<body>
+<div th:fragment="contenido" class="prop-rev">
+
+	<!--
+		Esta pantalla usa los componentes del sistema visual: hero-inicio,
+		tarjeta, tabla, etiqueta, kpi, boton, alerta, bloque-form, sec-icono.
+
+		Colores por función:
+		- Tarjeta del día → cálido (acción principal: decidir).
+		- Tarjeta de programaciones del día → azul (listado de referencia).
+
+		En móvil:
+		- El hero se apila en una columna.
+		- Los indicadores pasan a 2 columnas y a 1 en pantallas pequeñas.
+		- El filtro de día se apila a todo el ancho.
+		- El bloque de lote pasa a columna y su botón a todo el ancho.
+		- La tabla se convierte en tarjeta por propuesta, con avatar.
+		- Los inputs suben a 16px para que iOS no haga zoom al enfocar.
+	-->
+	<style>
+		/* =================================================================
+		   Por aprobar · estilos locales
+		   ================================================================= */
+		.prop-rev {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			--a-ok: #2d7a55;
+			--a-peligro: #b42318;
+			animation: none;
+		}
+		.prop-rev > .hero-inicio,
+		.prop-rev > .filtros,
+		.prop-rev > .rejilla-kpi,
+		.prop-rev > .tarjeta,
+		.prop-rev > .alerta { margin-bottom: 1.25rem; }
+		.prop-rev > .tarjeta + .tarjeta { margin-top: 1.25rem; }
+
+		/* ---- Portada ---- */
+		.prop-rev .hero-inicio,
+		.prop-rev .hero-inicio * { animation: none; }
+		.prop-rev .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.prop-rev .hero-inicio::before,
+		.prop-rev .hero-inicio::after { content: none; }
+		.prop-rev .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.prop-rev .hero-inicio__contenido { max-width: 44rem; }
+		.prop-rev .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+			text-transform: uppercase;
+		}
+		.prop-rev .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.prop-rev .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+
+		/* ---- Filtros de día (bloque propio) ---- */
+		.prop-rev .filtros {
+			align-items: flex-end;
+			gap: 1rem;
+			padding: 1.25rem 1.5rem;
+			background: #fff;
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+		}
+		.prop-rev .filtros .campo { flex: 1 1 14rem; margin-bottom: 0; }
+		.prop-rev .filtros__fin { margin-left: auto; display: flex; gap: .5rem; align-items: flex-end; }
+
+		/* ---- Campos ---- */
+		.prop-rev .campo__etiqueta,
+		.prop-rev .campo:focus-within .campo__etiqueta {
+			margin-bottom: .375rem;
+			color: var(--a-navy);
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+		.prop-rev input[type="text"],
+		.prop-rev input[type="date"],
+		.prop-rev select,
+		.prop-rev textarea {
+			width: 100%;
+			padding: .625rem .875rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background-color: #fff;
+			font-size: .9375rem;
+			font-weight: 500;
+			color: var(--a-texto);
+		}
+		.prop-rev select { padding-right: 2.5rem; }
+		.prop-rev input[type="text"]:focus,
+		.prop-rev input[type="date"]:focus,
+		.prop-rev select:focus,
+		.prop-rev textarea:focus {
+			border-color: var(--a-azul);
+			box-shadow: 0 0 0 3px rgba(23, 68, 117, .14);
+			outline: none;
+		}
+
+		/* ---- Indicadores (KPI) ---- */
+		.prop-rev .rejilla-kpi {
+			display: grid;
+			grid-template-columns: repeat(4, 1fr);
+			gap: 1rem;
+		}
+		.prop-rev .kpi {
+			position: relative;
+			padding: 1.125rem 1.25rem;
+			background: #fff;
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			overflow: hidden;
+			animation: none;
+		}
+		.prop-rev .kpi::before { content: none; }
+		.prop-rev .kpi:hover { transform: none; box-shadow: 0 2px 10px rgba(30, 58, 95, .05); }
+		.prop-rev .kpi__rotulo {
+			display: flex;
+			align-items: center;
+			gap: .5rem;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .02em;
+			color: var(--a-tenue);
+			text-transform: none;
+		}
+		.prop-rev .kpi__valor {
+			margin-top: .625rem;
+			font-size: 1.875rem;
+			font-weight: 700;
+			line-height: 1.1;
+			color: var(--a-navy);
+			font-variant-numeric: tabular-nums;
+			letter-spacing: -.02em;
+		}
+		.prop-rev .kpi__detalle {
+			margin-top: .25rem;
+			font-size: .75rem;
+			font-weight: 500;
+			color: var(--a-tenue);
+		}
+		.prop-rev .kpi--alerta .kpi__valor { color: #9a5a0a; }
+
+		/* ---- Tarjeta y cabecera ---- */
+		.prop-rev .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+			overflow: hidden;
+		}
+		.prop-rev .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.prop-rev .tarjeta__cabecera {
+			justify-content: flex-start;
+			padding: 1.375rem 1.5rem;
+			gap: 1rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.prop-rev .tarjeta__titulo-grupo { flex: 1 1 16rem; }
+		.prop-rev .tarjeta__titulo-grupo h2 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+			text-transform: capitalize;
+		}
+		.prop-rev .tarjeta__cabecera h2::before,
+		.prop-rev .tarjeta__titulo-grupo h2::before { display: none; }
+		.prop-rev .tarjeta__titulo-grupo p {
+			margin-top: .25rem;
+			max-width: 62ch;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+		.prop-rev .tarjeta__cuerpo { padding: 1.5rem; }
+
+		/* Acento cálido: acción principal (decidir) */
+		.prop-rev .tarjeta--decision { border-color: #f1d8b2; }
+		.prop-rev .tarjeta--decision .tarjeta__cabecera {
+			background: #fdf8f0;
+			border-bottom-color: #f1d8b2;
+		}
+		/* Acento azul: listado de referencia */
+		.prop-rev .tarjeta--referencia { border-color: var(--a-borde); }
+
+		/* ---- Íconos de sección ---- */
+		.prop-rev .sec-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.25rem;
+		}
+		.prop-rev .sec-icono--azul { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+		.prop-rev .sec-icono--oro { background: #e09837; box-shadow: 0 3px 10px rgba(224, 152, 55, .3); }
+
+		/* ---- Etiquetas ---- */
+		.prop-rev .etiqueta {
+			padding: .375rem .875rem;
+			border: 0;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+			white-space: nowrap;
+		}
+		.prop-rev .etiqueta::before { content: none; display: none; animation: none; }
+		.prop-rev .etiqueta--ok { background: #dff3e6; color: #1f6b43; }
+		.prop-rev .etiqueta--alerta { background: #fdf0d9; color: #9a5a0a; }
+		.prop-rev .etiqueta--error { background: #fdecec; color: #b42318; }
+		.prop-rev .etiqueta--info { background: #e6effa; color: #24406a; }
+		.prop-rev .etiqueta--gris { background: #eceff3; color: var(--a-tenue); }
+		.prop-rev .etiqueta--chico { padding: .1875rem .5rem; font-size: .625rem; }
+		.prop-rev .tarjeta__cabecera > .etiqueta { align-self: center; }
+
+		/* ---- Botones ---- */
+		.prop-rev .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.prop-rev .boton::after { display: none; }
+		.prop-rev .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.prop-rev .boton--chico { padding: .5rem .875rem; font-size: .75rem; }
+		.prop-rev .boton--fantasma {
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.prop-rev .boton--fantasma:hover {
+			border: 1px solid #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.prop-rev .boton--ok {
+			border: 1px solid #2d7a55;
+			background: #2d7a55;
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(45, 122, 85, .25);
+		}
+		.prop-rev .boton--ok:hover {
+			border-color: #246143;
+			background: #246143;
+			box-shadow: 0 4px 12px rgba(45, 122, 85, .32);
+		}
+		.prop-rev .boton--peligro {
+			border: 1px solid #f0c4c4;
+			background: #fff;
+			color: #b42318;
+			box-shadow: none;
+		}
+		.prop-rev .boton--peligro:hover {
+			border: 1px solid #e6a8a8;
+			background: #fdf3f3;
+			color: #b42318;
+			box-shadow: none;
+		}
+
+		/* ---- Grupo de propuestas dentro de cada día ---- */
+		.prop-rev .grupo { margin-bottom: 1.75rem; }
+		.prop-rev .grupo:last-child { margin-bottom: 0; }
+		.prop-rev .grupo__cabecera {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: .625rem;
+			flex-wrap: wrap;
+			padding-bottom: .75rem;
+			margin-bottom: 1rem;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.prop-rev .grupo__cabecera h3 {
+			display: flex;
+			align-items: center;
+			gap: .5rem;
+			margin: 0;
+			font-size: .9375rem;
+			font-weight: 700;
+			color: var(--a-navy);
+		}
+		.prop-rev .grupo__cabecera h3 i { color: #e09837; }
+		.prop-rev .grupo__cabecera .meta {
+			margin: 0;
+			font-size: .75rem;
+			color: var(--a-tenue);
+		}
+
+		/* ---- Bloque-form ---- */
+		.prop-rev .bloque-form {
+			border: 1px solid var(--a-borde);
+			border-radius: 12px;
+			background: #f9fbfd;
+			box-shadow: none;
+			overflow: hidden;
+		}
+		.prop-rev .bloque-form__cabecera {
+			display: flex;
+			align-items: center;
+			gap: .875rem;
+			padding: 1rem 1.125rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.prop-rev .bloque-form__icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 2rem;
+			height: 2rem;
+			border-radius: 50%;
+			background: var(--a-circulo);
+			color: #fff;
+			font-size: .875rem;
+			box-shadow: none;
+		}
+		.prop-rev .bloque-form__cabecera > div:not(.bloque-form__icono) { min-width: 0; flex: 1; }
+		.prop-rev .bloque-form__cabecera h3 {
+			margin: 0;
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: .01em;
+			color: var(--a-navy);
+			line-height: 1.3;
+		}
+		.prop-rev .bloque-form__cabecera p {
+			margin: .1875rem 0 0;
+			font-size: .75rem;
+			color: var(--a-tenue);
+			font-weight: 500;
+			line-height: 1.5;
+			max-width: 52ch;
+		}
+		.prop-rev .bloque-form__cuerpo { padding: 1.25rem 1.125rem; }
+		.prop-rev .bloque-form__cuerpo .campo { margin-bottom: 0; }
+
+		/* Variante cálida */
+		.prop-rev .bloque-form--oro { border-color: #f1d8b2; }
+		.prop-rev .bloque-form--oro .bloque-form__cabecera {
+			background: #fdf8f0;
+			border-bottom-color: #f1d8b2;
+		}
+		.prop-rev .bloque-form--oro .bloque-form__icono { background: #e09837; }
+
+		/* ---- Formulario de lote ---- */
+		.prop-rev .lote-form {
+			display: flex;
+			align-items: center;
+			gap: .625rem;
+			flex-wrap: wrap;
+		}
+		.prop-rev .lote-form input[type="text"] {
+			width: auto;
+			flex: 1 1 14rem;
+			min-width: 11rem;
+		}
+
+		/* ---- Persona: avatar + nombre ---- */
+		.prop-rev .persona {
+			display: flex;
+			align-items: center;
+			gap: .75rem;
+			min-width: 0;
+		}
+		.prop-rev .inicial {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 2.5rem;
+			height: 2.5rem;
+			border-radius: 50%;
+			background: #2c5f94;
+			color: #fff;
+			font-size: .8125rem;
+			font-weight: 600;
+			box-shadow: none;
+			text-transform: uppercase;
+		}
+
+		/* ---- Tabla dentro de recuadro ---- */
+		.prop-rev .tabla-envoltura {
+			margin-top: 1rem;
+			border: 1px solid #dfe8f3;
+			border-radius: 12px;
+			background: #fff;
+			overflow-x: auto;
+			-webkit-overflow-scrolling: touch;
+		}
+		.prop-rev .tabla thead th {
+			padding: .875rem 1.125rem;
+			background: var(--a-suave);
+			color: #2f4a70;
+			border-bottom: 1px solid #e3ebf4;
+			font-size: .75rem;
+			font-weight: 600;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+			white-space: nowrap;
+			text-align: left;
+		}
+		.prop-rev .tabla thead tr th:first-child { border-left: 0; }
+		.prop-rev .tabla thead th.tabla__num { text-align: right; }
+		.prop-rev .tabla tbody td {
+			padding: 1rem 1.125rem;
+			border-bottom: 1px solid #edf2f8;
+			vertical-align: middle;
+			color: var(--a-texto);
+			text-align: left;
+		}
+		.prop-rev .tabla tbody td.tabla__num { text-align: right; font-variant-numeric: tabular-nums; }
+		.prop-rev .tabla tbody tr { animation: none; }
+		.prop-rev .tabla tbody tr:nth-child(even) { background: transparent; }
+		.prop-rev .tabla tbody tr:hover { background: #f7fafd; }
+		.prop-rev .tabla tbody tr:hover td:first-child { box-shadow: none; }
+		.prop-rev .tabla tbody tr:last-child td { border-bottom: 0; }
+		.prop-rev .tabla__principal { color: var(--a-navy); font-weight: 700; }
+		.prop-rev .tabla__secundario { display: block; font-size: .75rem; color: var(--a-tenue); font-weight: 500; }
+
+		/* ---- Acciones por fila ---- */
+		.prop-rev .acciones-fila {
+			display: flex;
+			flex-wrap: wrap;
+			gap: .375rem;
+		}
+
+		/* ---- Nota al pie de cada fila ---- */
+		.prop-rev .nota-fila {
+			display: block;
+			margin-top: .25rem;
+			font-size: .75rem;
+			font-weight: 500;
+			color: var(--a-tenue);
+		}
+
+		/* ---- Estado vacío ---- */
+		.prop-rev .tabla--vacia td {
+			white-space: normal;
+			line-height: 1.6;
+			text-align: center;
+			padding: 2rem 1rem 2.25rem;
+			color: var(--a-tenue);
+			font-size: .75rem;
+		}
+		.prop-rev .tabla tr.tabla--vacia:hover { background: transparent; }
+		.prop-rev .vacio-icono { display: block; margin-bottom: .625rem; color: #1f4b7a; font-size: 2rem; }
+		.prop-rev .tabla--vacia strong { display: block; margin-bottom: .375rem; color: var(--a-navy); font-size: .875rem; font-weight: 700; }
+
+		/* ---- Alertas ---- */
+		.prop-rev .alerta {
+			display: flex;
+			align-items: flex-start;
+			gap: .625rem;
+			padding: .875rem 1rem;
+			border: 1px solid;
+			border-left-width: 3px;
+			border-radius: 10px;
+			font-size: .875rem;
+			font-weight: 500;
+			line-height: 1.55;
+			box-shadow: none;
+			animation: none;
+		}
+		.prop-rev .alerta strong { display: block; margin-bottom: .125rem; font-weight: 700; color: inherit; }
+		.prop-rev .alerta__icono { flex-shrink: 0; font-size: .9375rem; line-height: 1.55; }
+		.prop-rev .alerta--info {
+			background: #eef6ff;
+			border-color: #cfe0f2;
+			border-left-color: var(--a-azul);
+			color: #1b2b3f;
+		}
+		.prop-rev .alerta--info .alerta__icono { color: var(--a-azul); }
+
+		/* =================================================================
+		   Móvil
+		   ================================================================= */
+		@media (max-width: 900px) {
+			.prop-rev .rejilla-kpi { grid-template-columns: repeat(2, 1fr); }
+		}
+		@media (max-width: 768px) {
+			.prop-rev .hero-inicio { padding: 1.25rem; min-height: 0; }
+			.prop-rev .hero-inicio h1 { font-size: 1.5rem; }
+			.prop-rev .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.prop-rev .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.prop-rev .tarjeta__cuerpo { padding: 1rem; }
+			.prop-rev .bloque-form__cuerpo { padding: 1rem; }
+
+			.prop-rev .filtros { padding: 1rem; flex-direction: column; align-items: stretch; }
+			.prop-rev .filtros .campo,
+			.prop-rev .filtros__fin { width: 100%; min-width: 0; flex-basis: 100%; margin-left: 0; }
+			.prop-rev .filtros__fin { justify-content: space-between; flex-wrap: wrap; }
+			.prop-rev .filtros__fin .boton { flex: 1; justify-content: center; }
+
+			.prop-rev .lote-form { flex-direction: column; align-items: stretch; }
+			.prop-rev .lote-form input[type="text"],
+			.prop-rev .lote-form .boton { width: 100%; justify-content: center; }
+
+			.prop-rev .campo input,
+			.prop-rev .campo select,
+			.prop-rev .campo textarea { font-size: 16px; }
+
+			/* Tabla a tarjeta por fila */
+			.prop-rev .tabla tbody tr { display: flex; flex-direction: column; }
+			.prop-rev .tabla tbody td {
+				display: block;
+				text-align: left;
+				padding: .5rem .875rem;
+				border-bottom: 1px dashed #edf2f8;
+			}
+			.prop-rev .tabla tbody td:last-child { border-bottom: 0; }
+			.prop-rev .tabla tbody td::before {
+				content: attr(data-label);
+				display: block;
+				margin-bottom: .25rem;
+				font-size: .625rem;
+				font-weight: 800;
+				letter-spacing: .06em;
+				text-transform: uppercase;
+				color: var(--a-tenue);
+			}
+			.prop-rev .tabla tbody td.tabla__num { text-align: left; }
+
+			.prop-rev .tabla tbody td.celda-nombre {
+				order: -1;
+				padding: .875rem;
+				background: var(--a-suave);
+				border-bottom: 1px solid var(--a-borde);
+			}
+			.prop-rev .tabla tbody td.celda-nombre::before { content: none; }
+			.prop-rev .celda-nombre .persona { font-size: 1rem; }
+			.prop-rev .celda-nombre .inicial { width: 2.5rem; height: 2.5rem; font-size: .9375rem; }
+
+			.prop-rev .tabla tbody td.celda-acciones {
+				order: 1;
+				padding: .875rem;
+				background: var(--a-suave);
+			}
+			.prop-rev .tabla tbody td.celda-acciones::before { display: block; margin-bottom: .625rem; }
+			.prop-rev .acciones-fila { flex-direction: column; }
+			.prop-rev .acciones-fila .boton { width: 100%; justify-content: center; }
+
+			.prop-rev .tabla tbody tr.tabla--vacia td { display: block; text-align: center; }
+			.prop-rev .tabla tbody tr.tabla--vacia td::before { content: none; }
+		}
+		@media (max-width: 480px) {
+			.prop-rev .hero-icono { display: none; }
+			.prop-rev .rejilla-kpi { grid-template-columns: 1fr; gap: .75rem; }
+		}
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-hourglass-half"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">DECISIÓN DE TALENTO HUMANO</span>
+			<h1>Por aprobar</h1>
+			<p>
+				Revise día por día. Operaciones y Básculas salen juntas bajo el grupo
+				Puerto porque la decisión se toma sobre el conjunto: la operación se
+				reparte entre las dos y salen en el mismo turno.
+			</p>
+		</div>
+	</section>
+
+	<!-- ======== FILTRO DE DÍA ======== -->
+	<form class="filtros" th:action="@{/programaciones/revision}" method="get">
+		<div class="campo">
+			<label class="campo__etiqueta" for="filtro-dia">Día</label>
+			<!--
+				data-filtro-dia hace que app.js envíe el formulario al cambiar la
+				fecha: el filtro solo tiene ese campo, así que el botón "Ver" es
+				redundante. En pantalla grande el botón sigue estando.
+			-->
+			<input id="filtro-dia" type="date" name="dia" th:value="${dia}" data-filtro-dia>
+		</div>
+		<div class="filtros__fin">
+			<a th:href="@{/programaciones/revision(dia=${ayer})}" class="boton boton--fantasma boton--chico">
+				<i class="fas fa-angle-left"></i>
+				<span th:text="${#temporals.format(ayer, 'dd/MM')}">01/09</span>
+			</a>
+			<a th:href="@{/programaciones/revision(dia=${manana})}" class="boton boton--fantasma boton--chico">
+				<span th:text="${#temporals.format(manana, 'dd/MM')}">02/10</span>
+				<i class="fas fa-angle-right"></i>
+			</a>
+			<button type="submit" class="boton">
+				<i class="fas fa-magnifying-glass"></i> Ver
+			</button>
+		</div>
+	</form>
+
+	<!-- ======== INDICADORES DEL DÍA ======== -->
+	<div class="rejilla-kpi">
+		<div class="kpi">
+			<div class="kpi__rotulo">En pantalla</div>
+			<div class="kpi__valor" th:text="${totalDelDia}">0</div>
+			<div class="kpi__detalle" th:text="'del ' + ${#temporals.format(dia, 'dd/MM/yyyy')}">del día</div>
+		</div>
+		<div class="kpi" th:each="entry : ${grupoDelDia}">
+			<div class="kpi__rotulo" th:text="${entry.key}">Grupo</div>
+			<div class="kpi__valor" th:text="${entry.value}">0</div>
+			<div class="kpi__detalle">propuestas</div>
+		</div>
+	</div>
+
+	<!-- ======== PENDIENTES POR DÍA ======== -->
+	<div class="tarjeta tarjeta--decision" th:each="diaPendiente : ${porDia}">
+
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--oro" aria-hidden="true"><i class="fas fa-hourglass-half"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>
+					<span th:text="${#temporals.format(diaPendiente.key, 'EEEE dd/MM/yyyy')}">día</span>
+				</h2>
+				<p>Revise cada grupo y decida aprobar, ajustar o rechazar cada propuesta.</p>
+			</div>
+			<span class="etiqueta" th:text="${#lists.size(diaPendiente.value)} + ' grupos'">0</span>
+		</div>
+
+		<div class="tarjeta__cuerpo">
+
+			<div class="grupo" th:each="grupo : ${diaPendiente.value}">
+
+				<div class="grupo__cabecera">
+					<h3><i class="fas fa-layer-group"></i> <span th:text="${grupo.key}">Grupo</span></h3>
+					<p class="meta" th:text="${#lists.size(grupo.value)} + ' propuesta(s) en este grupo'">0</p>
+				</div>
+
+				<!--
+					Aprobación del lote: bloque con cabecera que explica qué implica
+					aprobar todo el grupo. Pide confirmación por data-confirm porque
+					afecta a varias personas de golpe y no hay forma de deshacerlo
+					desde la pantalla.
+				-->
+				<div class="bloque-form bloque-form--oro">
+					<div class="bloque-form__cabecera">
+						<div class="bloque-form__icono"><i class="fas fa-layer-group"></i></div>
+						<div>
+							<h3>Aprobar el grupo completo</h3>
+							<p>Aprobar todas las propuestas de este grupo a la vez. Añada un comentario para el lote si lo necesita.</p>
+						</div>
+					</div>
+					<div class="bloque-form__cuerpo">
+						<form th:action="@{/programaciones/revision/aprobar-grupo}" method="post" class="lote-form"
+							  th:attr="data-confirm=|Aprobar las ${#lists.size(grupo.value)} propuestas de ${grupo.key} del ${#temporals.format(diaPendiente.key, 'dd/MM/yyyy')}. La decisión no se puede deshacer.|"
+							  th:attrappend="data-confirm-titulo='Aprobar el grupo completo',data-confirm-ok='Sí, aprobar el lote'">
+							<input type="hidden" name="dia" th:value="${diaPendiente.key}">
+							<input type="hidden" name="grupo" th:value="${grupo.key}">
+							<input type="text" name="comentario" placeholder="Comentario para el lote (opcional)">
+							<button type="submit" class="boton boton--ok"
+									th:disabled="${#lists.isEmpty(grupo.value)}">
+								<i class="fas fa-check-double"></i>
+								Aprobar las <span th:text="${#lists.size(grupo.value)}">0</span>
+							</button>
+						</form>
+					</div>
+				</div>
+
+				<th:block th:each="p : ${grupo.value}">
+					<form th:id="'aprobar-' + ${p.id}"
+						  th:action="@{/programaciones/{id}/aprobar(id=${p.id})}" method="post"
+						  th:attr="data-confirm=|¿Aprobar tal como propuso ${p.solicitante.nombreCompleto}? Se le comunicará el horario definitivo.|"
+						  th:attrappend="data-confirm-ok='Sí, aprobar'"></form>
+				</th:block>
+
+				<div class="tabla-envoltura">
+					<!--
+						Las celdas llevan data-label porque en celular la tabla se
+						convierte en fichas apiladas y sin eso cada valor aparece
+						suelto, sin decir a qué columna pertenece.
+					-->
+					<table class="tabla">
+						<thead>
+						<tr>
+							<th>Colaborador</th>
+							<th>Tipo</th>
+							<th class="tabla__num">Inicio</th>
+							<th class="tabla__num">Fin</th>
+							<th class="tabla__num">Horas</th>
+							<th>Motivo</th>
+							<th>Decidir</th>
+						</tr>
+						</thead>
+						<tbody>
+						<tr th:each="p : ${grupo.value}">
+							<td class="celda-nombre" data-label="Colaborador">
+								<div class="persona">
+										<span class="inicial" aria-hidden="true"
+											  th:text="${#strings.toUpperCase(#strings.substring(p.colaborador.nombreCompleto, 0, 1))}">N</span>
+									<span>
+											<span class="tabla__principal" th:text="${p.colaborador.nombreCompleto}">Nombre</span>
+											<span class="tabla__secundario" th:text="${p.colaborador.documento}">CC</span>
+										</span>
+								</div>
+							</td>
+							<td data-label="Tipo">
+								<span th:text="${p.tipo}">EXTENDIDO</span>
+								<span class="tabla__secundario" th:if="${p.tipoOperacion != null}"
+									  th:text="${p.tipoOperacion.nombre}">Op</span>
+								<span class="etiqueta etiqueta--alerta etiqueta--chico"
+									  th:if="${p.esEmergencia}"
+									  th:title="${p.referenciaEvento != null ? 'Evento: ' + p.referenciaEvento : 'Emergencia sin evento'}">
+										emergencia
+									</span>
+								<span class="etiqueta etiqueta--alerta etiqueta--chico"
+									  th:if="${p.requeriaNivelacion}"
+									  title="Se escogió aun con la etiqueta de nivelación">
+										sin nivelar
+									</span>
+								<span class="etiqueta etiqueta--error etiqueta--chico"
+									  th:if="${p.incumpleAptitud}"
+									  title="Se escogió sin la aptitud de la operación">
+										sin aptitud
+									</span>
+							</td>
+							<td class="tabla__num" data-label="Inicio"
+								th:text="${#temporals.format(p.inicioEfectivo, 'dd/MM HH:mm')}">fecha</td>
+							<td class="tabla__num" data-label="Fin"
+								th:text="${#temporals.format(p.finEfectivo, 'dd/MM HH:mm')}">
+								fecha
+							</td>
+							<td class="tabla__num" data-label="Horas"
+								th:text="${#numbers.formatDecimal(p.horasEfectivas, 1, 'COMMA', 2, 'POINT')}">
+								0
+							</td>
+							<td data-label="Motivo">
+								<span class="tabla__secundario" th:text="${p.motivo}">motivo</span>
+								<!--
+                                    Aquí el revisor decide, así que necesita lo mismo que tuvo el
+                                    coordinador al proponer: qué evento originó la emergencia y por
+                                    qué se aceptó a alguien que no cumplía. Sin esto, aprobar y
+                                    rechazar se vuelven decisiones a ciegas para las fichas que se
+                                    salieron de la regla.
+
+                                    Las fichas creadas antes de V10 guardaban el motivo
+                                    automático "Emergencia: <evento>", que repite la línea de
+                                    arriba; esas filas no se vuelven a pintar. Las nuevas no
+                                    traen motivo en emergencia, así que la condición solo
+                                    deja pasar lo escrito a mano, que es lo que sí explica
+                                    algo nuevo.
+                                -->
+								<span class="nota-fila"
+									  th:if="${p.esEmergencia and p.referenciaEvento != null}"
+									  th:text="'Evento: ' + ${p.referenciaEvento}">Evento</span>
+								<span class="nota-fila"
+									  th:if="${p.motivoExcepcionCandidato != null and !#strings.startsWith(p.motivoExcepcionCandidato, 'Emergencia:')}"
+									  th:text="'Excepción: ' + ${p.motivoExcepcionCandidato}">Excepción</span>
+								<span class="nota-fila" th:if="${p.solicitante != null}"
+									  th:text="'Envió: ' + ${p.solicitante.nombreCompleto}">Envió</span>
+							</td>
+							<td class="celda-acciones" data-label="Decidir">
+								<div class="acciones-fila">
+									<button type="submit" th:attr="form=|aprobar-${p.id}|"
+											class="boton boton--ok boton--chico"
+											th:title="'Aprobar tal como propuso ' + ${p.solicitante.nombreCompleto}">
+										<i class="fas fa-check"></i> Aprobar
+									</button>
+
+									<a th:href="@{/programaciones/{id}/ajustar(id=${p.id})}"
+									   class="boton boton--fantasma boton--chico"
+									   th:title="'Corregir las horas de ' + ${p.colaborador.nombreCompleto}">
+										<i class="fas fa-sliders"></i> Ajustar
+									</a>
+
+									<a th:href="@{/programaciones/{id}/rechazar(id=${p.id})}"
+									   class="boton boton--peligro boton--chico"
+									   th:title="'Rechazar la propuesta de ' + ${p.colaborador.nombreCompleto}">
+										<i class="fas fa-xmark"></i> Rechazar
+									</a>
+								</div>
+							</td>
+						</tr>
+						</tbody>
+					</table>
+				</div>
+
+			</div>
+
+		</div>
+
+	</div>
+
+	<!-- ======== VACÍO ======== -->
+	<!--
+		Cuando no hay nada pendiente la pantalla se quedaba muda: el indicador
+		marcaba 0 y no había una sola línea explicando por qué. El bloque que lo
+		resuelve vive en su propio archivo para poder probarlo sin armar una cola
+		de verdad.
+	-->
+	<th:block th:replace="~{fragments/pendientes-vacios :: bloque}"/>
+
+	<div class="alerta alerta--info" th:if="${totalDelDia > 0 and (porDia == null or porDia.isEmpty())}">
+		<span class="alerta__icono"><i class="fas fa-circle-info"></i></span>
+		<div>
+			<strong>Ese día ya está resuelto</strong>
+			Hay <span th:text="${totalDelDia}">0</span> programaciones del
+			<span th:text="${#temporals.format(dia, 'dd/MM/yyyy')}">día</span>, pero ninguna
+			pendiente de decisión. Baje en la lista para verlas.
+		</div>
+	</div>
+
+	<!-- ======== PROGRAMACIONES DEL DÍA ======== -->
+	<!--
+		El modelo ya traía la lista del día y no se pintaba: sin ella, un día
+		resuelto dejaba la pantalla vacía y la alerta de arriba prometía una lista
+		que no existía. Acá se ve todo lo del día, resuelto o no, para poder
+		confirmar que efectivamente no queda nada por decidir.
+	-->
+	<div class="tarjeta tarjeta--referencia" style="margin-top: 1.75rem;" th:if="${!#lists.isEmpty(delDia)}">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--azul" aria-hidden="true"><i class="fas fa-list-check"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Programaciones del día</h2>
+				<p>Todo lo registrado para el <span th:text="${#temporals.format(dia, 'dd/MM/yyyy')}">día</span>,
+					tanto lo pendiente como lo ya resuelto.</p>
+			</div>
+			<span class="etiqueta etiqueta--info" th:text="${#lists.size(delDia)} + ' en el día'">0</span>
+		</div>
+
+		<div class="tabla-envoltura" style="margin: 1.25rem 1.5rem 1.5rem;">
+			<table class="tabla">
+				<thead>
+				<tr>
+					<th>Colaborador</th>
+					<th>Área</th>
+					<th>Tipo</th>
+					<th class="tabla__num">Inicio</th>
+					<th class="tabla__num">Fin</th>
+					<th class="tabla__num">Horas</th>
+					<th>Estado</th>
+					<th>Acción</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr th:each="p : ${delDia}">
+					<td class="celda-nombre" data-label="Colaborador">
+						<div class="persona">
+							<span class="inicial" aria-hidden="true"
+								  th:text="${#strings.toUpperCase(#strings.substring(p.colaborador.nombreCompleto, 0, 1))}">N</span>
+							<span>
+								<span class="tabla__principal" th:text="${p.colaborador.nombreCompleto}">Nombre</span>
+								<span class="tabla__secundario" th:text="${p.colaborador.documento}">CC</span>
+							</span>
+						</div>
+					</td>
+					<td data-label="Área">
+						<span th:text="${p.area.nombre}">Área</span>
+					</td>
+					<td data-label="Tipo">
+						<span th:text="${p.tipo}">EXTENDIDO</span>
+						<span class="tabla__secundario" th:if="${p.tipoOperacion != null}"
+							  th:text="${p.tipoOperacion.nombre}">Op</span>
+					</td>
+					<td class="tabla__num" data-label="Inicio"
+						th:text="${#temporals.format(p.inicioEfectivo, 'dd/MM HH:mm')}">fecha</td>
+					<td class="tabla__num" data-label="Fin"
+						th:text="${#temporals.format(p.finEfectivo, 'dd/MM HH:mm')}">fecha</td>
+					<td class="tabla__num" data-label="Horas"
+						th:text="${#numbers.formatDecimal(p.horasEfectivas, 1, 'COMMA', 2, 'POINT')}">0</td>
+					<td data-label="Estado">
+						<span class="etiqueta"
+							  th:classappend="${p.estado.name() == 'APROBADA' or p.estado.name() == 'AJUSTADA' or p.estado.name() == 'EJECUTADA' or p.estado.name() == 'CERRADA'} ? 'etiqueta--ok'
+							                  : (${p.estado.name() == 'RECHAZADA' or p.estado.name() == 'CANCELADA'} ? 'etiqueta--error'
+							                  : (${p.estado.name() == 'ENVIADA' or p.estado.name() == 'EN_REVISION_TH'} ? 'etiqueta--alerta' : 'etiqueta--gris'))"
+							  th:text="${p.estado}">ESTADO</span>
+					</td>
+					<!--
+						Notificar es el paso que faltaba en el flujo: al aprobar, la
+						propuesta sale de la lista de pendientes y aterriza acá, y sin
+						este botón no había forma de pasarla a notificada ni de dejar el
+						SMS en cola desde la pantalla. Solo aparece en los estados que
+						admiten la transacción, y solo para los roles que pueden hacerla.
+					-->
+					<td data-label="Acción">
+						<form th:if="${p.estado.name() == 'APROBADA' or p.estado.name() == 'AJUSTADA'}"
+							  sec:authorize="hasAnyRole('TALENTO_HUMANO','ADMIN')"
+							  th:action="@{/programaciones/{id}/notificar(id=${p.id})}" method="post"
+							  th:attr="data-confirm=|¿Notificar a ${p.colaborador.nombreCompleto}? El SMS queda en cola con el horario del turno.|"
+							  th:attrappend="data-confirm-ok='Sí, notificar'">
+							<button type="submit" class="boton boton--primario boton--chico">
+								<i class="fas fa-paper-plane"></i> Notificar
+							</button>
+						</form>
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+</div>
+</body>
+
+</html>

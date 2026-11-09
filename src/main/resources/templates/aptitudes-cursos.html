@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="es" th:replace="~{fragments/layout :: pagina('Aptitudes y cursos', 'aptitudes', ~{::contenido})}">
+<body>
+<div th:fragment="contenido" class="op-cat">
+
+	<!--
+		Catálogo de cursos y aptitudes: alta de aptitud y listado de las
+		registradas. Era parte de /operaciones (operaciones-catalogo.html);
+		se mudó a su propia pantalla para que cada catálogo se vea por su
+		lado. Los requisitos por operación siguen en la pantalla de
+		Operaciones, que es donde se asocian.
+
+		Estilo: mismo sistema de colaboradores.html y transporte.html.
+		Todas las reglas van prefijadas con .op-cat y anulan las de app.css.
+
+		En móvil:
+		- Los inputs miden 16px para que iOS no haga zoom al enfocar.
+		- Los botones del bloque-form van a todo el ancho.
+	-->
+	<style>
+		/* =================================================================
+		   Aptitudes y cursos · estilos locales
+		   ================================================================= */
+		.op-cat {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+		.op-cat > .hero-inicio,
+		.op-cat > .tarjeta { margin-bottom: 1.25rem; }
+
+		/* ---- Portada ---- */
+		.op-cat .hero-inicio,
+		.op-cat .hero-inicio * { animation: none; }
+		.op-cat .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.op-cat .hero-inicio::before,
+		.op-cat .hero-inicio::after { content: none; }
+		.op-cat .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.op-cat .hero-inicio__contenido { max-width: 44rem; }
+		.op-cat .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+			text-transform: uppercase;
+		}
+		.op-cat .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.op-cat .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+
+		/* ---- Tarjeta y cabecera ---- */
+		.op-cat .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+		}
+		.op-cat .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.op-cat .tarjeta__cabecera {
+			justify-content: flex-start;
+			padding: 1.375rem 1.5rem;
+			gap: 1rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.op-cat .tarjeta__titulo-grupo { flex: 1 1 16rem; }
+		.op-cat .tarjeta__titulo-grupo h2 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+		}
+		.op-cat .tarjeta__cabecera h2::before,
+		.op-cat .tarjeta__titulo-grupo h2::before { display: none; }
+		.op-cat .tarjeta__titulo-grupo p {
+			margin-top: .25rem;
+			max-width: 62ch;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+		.op-cat .tarjeta__cuerpo { padding: 1.5rem; }
+
+		/* Acento cálido: alta / nueva maquinaria (cabecera #fdf8f0) */
+		.op-cat .tarjeta--alta { border-color: #f1d8b2; }
+		.op-cat .tarjeta--alta .tarjeta__cabecera {
+			background: #fdf8f0;
+			border-bottom-color: #f1d8b2;
+		}
+		/* Acento azul: listado (cabecera por defecto) */
+		.op-cat .tarjeta--config { border-color: var(--a-borde); }
+
+		/* ---- Íconos de sección ---- */
+		.op-cat .sec-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.25rem;
+		}
+		.op-cat .sec-icono--azul { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+		.op-cat .sec-icono--oro { background: #e09837; box-shadow: 0 3px 10px rgba(224, 152, 55, .3); }
+		.op-cat .sec-icono--verde { background: #2d7a55; box-shadow: 0 3px 10px rgba(45, 122, 85, .25); }
+		.op-cat .sec-icono--cian { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+
+		/* ---- Etiquetas (sin punto) ---- */
+		.op-cat .etiqueta {
+			padding: .375rem .875rem;
+			border: 0;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+			white-space: nowrap;
+		}
+		.op-cat .etiqueta::before { content: none; display: none; animation: none; }
+		.op-cat .etiqueta--info { background: #e6effa; color: #24406a; }
+		.op-cat .etiqueta--gris { background: #eceff3; color: var(--a-tenue); }
+		.op-cat .etiqueta--ok { background: #dff3e6; color: #1f6b43; }
+		.op-cat .etiqueta--alerta { background: #fdf0d9; color: #9a5a0a; }
+		.op-cat .etiqueta--error { background: #fdecec; color: #b42318; }
+		.op-cat .tarjeta__cabecera > .etiqueta { align-self: center; }
+
+		/* ---- Botones ---- */
+		.op-cat .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.op-cat .boton::after { display: none; }
+		.op-cat .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.op-cat .boton--primario,
+		.op-cat .boton--primario:hover {
+			border-color: var(--a-accion);
+			background: var(--a-accion);
+			box-shadow: 0 3px 10px rgba(221, 145, 44, .28);
+		}
+		.op-cat .boton--primario:hover {
+			border-color: var(--a-accion-hover);
+			background: var(--a-accion-hover);
+			box-shadow: 0 4px 12px rgba(221, 145, 44, .36);
+		}
+		.op-cat .boton--chico { padding: .5rem .875rem; font-size: .75rem; }
+		.op-cat .boton--peligro {
+			border: 1px solid #f0c4c4;
+			background: #fff;
+			color: #b42318;
+			box-shadow: none;
+		}
+		.op-cat .boton--peligro:hover {
+			border: 1px solid #e6a8a8;
+			background: #fdf3f3;
+			color: #b42318;
+			box-shadow: none;
+		}
+		.op-cat .boton--fantasma,
+		.op-cat .boton--secundario {
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.op-cat .boton--fantasma:hover,
+		.op-cat .boton--secundario:hover {
+			border: 1px solid #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.op-cat .boton--contorno {
+			border: 1px solid #cfe0f2;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+
+		/* ---- Paginación de tablas largas (la inserta app.js bajo la tabla) ----
+		   Sus botones traen el color del tema base; aquí se fijan para que
+		   "Anterior" y "Siguiente" siempre se lean. */
+		.op-cat .paginacion {
+			margin: 0;
+			padding: 1rem 1.5rem;
+			background: #f8fafd;
+			border-top: 1px solid var(--a-borde);
+			color: var(--a-tenue);
+			font-size: .875rem;
+		}
+		.op-cat .paginacion__estado,
+		.op-cat .paginacion__actual {
+			color: var(--a-navy);
+			font-size: .8125rem;
+			font-weight: 700;
+		}
+		.op-cat .paginacion .boton {
+			padding: .5rem .875rem;
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			font-size: .8125rem;
+			box-shadow: none;
+		}
+		.op-cat .paginacion .boton:hover:not([disabled]) {
+			border-color: #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.op-cat .paginacion .boton[disabled] {
+			border-color: #e3ebf4;
+			background: #f3f6fa;
+			color: var(--a-tenue);
+			opacity: .6;
+			box-shadow: none;
+		}
+
+		/* ---- Campos ---- */
+		.op-cat .campo__etiqueta,
+		.op-cat .campo:focus-within .campo__etiqueta {
+			margin-bottom: .375rem;
+			color: var(--a-navy);
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+		.op-cat .campo__ayuda { color: var(--a-tenue); line-height: 1.45; }
+		.op-cat input[type="text"],
+		.op-cat input[type="search"],
+		.op-cat input[type="date"],
+		.op-cat select {
+			padding: .625rem .875rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background-color: #fff;
+			font-size: .9375rem;
+			font-weight: 500;
+			color: var(--a-texto);
+		}
+		.op-cat select { padding-right: 2.5rem; }
+		.op-cat input:hover, .op-cat select:hover { border-color: #b9c9dc; }
+		.op-cat input[type="text"]:focus,
+		.op-cat input[type="search"]:focus,
+		.op-cat input[type="date"]:focus,
+		.op-cat select:focus {
+			border-color: var(--a-azul);
+			box-shadow: 0 0 0 3px rgba(23, 68, 117, .14);
+		}
+
+		/* ---- Rejilla interna de formularios ---- */
+		.op-cat .rejilla-campos {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 1rem 1.125rem;
+		}
+		.op-cat .rejilla-campos .campo--ancho { grid-column: 1 / -1; }
+		.op-cat .bloque-form__cuerpo .campo { margin-bottom: 0; }
+
+		/* ---- Bloque-form ---- */
+		.op-cat .bloque-form {
+			margin-bottom: 1.25rem;
+			border: 1px solid var(--a-borde);
+			border-radius: 12px;
+			background: #f9fbfd;
+			box-shadow: none;
+		}
+		.op-cat .bloque-form__cabecera {
+			display: none;
+		}
+		.op-cat .bloque-form__cuerpo { padding: 1.25rem; }
+		.op-cat .form-actions-bar {
+			display: flex;
+			justify-content: flex-end;
+			padding: 0;
+			margin: 0;
+			background: none;
+			border: 0;
+		}
+
+		/* ---- Tabla dentro de recuadro ---- */
+		.op-cat .tabla-envoltura {
+			margin: 1.25rem 1.5rem 1.5rem;
+			border: 1px solid #dfe8f3;
+			border-radius: 12px;
+			background: #fff;
+			overflow-x: auto;
+			-webkit-overflow-scrolling: touch;
+		}
+		.op-cat .tabla thead th {
+			padding: .875rem 1.125rem;
+			background: var(--a-suave);
+			color: #2f4a70;
+			border-bottom: 1px solid #e3ebf4;
+			font-size: .75rem;
+			font-weight: 600;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+		}
+		.op-cat .tabla thead tr th:first-child { border-left: 0; }
+		.op-cat .tabla thead th.tabla__acciones { text-align: center; }
+		.op-cat .tabla tbody td {
+			padding: 1rem 1.125rem;
+			border-bottom: 1px solid #edf2f8;
+			vertical-align: middle;
+			color: var(--a-texto);
+		}
+		.op-cat .tabla tbody tr { animation: none; }
+		.op-cat .tabla tbody tr:nth-child(even) { background: transparent; }
+		.op-cat .tabla tbody tr:hover { background: #f7fafd; }
+		.op-cat .tabla tbody tr:hover td:first-child { box-shadow: none; }
+		.op-cat .tabla tbody tr:last-child td { border-bottom: 0; }
+		.op-cat .tabla__principal { color: var(--a-navy); font-weight: 700; }
+		.op-cat .tabla__acciones { text-align: center; }
+		.op-cat .form-linea { display: inline-flex; align-items: center; gap: .375rem; margin: 0; }
+
+		/* ---- Código en mayúsculas ---- */
+		.op-cat .operacion-codigo {
+			display: inline-block;
+			font-size: .6875rem;
+			font-weight: 800;
+			letter-spacing: .06em;
+			color: var(--a-navy);
+			text-transform: uppercase;
+		}
+
+		/* ---- Estado vacío ---- */
+		.op-cat .tabla--vacia td {
+			white-space: normal;
+			line-height: 1.6;
+			text-align: center;
+			padding: 2rem 1rem 2.25rem;
+			color: var(--a-tenue);
+			font-size: .75rem;
+		}
+		.op-cat .tabla tr.tabla--vacia:hover { background: transparent; }
+		.op-cat .vacio-icono { display: block; margin-bottom: .625rem; color: #1f4b7a; font-size: 2rem; }
+		.op-cat .tabla--vacia strong { display: block; margin-bottom: .375rem; color: var(--a-navy); font-size: .875rem; font-weight: 700; }
+
+		/* =================================================================
+		   Móvil
+		   ================================================================= */
+		@media (max-width: 768px) {
+			.op-cat .hero-inicio { padding: 1.25rem; min-height: 0; }
+			.op-cat .hero-inicio h1 { font-size: 1.5rem; }
+			.op-cat .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.op-cat .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.op-cat .tarjeta__cuerpo { padding: 1rem; }
+			.op-cat .rejilla-campos { grid-template-columns: 1fr; }
+			.op-cat .bloque-form__cuerpo { padding: 1rem; }
+			.op-cat .form-actions-bar {
+				flex-direction: column-reverse;
+				align-items: stretch;
+			}
+			.op-cat .form-actions-bar .boton { width: 100%; justify-content: center; }
+			.op-cat .tabla-envoltura { margin: 1rem 1rem 1.25rem; }
+
+			/* inputs a 16px: iOS no hace zoom al enfocar */
+			.op-cat .campo input,
+			.op-cat .campo select { font-size: 16px; }
+
+			/* tabla → tarjetas */
+			.op-cat .tabla tbody tr { display: flex; flex-direction: column; }
+			.op-cat .tabla tbody td {
+				display: block;
+				text-align: left;
+				padding: .5rem .875rem;
+			}
+			.op-cat .tabla tbody td::before {
+				content: attr(data-label);
+				display: block;
+				margin-bottom: .25rem;
+				font-size: .625rem;
+				font-weight: 800;
+				letter-spacing: .06em;
+				text-transform: uppercase;
+				color: var(--a-tenue);
+			}
+			/* El nombre sube como encabezado de la tarjeta */
+			.op-cat .tabla tbody td.celda-nombre {
+				order: -1;
+				padding: .875rem;
+				background: var(--a-suave);
+				border-bottom: 1px solid var(--a-borde);
+			}
+			.op-cat .tabla tbody td.celda-nombre::before { content: none; }
+			/* La acción va al final y a todo el ancho */
+			.op-cat .tabla tbody td.tabla__acciones {
+				padding: .875rem;
+				background: var(--a-suave);
+				text-align: left;
+			}
+			.op-cat .tabla tbody td.tabla__acciones::before { display: block; margin-bottom: .625rem; }
+			.op-cat .tabla tbody td.tabla__acciones .form-linea { width: 100%; }
+			.op-cat .tabla tbody td.tabla__acciones .boton { width: 100%; justify-content: center; }
+
+			.op-cat .tabla tbody tr.tabla--vacia td { display: block; text-align: center; }
+			.op-cat .tabla tbody tr.tabla--vacia td::before { content: none; }
+		}
+		@media (max-width: 480px) {
+			.op-cat .hero-icono { display: none; }
+		}
+		/* ---- Tarjeta plegable ---- */
+		.op-cat .detalle__flecha { margin-left: auto; background: var(--a-suave); color: var(--a-navy); }
+		.op-cat .detalle__cabecera:hover .detalle__flecha { background: var(--a-accion); color: #fff; }
+		.op-cat details:not([open]) > .tarjeta__cabecera { border-bottom: 0; }
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-graduation-cap"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">CONFIGURACIÓN</span>
+			<h1>Aptitudes y cursos</h1>
+			<p>
+				Registre los cursos y autorizaciones que habilitan al personal.
+				Después asócielos a cada operación desde la pantalla de
+				Operaciones.
+			</p>
+		</div>
+	</section>
+
+	<!-- ======== ALTA APTITUD ======== -->
+	<details class="tarjeta tarjeta--alta detalle">
+		<summary class="tarjeta__cabecera detalle__cabecera">
+			<span class="sec-icono sec-icono--oro" aria-hidden="true"><i class="fas fa-certificate"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Nuevo curso / aptitud</h2>
+				<p>Registre el curso o autorización que habilita al personal.</p>
+			</div>
+			<span class="detalle__flecha" aria-hidden="true"><i class="fas fa-chevron-down"></i></span>
+		</summary>
+
+		<div class="tarjeta__cuerpo">
+			<form th:action="@{/operaciones/aptitudes}" method="post">
+				<div class="bloque-form">
+					<div class="bloque-form__cabecera">
+						<div class="bloque-form__icono"><i class="fas fa-graduation-cap"></i></div>
+						<div>
+							<h3>Datos de la aptitud</h3>
+							<p>La descripción aparece en el perfil del colaborador y en la validación de candidatos.</p>
+						</div>
+					</div>
+					<div class="bloque-form__cuerpo">
+						<div class="rejilla-campos">
+							<label class="campo">
+								<span class="campo__etiqueta">Código</span>
+								<input type="text" name="codigo" placeholder="VOLQUETA" required>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Nombre</span>
+								<input type="text" name="nombre" placeholder="Manejo de volqueta" required>
+							</label>
+							<label class="campo campo--ancho">
+								<span class="campo__etiqueta">Descripción</span>
+								<input type="text" name="descripcion" placeholder="Curso o autorización requerida">
+								<span class="campo__ayuda">Explique brevemente qué habilita esta aptitud.</span>
+							</label>
+						</div>
+					</div>
+				</div>
+
+				<div class="form-actions-bar">
+					<button type="submit" class="boton boton--primario">
+						<i class="fas fa-plus"></i> Crear aptitud
+					</button>
+				</div>
+			</form>
+		</div>
+	</details>
+
+	<!-- ======== ALTA MAQUINARIA ======== -->
+	<details class="tarjeta tarjeta--alta detalle">
+		<summary class="tarjeta__cabecera detalle__cabecera">
+			<span class="sec-icono sec-icono--oro" aria-hidden="true"><i class="fas fa-truck-monster"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Nueva maquinaria</h2>
+				<p>Registre el equipo específico que opera la terminal (reach stacker, cargador, sennebogen…).</p>
+			</div>
+			<span class="detalle__flecha" aria-hidden="true"><i class="fas fa-chevron-down"></i></span>
+		</summary>
+
+		<div class="tarjeta__cuerpo">
+			<form th:action="@{/operaciones/maquinarias}" method="post">
+				<div class="bloque-form">
+					<div class="bloque-form__cabecera">
+						<div class="bloque-form__icono"><i class="fas fa-truck-monster"></i></div>
+						<div>
+							<h3>Datos del equipo</h3>
+							<p>El identificador es el que aparece en el reporte y en los listados.</p>
+						</div>
+					</div>
+					<div class="bloque-form__cuerpo">
+						<div class="rejilla-campos">
+							<label class="campo campo--ancho">
+								<span class="campo__etiqueta">Identificador</span>
+								<input type="text" name="identificador" maxlength="40"
+									   placeholder="REACH STACKER 1" required>
+							</label>
+						</div>
+					</div>
+				</div>
+
+				<div class="form-actions-bar">
+					<button type="submit" class="boton boton--primario">
+						<i class="fas fa-plus"></i> Agregar equipo
+					</button>
+				</div>
+			</form>
+		</div>
+	</details>
+
+	<!-- ======== APTITUDES REGISTRADAS ======== -->
+	<!--
+		Los cursos y aptitudes también se tienen que poder quitar: un curso que ya no
+		se dicta no puede seguir apareciendo en el catálogo ni en el perfil.
+	-->
+	<div class="tarjeta tarjeta--config">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--cian" aria-hidden="true"><i class="fas fa-certificate"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Aptitudes y cursos registrados</h2>
+				<p>Habilitaciones que se pueden exigir a una operación o asignar a una persona.</p>
+			</div>
+			<span class="etiqueta etiqueta--info"
+				  th:text="${#lists.size(habilitaciones)} + ' aptitud(es)'">0</span>
+		</div>
+
+		<div class="tabla-envoltura">
+			<table class="tabla">
+				<thead>
+				<tr>
+					<th>Código</th>
+					<th>Nombre</th>
+					<th>Descripción</th>
+					<th class="tabla__acciones">Acción</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr th:each="aptitud : ${habilitaciones}">
+					<td data-label="Código"><span class="operacion-codigo" th:text="${aptitud.codigo}">VOLQUETA</span></td>
+					<td class="celda-nombre" data-label="Nombre">
+						<span class="tabla__principal" th:text="${aptitud.nombre}">Manejo de volqueta</span>
+					</td>
+					<td data-label="Descripción" th:text="${aptitud.descripcion ?: 'Sin descripción'}">Descripción</td>
+					<td class="tabla__acciones" data-label="Acción">
+						<form th:action="@{/operaciones/aptitudes/{id}/eliminar(id=${aptitud.id})}"
+							  method="post" class="form-linea"
+							  th:attr="data-confirm=|¿Eliminar la aptitud ${aptitud.nombre}? Se quitará de las operaciones que la exigen y de las personas que la tengan.|,data-confirm-peligro='true'">
+							<button type="submit" class="boton boton--peligro boton--chico">
+								<i class="fas fa-trash-can"></i> Eliminar
+							</button>
+						</form>
+					</td>
+				</tr>
+				<tr th:if="${#lists.isEmpty(habilitaciones)}" class="tabla--vacia">
+					<td colspan="4" data-label="Aviso">
+						<i class="fas fa-certificate vacio-icono" aria-hidden="true"></i>
+						<strong>Sin aptitudes registradas</strong>
+						Cree la primera con el formulario de arriba.
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+	<!-- ======== MAQUINARIA REGISTRADA ======== -->
+	<div class="tarjeta tarjeta--config">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--cian" aria-hidden="true"><i class="fas fa-truck-monster"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Maquinaria registrada</h2>
+				<p>Equipos disponibles en la operación.</p>
+			</div>
+			<span class="etiqueta etiqueta--info"
+				  th:text="${#lists.size(maquinarias)} + ' equipo(s)'">0</span>
+		</div>
+
+		<div class="tabla-envoltura">
+			<table class="tabla">
+				<thead>
+				<tr>
+					<th>Identificador</th>
+					<th>Tipo</th>
+					<th class="tabla__acciones">Acción</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr th:each="equipo : ${maquinarias}">
+					<td data-label="Identificador">
+						<span class="operacion-codigo" th:text="${equipo.identificador}">REACH STACKER 1</span>
+					</td>
+					<td data-label="Tipo" th:text="${equipo.tipo}">MAQUINARIA</td>
+					<td class="tabla__acciones" data-label="Acción">
+						<form th:action="@{/operaciones/maquinarias/{id}/eliminar(id=${equipo.id})}"
+							  method="post" class="form-linea"
+							  th:attr="data-confirm=|¿Eliminar la maquinaria ${equipo.identificador}?|,data-confirm-peligro='true'">
+							<button type="submit" class="boton boton--peligro boton--chico">
+								<i class="fas fa-trash-can"></i> Eliminar
+							</button>
+						</form>
+					</td>
+				</tr>
+				<tr th:if="${#lists.isEmpty(maquinarias)}" class="tabla--vacia">
+					<td colspan="3" data-label="Aviso">
+						<i class="fas fa-truck-monster vacio-icono" aria-hidden="true"></i>
+						<strong>Sin maquinaria registrada</strong>
+						Agregue la primera con el formulario de arriba.
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+</div>
+</body>
+</html>

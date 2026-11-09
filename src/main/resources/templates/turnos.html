@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+	  th:replace="~{fragments/layout :: pagina('Turnos y horarios', 'turnos', ~{::contenido})}">
+<body>
+<div th:fragment="contenido" class="op-cat">
+
+	<!--
+		Catálogo doble: los turnos del personal (código, nombre y horario) y
+		las horas que el grupo repite al programar (los botones del formulario).
+
+		Antes estaba sembrado a fuego con la instalación: si la operación
+		cambiaba el horario de un turno, había que editar la base. Ahora es
+		una pantalla, y un turno nuevo queda disponible de inmediato en el
+		selector del perfil del colaborador.
+
+		Edición por ?editar=id y no por ruta: el alta y la corrección
+		comparten el mismo formulario para que no se cambie en uno y se
+		olvide en el otro.
+
+		Colores por función:
+		- Alta / edición de turno → cálido (naranja).
+		- Listado de turnos y horarios rápidos → azul.
+
+		Estilo: mismo sistema de colaboradores.html, todo prefijado con .op-cat.
+	-->
+	<style>
+		/* =================================================================
+		   Turnos y horarios · estilos locales
+		   ================================================================= */
+		/* ---- Variables ---- */
+		.op-cat {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+		.op-cat > .hero-inicio,
+		.op-cat > .tarjeta,
+		.op-cat > .filtros { margin-bottom: 1.25rem; }
+
+		/* ---- Portada (para poner foto: style="--foto: url('/img/x.jpg')") ---- */
+		.op-cat .hero-inicio,
+		.op-cat .hero-inicio * { animation: none; }
+		.op-cat .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.op-cat .hero-inicio::before,
+		.op-cat .hero-inicio::after { content: none; }
+		.op-cat .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.op-cat .hero-inicio__contenido { max-width: 44rem; }
+		.op-cat .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+		}
+		.op-cat .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.op-cat .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+
+		/* ---- Tarjeta y cabecera ---- */
+		.op-cat .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+		}
+		.op-cat .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.op-cat .tarjeta__cabecera {
+			padding: 1.375rem 1.5rem;
+			gap: 1rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.op-cat .sec-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.25rem;
+		}
+		.op-cat .sec-icono--azul { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+		.op-cat .sec-icono--oro { background: #e09837; box-shadow: 0 3px 10px rgba(224, 152, 55, .3); }
+		.op-cat .sec-icono--verde { background: #2d7a55; box-shadow: 0 3px 10px rgba(45, 122, 85, .25); }
+		.op-cat .tarjeta__titulo-grupo h2 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+		}
+		.op-cat .tarjeta__cabecera h2::before,
+		.op-cat .tarjeta__titulo-grupo h2::before { display: none; }
+		.op-cat .tarjeta__titulo-grupo p {
+			margin-top: .25rem;
+			max-width: 62ch;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+		.op-cat .tarjeta__pie {
+			padding: 1rem 1.5rem;
+			background: #f8fafd;
+			border-top: 1px solid var(--a-borde);
+			color: var(--a-tenue);
+			font-size: .875rem;
+			font-weight: 600;
+		}
+
+		/* ---- Botones ---- */
+		.op-cat .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.op-cat .boton::after { display: none; }
+		.op-cat .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.op-cat .boton--primario,
+		.op-cat .boton--primario:hover {
+			border-color: var(--a-accion);
+			background: var(--a-accion);
+			box-shadow: 0 3px 10px rgba(221, 145, 44, .28);
+		}
+		.op-cat .boton--primario:hover {
+			border-color: var(--a-accion-hover);
+			background: var(--a-accion-hover);
+			box-shadow: 0 4px 12px rgba(221, 145, 44, .36);
+		}
+		.op-cat .boton--chico { padding: .5rem .875rem; font-size: .75rem; }
+		.op-cat .boton--contorno {
+			border: 1px solid #cfe0f2;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.op-cat .boton--contorno:hover:not(:disabled) {
+			border: 1px solid #b6cfe9;
+			background: #e9f1fa;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.op-cat .boton--fantasma {
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.op-cat .boton--fantasma:hover {
+			border: 1px solid #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.op-cat .boton--peligro {
+			border: 1px solid #f0c4c4;
+			background: #fff;
+			color: #b42318;
+			box-shadow: none;
+		}
+		.op-cat .boton--peligro:hover {
+			border: 1px solid #e6a8a8;
+			background: #fdf3f3;
+			color: #b42318;
+			box-shadow: none;
+		}
+		.op-cat .boton:disabled { opacity: .5; box-shadow: none; }
+
+		/* ---- Campos ---- */
+		.op-cat .campo__etiqueta,
+		.op-cat .campo:focus-within .campo__etiqueta {
+			margin-bottom: .375rem;
+			color: var(--a-navy);
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+		.op-cat .campo__ayuda { color: var(--a-tenue); line-height: 1.45; }
+		.op-cat input[type="search"],
+		.op-cat input[type="date"],
+		.op-cat input[type="datetime-local"],
+		.op-cat input[type="time"],
+		.op-cat select {
+			padding: .625rem .875rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background-color: #fff;
+			font-size: .9375rem;
+			font-weight: 500;
+			color: var(--a-texto);
+		}
+		.op-cat select { padding-right: 2.5rem; }
+		.op-cat input:hover, .op-cat select:hover { border-color: #b9c9dc; }
+		.op-cat input[type="search"]:focus,
+		.op-cat input[type="date"]:focus,
+		.op-cat input[type="datetime-local"]:focus,
+		.op-cat input[type="time"]:focus,
+		.op-cat select:focus {
+			border-color: var(--a-azul);
+			box-shadow: 0 0 0 3px rgba(23, 68, 117, .14);
+		}
+		.op-cat .filtros {
+			align-items: flex-end;
+			gap: 1rem;
+			padding: 1.25rem 1.5rem;
+			background: #fff;
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .06);
+		}
+		.op-cat .filtros .campo { flex: 1 1 11rem; }
+		.op-cat .filtros .campo--buscar { flex: 2 1 15rem; }
+		.op-cat .masiva-check {
+			flex: none;
+			width: 1.25rem;
+			height: 1.25rem;
+			accent-color: var(--a-azul);
+			cursor: pointer;
+		}
+
+		/* ---- Etiquetas (sin punto parpadeante) ---- */
+		.op-cat .etiqueta {
+			padding: .375rem .875rem;
+			border: 0;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+		}
+		.op-cat .etiqueta::before { content: none; display: none; animation: none; }
+		.op-cat .etiqueta--gris { background: #eceff3; color: var(--a-tenue); }
+		.op-cat .etiqueta--ok { background: var(--ok-100); color: var(--ok-700); }
+		.op-cat .etiqueta--alerta { background: #fdf0d9; color: #9a5a0a; }
+		.op-cat .etiqueta--error { background: #fdecec; color: #b42318; }
+		.op-cat .etiqueta--chico { padding: .1875rem .5rem; font-size: .625rem; }
+
+		/* ---- Tabla ---- */
+		.op-cat .tabla-envoltura {
+			margin: 1.25rem 1.5rem 1.5rem;
+			border: 1px solid #dfe8f3;
+			border-radius: 12px;
+			background: #fff;
+		}
+		.op-cat .tabla thead th {
+			padding: .875rem 1.125rem;
+			background: var(--a-suave);
+			color: #2f4a70;
+			border-bottom: 1px solid #e3ebf4;
+			font-size: .75rem;
+			font-weight: 600;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+		}
+		.op-cat .tabla thead tr th:first-child { border-left: 0; }
+		.op-cat .tabla thead th.tabla__num { text-align: right; }
+		.op-cat .tabla tbody td {
+			padding: 1rem 1.125rem;
+			border-bottom: 1px solid #edf2f8;
+			vertical-align: middle;
+			color: var(--a-texto);
+		}
+		.op-cat .tabla tbody tr { animation: none; }
+		.op-cat .tabla tbody tr:nth-child(even) { background: transparent; }
+		.op-cat .tabla tbody tr:hover { background: #f7fafd; }
+		.op-cat .tabla tbody tr:hover td:first-child { box-shadow: none; }
+		.op-cat .tabla tbody tr:last-child td { border-bottom: 0; }
+		.op-cat .tabla__principal { color: var(--a-navy); font-weight: 700; }
+		.op-cat .tabla__secundario { color: var(--a-tenue); font-weight: 500; }
+		.op-cat .tenue { color: var(--a-tenue); }
+
+		.op-cat .persona { display: flex; align-items: center; gap: .875rem; min-width: 0; }
+		.op-cat .inicial {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 2.5rem;
+			height: 2.5rem;
+			border-radius: 50%;
+			background: #2c5f94;
+			color: #fff;
+			font-size: .9375rem;
+			font-weight: 600;
+			text-transform: uppercase;
+			box-shadow: none;
+		}
+		.op-cat .codigo-area {
+			display: block;
+			margin-top: .125rem;
+			font-size: .6875rem;
+			font-weight: 700;
+			letter-spacing: .06em;
+			color: var(--a-tenue);
+		}
+
+		/* ---- Lista vacía ---- */
+		.op-cat .tabla--vacia td {
+			white-space: normal;
+			line-height: 1.6;
+			text-align: center;
+			padding: 2rem 1rem 2.25rem;
+			color: var(--a-tenue);
+			font-size: .75rem;
+		}
+		.op-cat .tabla tr.tabla--vacia:hover { background: transparent; }
+		.op-cat .vacio-icono { display: block; margin-bottom: .625rem; color: #1f4b7a; font-size: 2rem; }
+		.op-cat .tabla--vacia strong { color: var(--a-navy); font-size: .875rem; font-weight: 700; }
+
+		/* ---- Paginación de tablas largas (la inserta app.js bajo la tabla) ---- */
+		.op-cat .paginacion {
+			margin: 0;
+			padding: 1rem 1.5rem;
+			background: #f8fafd;
+			border-top: 1px solid var(--a-borde);
+			color: var(--a-tenue);
+			font-size: .875rem;
+		}
+		.op-cat .paginacion__estado,
+		.op-cat .paginacion__actual {
+			color: var(--a-navy);
+			font-size: .8125rem;
+			font-weight: 700;
+		}
+		.op-cat .paginacion .boton {
+			padding: .5rem .875rem;
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			font-size: .8125rem;
+			box-shadow: none;
+		}
+		.op-cat .paginacion .boton:hover:not([disabled]) {
+			border-color: #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.op-cat .paginacion .boton[disabled] {
+			border-color: #e3ebf4;
+			background: #f3f6fa;
+			color: var(--a-tenue);
+			opacity: .6;
+			box-shadow: none;
+		}
+
+		/* ---- Específico de Turnos ---- */
+		.op-cat .tarjeta__cabecera { justify-content: flex-start; }
+		.op-cat .tarjeta__titulo-grupo { flex: 1 1 16rem; }
+		.op-cat .tarjeta__cabecera > .etiqueta { align-self: center; }
+		.op-cat .sec-icono--cian { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+		.op-cat .tarjeta--alta { border-color: #f1d8b2; border-top: 1px solid #f1d8b2; }
+		.op-cat .tarjeta--alta .tarjeta__cabecera { background: #fdf8f0; border-bottom-color: #f1d8b2; }
+		.op-cat .tarjeta__cuerpo { padding: 1.5rem; }
+		.op-cat .tarjeta__titulo-grupo p a { color: var(--a-azul); font-weight: 700; }
+
+		.op-cat .etiqueta--info { background: #e6effa; color: #24406a; }
+		.op-cat .boton--secundario {
+			border: 1px solid #cfe0f2;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.op-cat .boton--secundario:hover {
+			border: 1px solid #b6cfe9;
+			background: #e9f1fa;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+
+		/* Bloque de formulario: se conserva el texto guía, sin icono ni degradado */
+		.op-cat .bloque-form {
+			margin-bottom: 1.25rem;
+			border: 1px solid var(--a-borde);
+			border-radius: 12px;
+			background: #f9fbfd;
+		}
+		.op-cat .bloque-form__cabecera {
+			padding: 1rem 1.25rem .25rem;
+			background: transparent;
+			border-bottom: 0;
+		}
+		.op-cat .bloque-form__icono { display: none; }
+		.op-cat .bloque-form__cabecera h3 { color: var(--a-navy); font-size: .9375rem; font-weight: 700; letter-spacing: 0; }
+		.op-cat .bloque-form__cabecera p { max-width: none; color: var(--a-tenue); font-size: .8125rem; }
+		.op-cat .bloque-form__cuerpo { padding: 1rem 1.25rem 1.25rem; }
+		.op-cat .bloque-form__cuerpo .campo { margin-bottom: 0; }
+
+		.op-cat .rejilla-campos {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 1rem 1.25rem;
+		}
+		.op-cat .rejilla-campos .campo--ancho { grid-column: 1 / -1; }
+		.op-cat input[type="text"] {
+			padding: .625rem .875rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background-color: #fff;
+			font-size: .9375rem;
+			font-weight: 500;
+			color: var(--a-texto);
+		}
+		.op-cat input[type="text"]:focus {
+			border-color: var(--a-azul);
+			box-shadow: 0 0 0 3px rgba(23, 68, 117, .14);
+		}
+		.op-cat .campo__etiqueta:has(input[type="checkbox"]) { display: flex; align-items: center; gap: .625rem; }
+		.op-cat input[type="checkbox"] {
+			flex: none;
+			width: 1.25rem;
+			height: 1.25rem;
+			accent-color: var(--a-azul);
+			cursor: pointer;
+		}
+		.op-cat .form-actions-bar {
+			display: flex;
+			justify-content: flex-end;
+			gap: .75rem;
+			padding: 0;
+			margin: 0;
+			background: none;
+			border: 0;
+		}
+
+		/* Tablas */
+		.op-cat .tabla-envoltura { margin-top: 0; }
+		.op-cat .tarjeta__cuerpo .tabla-envoltura { margin: 0; }
+		.op-cat .tabla thead th.tabla__acciones { text-align: center; }
+		.op-cat .tabla td.tabla__acciones { white-space: nowrap; }
+		.op-cat .tabla td.tabla__acciones .boton { margin-right: .375rem; }
+		.op-cat .tabla td.tabla__acciones .form-linea .boton { margin-right: 0; }
+		.op-cat .operacion-codigo {
+			display: inline-block;
+			color: var(--a-tenue);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+		}
+		.op-cat .turno-horario {
+			color: var(--a-navy);
+			font-weight: 700;
+			font-variant-numeric: tabular-nums;
+			white-space: nowrap;
+		}
+		.op-cat .turno-horario .flecha { padding: 0 .375rem; color: var(--a-tenue); }
+		.op-cat .tabla td .etiqueta--info { margin-left: .375rem; }
+		.op-cat .tabla tr.fila-editando td { background: #fdf8f0; }
+		.op-cat .bandera-editando {
+			display: inline-block;
+			margin-left: .5rem;
+			color: var(--a-accion-hover);
+			font-size: .6875rem;
+			font-weight: 700;
+			letter-spacing: .05em;
+			text-transform: uppercase;
+		}
+
+		/* Alta de horario rápido */
+		.op-cat .horario-alta {
+			display: flex;
+			flex-wrap: wrap;
+			gap: .75rem 1rem;
+			align-items: flex-end;
+			padding: 1.25rem;
+			margin-bottom: 1.25rem;
+			background: #f9fbfd;
+			border: 1px solid var(--a-borde);
+			border-radius: 12px;
+		}
+		.op-cat .horario-alta .campo { flex: 1 1 12rem; margin-bottom: 0; }
+		.op-cat .horario-alta .boton { flex: 0 0 auto; }
+
+		@media (max-width: 768px) {
+			.op-cat .campo input,
+			.op-cat .campo select { font-size: 16px; }
+			.op-cat .hero-inicio { padding: 1.25rem; min-height: 0; }
+			.op-cat .hero-inicio h1 { font-size: 1.5rem; }
+			.op-cat .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.op-cat .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.op-cat .tarjeta__cuerpo { padding: 1rem; }
+			.op-cat .rejilla-campos { grid-template-columns: 1fr; }
+			.op-cat .form-actions-bar { flex-direction: column-reverse; align-items: stretch; }
+			.op-cat .form-actions-bar .boton { width: 100%; justify-content: center; }
+			.op-cat .horario-alta { flex-direction: column; align-items: stretch; padding: 1rem; }
+			.op-cat .horario-alta .boton { width: 100%; justify-content: center; }
+			.op-cat .tabla-envoltura { margin: 1rem 1rem 1.25rem; }
+			.op-cat .tarjeta__cuerpo .tabla-envoltura { margin: 0; }
+
+			.op-cat .tabla tbody tr { display: flex; flex-direction: column; }
+			.op-cat .tabla tbody td.celda-nombre {
+				order: -1;
+				display: block;
+				padding: .875rem .875rem .75rem;
+				text-align: left;
+				background: var(--a-suave);
+				border-bottom: 1px solid var(--a-borde);
+			}
+			.op-cat .tabla tbody td.celda-nombre::before { content: none; }
+			.op-cat .tabla tbody tr.tabla--vacia td { display: block; text-align: center; }
+			.op-cat .tabla tbody tr.tabla--vacia td::before { content: none; }
+		}
+		@media (max-width: 480px) {
+			.op-cat .hero-icono { display: none; }
+		}
+
+		/* ---- Tarjeta plegable ---- */
+		.op-cat .detalle__flecha { margin-left: auto; background: var(--a-suave); color: var(--a-navy); }
+		.op-cat .detalle__cabecera:hover .detalle__flecha { background: var(--a-accion); color: #fff; }
+		.op-cat details:not([open]) > .tarjeta__cabecera { border-bottom: 0; }
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-clock"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">CONFIGURACIÓN</span>
+			<h1>Turnos y horarios</h1>
+			<p>
+				Defina los turnos del personal y las horas que se repiten al
+				programar: con los segundos, los formularios ofrecen botones en
+				vez de pedir que se digite la hora a mano.
+			</p>
+		</div>
+	</section>
+
+	<!-- ======== ALTA / EDICIÓN DE TURNO ======== -->
+	<details class="tarjeta tarjeta--alta detalle" th:open="${editar != null}">
+		<summary class="tarjeta__cabecera detalle__cabecera">
+			<span class="sec-icono sec-icono--oro" aria-hidden="true"><i class="fas fa-user-clock"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2 th:text="${editar != null} ? 'Editar turno' : 'Nuevo turno'">Nuevo turno</h2>
+				<p th:if="${editar == null}">Código, nombre y horario de la jornada. Se aplica a las personas que lo tengan asignado.</p>
+				<p th:if="${editar != null}">
+					Corrija los datos y guarde; el código debe ser único.
+					<a th:href="@{/turnos}">Volver a crear uno nuevo</a>
+				</p>
+			</div>
+			<span class="etiqueta etiqueta--alerta" th:if="${editar != null}">Modo edición</span>
+			<span class="detalle__flecha" aria-hidden="true"><i class="fas fa-chevron-down"></i></span>
+		</summary>
+
+		<div class="tarjeta__cuerpo">
+			<form th:action="${editar != null} ? @{/turnos/{id}(id=${editar.id})} : @{/turnos}" method="post">
+				<div class="bloque-form">
+					<div class="bloque-form__cabecera">
+						<div class="bloque-form__icono"><i class="fas fa-clock"></i></div>
+						<div>
+							<h3>Datos del turno</h3>
+							<p>Si la fin es menor que el inicio, el turno cruza la medianoche (19:00 → 07:00).</p>
+						</div>
+					</div>
+					<div class="bloque-form__cuerpo">
+						<div class="rejilla-campos">
+							<label class="campo">
+								<span class="campo__etiqueta">Código</span>
+								<input type="text" name="codigo" placeholder="DIURNO" required maxlength="30"
+									   th:value="${editar?.codigo}">
+								<span class="campo__ayuda">Se guarda en mayúsculas; no se puede repetir.</span>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Nombre</span>
+								<input type="text" name="nombre" placeholder="Turno diurno 07:00 – 15:00" required maxlength="80"
+									   th:value="${editar?.nombre}">
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Entrada</span>
+								<input type="time" name="horaInicio" required th:value="${editar?.horaInicio}">
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Salida</span>
+								<input type="time" name="horaFin" required th:value="${editar?.horaFin}">
+								<span class="campo__ayuda">Menor que la entrada si pasa de medianoche.</span>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Salida lunes y martes</span>
+								<input type="time" name="horaFinLunesMartes" th:value="${editar?.horaFinLunesMartes}">
+								<span class="campo__ayuda">Opcional: si esos días la jornada termina a otra hora (la mañana sale a las 4 pm y lunes y martes a las 5 pm). Vacío = mismo fin todos los días.</span>
+							</label>
+							<label class="campo campo--ancho">
+								<span class="campo__etiqueta">
+									<input type="checkbox" name="permiteDoceHoras"
+										   th:checked="${editar != null and editar.permiteDoceHoras}">
+									Admite propuestas de hasta 12 horas
+								</span>
+								<span class="campo__ayuda">Sin marcar, la duración máxima de una propuesta para quien tenga este turno es de 8 horas; con él, 12 (jornadas largas como 19:00 → 07:00 o la mañana que cierra a las 7 pm).</span>
+							</label>
+							<label class="campo campo--ancho" th:if="${editar != null}">
+								<span class="campo__etiqueta">
+									<input type="checkbox" name="activo" th:checked="${editar.activo}">
+									Turno activo (visible en los selectores)
+								</span>
+							</label>
+						</div>
+					</div>
+				</div>
+
+				<div class="form-actions-bar">
+					<a th:if="${editar != null}" th:href="@{/turnos}" class="boton boton--secundario">Cancelar</a>
+					<button type="submit" class="boton boton--primario">
+						<i class="fas fa-check"></i>
+						<span th:text="${editar != null} ? 'Guardar cambios' : 'Crear turno'">Crear turno</span>
+					</button>
+				</div>
+			</form>
+		</div>
+	</details>
+
+	<!-- ======== ALTA DE HORARIO RÁPIDO ======== -->
+	<details class="tarjeta tarjeta--alta detalle">
+		<summary class="tarjeta__cabecera detalle__cabecera">
+			<span class="sec-icono sec-icono--oro" aria-hidden="true"><i class="fas fa-bolt"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Nuevo horario rápido</h2>
+				<p>Agregue una hora que el grupo repita como botón en la programación y el ajuste.</p>
+			</div>
+			<span class="detalle__flecha" aria-hidden="true"><i class="fas fa-chevron-down"></i></span>
+		</summary>
+
+		<div class="tarjeta__cuerpo">
+			<form th:action="@{/turnos/horarios}" method="post" class="horario-alta">
+				<label class="campo">
+					<span class="campo__etiqueta">Etiqueta</span>
+					<input type="text" name="etiqueta" placeholder="Salida 11:00 pm" required maxlength="60">
+					<span class="campo__ayuda">Lo que se lee en el botón.</span>
+				</label>
+				<label class="campo">
+					<span class="campo__etiqueta">Hora</span>
+					<input type="time" name="hora" required>
+				</label>
+				<button type="submit" class="boton boton--primario">
+					<i class="fas fa-plus"></i> Agregar hora
+				</button>
+			</form>
+		</div>
+	</details>
+
+	<!-- ======== TURNOS REGISTRADOS ======== -->
+	<div class="tarjeta tarjeta--config">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--cian" aria-hidden="true"><i class="fas fa-users"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Turnos registrados</h2>
+				<p>Los que aparecen en el perfil del colaborador y en la programación.</p>
+			</div>
+			<span class="etiqueta etiqueta--info" th:text="${#lists.size(turnos)} + ' turno(s)'">0</span>
+		</div>
+
+		<div class="tabla-envoltura">
+			<table class="tabla">
+				<thead>
+				<tr>
+					<th>Código</th>
+					<th>Nombre</th>
+					<th>Horario</th>
+					<th>Estado</th>
+					<th class="tabla__acciones">Acción</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr th:each="turno : ${turnos}" th:classappend="${editar != null and editar.id == turno.id} ? 'fila-editando' : ''">
+					<td data-label="Código"><span class="operacion-codigo" th:text="${turno.codigo}">DIURNO</span></td>
+					<td class="celda-nombre" data-label="Nombre">
+						<span class="tabla__principal" th:text="${turno.nombre}">Turno diurno</span>
+						<span class="bandera-editando" th:if="${editar != null and editar.id == turno.id}">Editando</span>
+					</td>
+					<td data-label="Horario">
+						<span class="turno-horario">
+							<span th:text="${turno.horaInicio}">07:00</span>
+							<span class="flecha">→</span>
+							<span th:text="${turno.horaFin}">15:00</span>
+						</span>
+						<span class="etiqueta etiqueta--info" th:if="${turno.horaFinLunesMartes}"
+							  th:title="|Los lunes y martes este turno termina a las ${turno.horaFinLunesMartes}|"
+							  th:text="|L/M hasta ${turno.horaFinLunesMartes}|">L/M hasta 17:00</span>
+						<span class="etiqueta etiqueta--info" th:if="${turno.permiteDoceHoras}"
+							  title="Las propuestas de quien tenga este turno pueden durar hasta 12 horas">Hasta 12 h</span>
+					</td>
+					<td data-label="Estado">
+						<span class="etiqueta" th:classappend="${turno.activo} ? 'etiqueta--ok' : 'etiqueta--alerta'"
+							  th:text="${turno.activo} ? 'Activo' : 'Inactivo'">Activo</span>
+					</td>
+					<td class="tabla__acciones" data-label="Acción">
+						<a th:href="@{/turnos(editar=${turno.id})}" class="boton boton--secundario boton--chico">
+							<i class="fas fa-pen"></i> Editar
+						</a>
+						<form th:action="@{/turnos/{id}/eliminar(id=${turno.id})}" method="post" class="form-linea"
+							  th:attr="data-confirm=|¿Eliminar el turno ${turno.nombre}?|,data-confirm-peligro='true'">
+							<button type="submit" class="boton boton--peligro boton--chico">
+								<i class="fas fa-trash-can"></i> Eliminar
+							</button>
+						</form>
+					</td>
+				</tr>
+				<tr th:if="${#lists.isEmpty(turnos)}" class="tabla--vacia">
+					<td colspan="5" data-label="Aviso">
+						<i class="fas fa-user-clock vacio-icono" aria-hidden="true"></i>
+						<strong>Sin turnos registrados</strong><br>
+						Cree el primero con el formulario de arriba.
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+	<!-- ======== HORARIOS RÁPIDOS ======== -->
+	<div class="tarjeta tarjeta--config">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--cian" aria-hidden="true"><i class="fas fa-bolt"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Horarios rápidos</h2>
+				<p>Las horas que el grupo repite: aparecen como botones en la programación y el ajuste.</p>
+			</div>
+			<span class="etiqueta etiqueta--info" th:text="${#lists.size(horarios)} + ' hora(s)'">0</span>
+		</div>
+
+		<div class="tarjeta__cuerpo">
+			<div class="tabla-envoltura">
+				<table class="tabla">
+					<thead>
+					<tr>
+						<th>Etiqueta</th>
+						<th>Hora</th>
+						<th class="tabla__acciones">Acción</th>
+					</tr>
+					</thead>
+					<tbody>
+					<tr th:each="horario : ${horarios}">
+						<td data-label="Etiqueta" class="celda-nombre">
+							<span class="tabla__principal" th:text="${horario.etiqueta}">Ingreso 3:40 pm</span>
+						</td>
+						<td data-label="Hora">
+							<span class="turno-horario" th:text="${horario.hora}">15:40</span>
+						</td>
+						<td class="tabla__acciones" data-label="Acción">
+							<form th:action="@{/turnos/horarios/{id}/eliminar(id=${horario.id})}" method="post"
+								  class="form-linea"
+								  th:attr="data-confirm=|Quitar ${horario.etiqueta} de los botones rápidos?|,data-confirm-peligro='true'">
+								<button type="submit" class="boton boton--peligro boton--chico">
+									<i class="fas fa-trash-can"></i> Eliminar
+								</button>
+							</form>
+						</td>
+					</tr>
+					<tr th:if="${#lists.isEmpty(horarios)}" class="tabla--vacia">
+						<td colspan="3" data-label="Aviso">
+							<i class="fas fa-bolt vacio-icono" aria-hidden="true"></i>
+							<strong>Sin horas rápidas</strong><br>
+							Agregue la primera con el formulario de arriba.
+						</td>
+					</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+
+</div>
+</body>
+</html>

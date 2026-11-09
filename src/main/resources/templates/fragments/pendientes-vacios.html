@@ -1,0 +1,92 @@
+<!--
+	Bloque de "no hay nada pendiente" de la pantalla Por aprobar.
+
+	Vive en su propio archivo por dos motivos: la pantalla lo incluye con
+	th:replace como cualquier otro fragmento, y la prueba puede pintarlo a
+	siola con el contexto lleno de lo que usa, sin tener que armar una cola de
+	verdad para que la condición se cumpla.
+
+	El th:if va en el mismo nodo que el th:fragment a propósito: Thymeleaf busca
+	el fragmento por el nombre y después procesa su contenido, así que la
+	condición se evalúa igual dentro de la página que suelta.
+-->
+<div th:fragment="bloque" class="tarjeta pend-vacio" th:if="${porDia == null or porDia.isEmpty()}">
+	<style>
+		/* =================================================================
+		   Estado vacío · Por aprobar
+		   Mismo sistema visual de colaboradores.html y transporte.html:
+		   paleta azul corporativa, sin degradados ni animaciones.
+		   Todas las reglas van prefijadas con .pend-vacio porque este
+		   archivo es un fragmento y no debe alterar el resto de tarjetas
+		   de la pantalla que lo incluye.
+		   ================================================================= */
+		.pend-vacio {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+
+		/* Tarjeta: misma que el resto del sistema, sin hover ni elevación */
+		.pend-vacio.tarjeta {
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+		}
+		.pend-vacio.tarjeta:hover {
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			border-color: var(--a-borde);
+		}
+		.pend-vacio .tarjeta__cuerpo { padding: 1.5rem; }
+
+		/* Estado vacío: ícono, título y texto con la paleta sobria */
+		.pend-vacio .vacio {
+			padding: 1.5rem 1rem 1.75rem;
+			text-align: center;
+			color: var(--a-tenue);
+			font-size: .75rem;
+			line-height: 1.6;
+		}
+		.pend-vacio .vacio-icono {
+			display: block;
+			margin-bottom: .625rem;
+			color: #1f4b7a;
+			font-size: 2rem;
+			line-height: 1;
+		}
+		.pend-vacio .vacio strong {
+			display: block;
+			margin-bottom: .375rem;
+			color: var(--a-navy);
+			font-size: .875rem;
+			font-weight: 700;
+		}
+		.pend-vacio .vacio span {
+			display: block;
+			margin-top: .375rem;
+		}
+
+		@media (max-width: 640px) {
+			.pend-vacio .tarjeta__cuerpo { padding: 1rem; }
+			.pend-vacio .vacio { padding: 1.25rem .5rem 1.5rem; }
+		}
+	</style>
+
+	<div class="tarjeta__cuerpo">
+		<div class="vacio">
+			<i class="fas fa-inbox vacio-icono" aria-hidden="true"></i>
+			<strong>No hay programaciones pendientes</strong>
+			Ninguna propuesta espera su decisión en las áreas de su alcance.
+			<span th:if="${totalDelDia > 0}">Más abajo está el listado del día.</span>
+		</div>
+	</div>
+</div>

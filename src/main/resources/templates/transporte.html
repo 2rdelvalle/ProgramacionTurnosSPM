@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+	  th:replace="~{fragments/layout :: pagina('Salidas y transporte', 'transporte', ~{::contenido})}">
+<body>
+<div th:fragment="contenido" class="transp">
+
+	<!--
+		Estructura:
+		- Portada + filtro de día.
+		- Tarjetas plegables "Nueva salida" y "Nuevo ingreso".
+		- Tarjeta "Salidas del día" (tabla).
+		- Tarjeta "Ingresos del día" (tabla).
+		- Tarjeta "Personas pendientes" (tabla con avatares y asignación).
+
+		La salida recoge al personal al terminar su turno; el ingreso, antes de
+		que empiece. Las mismas reglas sirven para armar los dos listados.
+
+		El catálogo (registrar vehículo y destino) vive aparte en
+		/transporte/vehiculos.
+
+		Estilo: mismo sistema de colaboradores.html. Todas las reglas van
+		prefijadas con .transp y anulan las de app.css.
+
+		En móvil: las tablas pasan a una tarjeta por fila, la asignación se
+		apila a todo el ancho y los inputs suben a 16px (iOS no hace zoom).
+	-->
+	<style>
+		/* =================================================================
+		   Transporte · estilos locales
+		   ================================================================= */
+		/* ---- Variables ---- */
+		.transp {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+		.transp > .hero-inicio,
+		.transp > .tarjeta,
+		.transp > .filtros { margin-bottom: 1.25rem; }
+
+		/* ---- Portada (para poner foto: style="--foto: url('/img/x.jpg')") ---- */
+		.transp .hero-inicio,
+		.transp .hero-inicio * { animation: none; }
+		.transp .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.transp .hero-inicio::before,
+		.transp .hero-inicio::after { content: none; }
+		.transp .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.transp .hero-inicio__contenido { max-width: 44rem; }
+		.transp .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+		}
+		.transp .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.transp .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+
+		/* ---- Tarjeta y cabecera ---- */
+		.transp .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+		}
+		.transp .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.transp .tarjeta__cabecera {
+			padding: 1.375rem 1.5rem;
+			gap: 1rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.transp .sec-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.25rem;
+		}
+		.transp .sec-icono--azul { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+		.transp .sec-icono--oro { background: #e09837; box-shadow: 0 3px 10px rgba(224, 152, 55, .3); }
+		.transp .sec-icono--verde { background: #2d7a55; box-shadow: 0 3px 10px rgba(45, 122, 85, .25); }
+		.transp .tarjeta__titulo-grupo h2 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+		}
+		.transp .tarjeta__cabecera h2::before,
+		.transp .tarjeta__titulo-grupo h2::before { display: none; }
+		.transp .tarjeta__titulo-grupo p {
+			margin-top: .25rem;
+			max-width: 62ch;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+		.transp .tarjeta__pie {
+			padding: 1rem 1.5rem;
+			background: #f8fafd;
+			border-top: 1px solid var(--a-borde);
+			color: var(--a-tenue);
+			font-size: .875rem;
+			font-weight: 600;
+		}
+
+		/* ---- Botones ---- */
+		.transp .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.transp .boton::after { display: none; }
+		.transp .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.transp .boton--primario,
+		.transp .boton--primario:hover {
+			border-color: var(--a-accion);
+			background: var(--a-accion);
+			box-shadow: 0 3px 10px rgba(221, 145, 44, .28);
+		}
+		.transp .boton--primario:hover {
+			border-color: var(--a-accion-hover);
+			background: var(--a-accion-hover);
+			box-shadow: 0 4px 12px rgba(221, 145, 44, .36);
+		}
+		.transp .boton--chico { padding: .5rem .875rem; font-size: .75rem; }
+		.transp .boton--contorno {
+			border: 1px solid #cfe0f2;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.transp .boton--contorno:hover:not(:disabled) {
+			border: 1px solid #b6cfe9;
+			background: #e9f1fa;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.transp .boton--fantasma {
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.transp .boton--fantasma:hover {
+			border: 1px solid #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.transp .boton--peligro {
+			border: 1px solid #f0c4c4;
+			background: #fff;
+			color: #b42318;
+			box-shadow: none;
+		}
+		.transp .boton--peligro:hover {
+			border: 1px solid #e6a8a8;
+			background: #fdf3f3;
+			color: #b42318;
+			box-shadow: none;
+		}
+		.transp .boton:disabled { opacity: .5; box-shadow: none; }
+
+		/* ---- Campos ---- */
+		.transp .campo__etiqueta,
+		.transp .campo:focus-within .campo__etiqueta {
+			margin-bottom: .375rem;
+			color: var(--a-navy);
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+		.transp .campo__ayuda { color: var(--a-tenue); line-height: 1.45; }
+		.transp input[type="search"],
+		.transp input[type="date"],
+		.transp input[type="datetime-local"],
+		.transp input[type="time"],
+		.transp select {
+			padding: .625rem .875rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background-color: #fff;
+			font-size: .9375rem;
+			font-weight: 500;
+			color: var(--a-texto);
+		}
+		.transp select { padding-right: 2.5rem; }
+		.transp input:hover, .transp select:hover { border-color: #b9c9dc; }
+		.transp input[type="search"]:focus,
+		.transp input[type="date"]:focus,
+		.transp input[type="datetime-local"]:focus,
+		.transp input[type="time"]:focus,
+		.transp select:focus {
+			border-color: var(--a-azul);
+			box-shadow: 0 0 0 3px rgba(23, 68, 117, .14);
+		}
+		.transp .filtros {
+			align-items: flex-end;
+			gap: 1rem;
+			padding: 1.25rem 1.5rem;
+			background: #fff;
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .06);
+		}
+		.transp .filtros .campo { flex: 1 1 11rem; }
+		.transp .filtros .campo--buscar { flex: 2 1 15rem; }
+		.transp .masiva-check {
+			flex: none;
+			width: 1.25rem;
+			height: 1.25rem;
+			accent-color: var(--a-azul);
+			cursor: pointer;
+		}
+
+		/* ---- Etiquetas (sin punto parpadeante) ---- */
+		.transp .etiqueta {
+			padding: .375rem .875rem;
+			border: 0;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+		}
+		.transp .etiqueta::before { content: none; display: none; animation: none; }
+		.transp .etiqueta--gris { background: #eceff3; color: var(--a-tenue); }
+		.transp .etiqueta--ok { background: var(--ok-100); color: var(--ok-700); }
+		.transp .etiqueta--alerta { background: #fdf0d9; color: #9a5a0a; }
+		.transp .etiqueta--error { background: #fdecec; color: #b42318; }
+		.transp .etiqueta--chico { padding: .1875rem .5rem; font-size: .625rem; }
+
+		/* ---- Tabla ---- */
+		.transp .tabla-envoltura {
+			margin: 1.25rem 1.5rem 1.5rem;
+			border: 1px solid #dfe8f3;
+			border-radius: 12px;
+			background: #fff;
+		}
+		.transp .tabla thead th {
+			padding: .875rem 1.125rem;
+			background: var(--a-suave);
+			color: #2f4a70;
+			border-bottom: 1px solid #e3ebf4;
+			font-size: .75rem;
+			font-weight: 600;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+		}
+		.transp .tabla thead tr th:first-child { border-left: 0; }
+		.transp .tabla thead th.tabla__num { text-align: right; }
+		.transp .tabla tbody td {
+			padding: 1rem 1.125rem;
+			border-bottom: 1px solid #edf2f8;
+			vertical-align: middle;
+			color: var(--a-texto);
+		}
+		.transp .tabla tbody tr { animation: none; }
+		.transp .tabla tbody tr:nth-child(even) { background: transparent; }
+		.transp .tabla tbody tr:hover { background: #f7fafd; }
+		.transp .tabla tbody tr:hover td:first-child { box-shadow: none; }
+		.transp .tabla tbody tr:last-child td { border-bottom: 0; }
+		.transp .tabla__principal { color: var(--a-navy); font-weight: 700; }
+		.transp .tabla__secundario { color: var(--a-tenue); font-weight: 500; }
+		.transp .tenue { color: var(--a-tenue); }
+
+		.transp .persona { display: flex; align-items: center; gap: .875rem; min-width: 0; }
+		.transp .inicial {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 2.5rem;
+			height: 2.5rem;
+			border-radius: 50%;
+			background: #2c5f94;
+			color: #fff;
+			font-size: .9375rem;
+			font-weight: 600;
+			text-transform: uppercase;
+			box-shadow: none;
+		}
+		.transp .codigo-area {
+			display: block;
+			margin-top: .125rem;
+			font-size: .6875rem;
+			font-weight: 700;
+			letter-spacing: .06em;
+			color: var(--a-tenue);
+		}
+
+		/* ---- Lista vacía ---- */
+		.transp .tabla--vacia td {
+			white-space: normal;
+			line-height: 1.6;
+			text-align: center;
+			padding: 2rem 1rem 2.25rem;
+			color: var(--a-tenue);
+			font-size: .75rem;
+		}
+		.transp .tabla tr.tabla--vacia:hover { background: transparent; }
+		.transp .vacio-icono { display: block; margin-bottom: .625rem; color: #1f4b7a; font-size: 2rem; }
+		.transp .tabla--vacia strong { color: var(--a-navy); font-size: .875rem; font-weight: 700; }
+
+		/* ---- Paginación de tablas largas (la inserta app.js bajo la tabla) ---- */
+		.transp .paginacion {
+			margin: 0;
+			padding: 1rem 1.5rem;
+			background: #f8fafd;
+			border-top: 1px solid var(--a-borde);
+			color: var(--a-tenue);
+			font-size: .875rem;
+		}
+		.transp .paginacion__estado,
+		.transp .paginacion__actual {
+			color: var(--a-navy);
+			font-size: .8125rem;
+			font-weight: 700;
+		}
+		.transp .paginacion .boton {
+			padding: .5rem .875rem;
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			font-size: .8125rem;
+			box-shadow: none;
+		}
+		.transp .paginacion .boton:hover:not([disabled]) {
+			border-color: #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.transp .paginacion .boton[disabled] {
+			border-color: #e3ebf4;
+			background: #f3f6fa;
+			color: var(--a-tenue);
+			opacity: .6;
+			box-shadow: none;
+		}
+
+		/* ---- Específico de Transporte ---- */
+		.transp .tarjeta__cabecera { justify-content: flex-start; }
+		.transp .tarjeta__titulo-grupo { flex: 1 1 16rem; }
+		.transp .tarjeta--nueva { border-color: #f1d8b2; }
+		.transp .tarjeta--nueva .tarjeta__cabecera { background: #fdf8f0; border-bottom-color: #f1d8b2; }
+		/* Las altas plegables (Nueva salida / Nuevo ingreso) no deben mostrar la
+		   línea inferior cuando están cerradas. */
+		.transp details.detalle:not([open]) > .tarjeta__cabecera { border-bottom: 0; }
+		.transp .detalle__flecha { background: #eef4fb; color: var(--a-azul); }
+		.transp .tarjeta--personas { border-color: #dcebe2; }
+		.transp .tarjeta--personas .tarjeta__cabecera { background: #f7fbf8; border-bottom-color: #dcebe2; }
+		.transp .tarjeta__cuerpo { padding: 1.5rem; }
+
+		/* Barra del día */
+		.transp .filtros { flex-wrap: wrap; align-items: flex-end; }
+		.transp .barra-icono {
+			align-self: center;
+			margin-right: .25rem;
+			font-size: 1.75rem;
+			color: var(--a-azul);
+		}
+		.transp .filtros .campo { flex: 0 1 15rem; }
+		.transp .filtros__fin { margin-left: 0; }
+
+		/* Enlaces tipo etiqueta en la cabecera */
+		.transp a.etiqueta { text-decoration: none; }
+		.transp a.etiqueta:hover { background: #d9e6f6; color: var(--a-navy); }
+		.transp .tarjeta__cabecera > .etiqueta { align-self: center; }
+
+		/* Formulario de nueva salida */
+		.transp .bloque-form {
+			margin-bottom: 1.25rem;
+			border: 1px solid var(--a-borde);
+			border-radius: 12px;
+			background: #f9fbfd;
+			box-shadow: none;
+		}
+		.transp .bloque-form__cabecera { display: none; }
+		.transp .bloque-form__cuerpo { padding: 1.25rem; }
+		.transp .bloque-form__cuerpo .campo { margin-bottom: 0; }
+		.transp .rejilla-3 {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 1rem 1.25rem;
+		}
+		.transp .form-actions-bar {
+			display: flex;
+			justify-content: flex-end;
+			padding: 0;
+			margin: 0;
+			background: none;
+			border: 0;
+		}
+
+		/* Tablas */
+		.transp .tabla-envoltura { margin-top: 0; }
+		.transp .tabla thead th.tabla__acciones { text-align: center; }
+		.transp .hora {
+			display: inline-block;
+			color: var(--a-navy);
+			font-weight: 700;
+			font-size: .9375rem;
+			font-variant-numeric: tabular-nums;
+		}
+		.transp .placa {
+			display: block;
+			font-weight: 700;
+			font-size: .875rem;
+			color: var(--a-navy);
+			letter-spacing: .01em;
+		}
+		.transp .pasajeros {
+			display: inline-flex;
+			align-items: center;
+			padding: .375rem .875rem;
+			border-radius: 999px;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			font-variant-numeric: tabular-nums;
+		}
+		.transp .persona { flex-wrap: wrap; gap: .75rem; }
+		.transp .persona .etiqueta { margin-left: .125rem; }
+
+		/* Asignación */
+		.transp .asignar-wrap { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+		.transp .asignar-fila { display: flex; gap: .625rem; align-items: center; flex-wrap: wrap; }
+		.transp .asignar-fila form {
+			display: flex;
+			gap: .5rem;
+			align-items: center;
+			flex-wrap: wrap;
+			flex: 1 1 auto;
+			min-width: 0;
+		}
+		.transp .asignar-fila select {
+			flex: 1 1 12rem;
+			min-width: 0;
+			padding: .4375rem 2.25rem .4375rem .625rem;
+			font-size: .8125rem;
+		}
+		.transp .masiva-bar {
+			padding: 1.25rem 1.5rem;
+			background: #f7fbf8;
+			border-bottom: 1px solid #dcebe2;
+		}
+		.transp .masiva-form { display: flex; flex-wrap: wrap; gap: .75rem; align-items: flex-end; }
+		.transp .masiva-form .campo { flex: 1 1 17rem; min-width: 0; margin-bottom: 0; }
+		.transp .masiva-ayuda { margin: .75rem 0 0; font-size: .75rem; color: var(--a-tenue); line-height: 1.5; }
+		.transp .tarjeta--personas .tabla-envoltura { margin-top: 1.25rem; }
+		.transp .asignado {
+			display: inline-flex;
+			align-items: center;
+			gap: .5rem;
+			margin: 0;
+			padding: .4375rem .875rem;
+			border-radius: 999px;
+			background: var(--ok-100);
+			border: 1px solid var(--ok-borde);
+			color: var(--ok-700);
+			font-size: .75rem;
+			font-weight: 700;
+			line-height: 1.4;
+		}
+		.transp .asignado i { flex: none; }
+
+		@media (max-width: 768px) {
+			.transp .campo input,
+			.transp .campo select { font-size: 16px; }
+			.transp .hero-inicio { padding: 1.25rem; min-height: 0; }
+			.transp .hero-inicio h1 { font-size: 1.5rem; }
+			.transp .filtros { padding: 1rem; }
+			.transp .barra-icono { display: none; }
+			.transp .filtros .campo,
+			.transp .filtros__fin { width: 100%; min-width: 0; flex-basis: 100%; }
+			.transp .filtros__fin .boton { flex: 1; justify-content: center; }
+			.transp .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.transp .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.transp .tarjeta__cuerpo { padding: 1rem; }
+			.transp .rejilla-3 { grid-template-columns: 1fr; }
+			.transp .bloque-form__cuerpo { padding: 1rem; }
+			.transp .form-actions-bar { flex-direction: column-reverse; align-items: stretch; }
+			.transp .form-actions-bar .boton { width: 100%; justify-content: center; }
+			.transp .tabla-envoltura { margin: 1rem 1rem 1.25rem; }
+			.transp .tarjeta--personas .tabla-envoltura { margin-top: 1rem; }
+
+			.transp .tabla tbody tr { display: flex; flex-direction: column; }
+			.transp .tabla--salidas tbody td.celda-hora {
+				order: -1;
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: .75rem;
+				padding: .875rem;
+				text-align: left;
+				background: var(--a-suave);
+				border-bottom: 1px solid var(--a-borde);
+			}
+			.transp .tabla--salidas tbody td.celda-hora::before { content: none; }
+			.transp .tabla--salidas tbody td.celda-hora .hora { font-size: 1.125rem; }
+
+			.transp .tabla--pendientes tbody td.celda-persona {
+				order: -1;
+				display: block;
+				padding: .875rem .875rem .75rem;
+				text-align: left;
+				background: var(--a-suave);
+				border-bottom: 1px solid var(--a-borde);
+			}
+			.transp .tabla--pendientes tbody td.celda-persona::before { content: none; }
+			.transp .tabla--pendientes tbody td.celda-asignar { order: 1; display: block; padding: .875rem; text-align: left; }
+			.transp .tabla--pendientes tbody td.celda-asignar::before { display: block; margin-bottom: .625rem; }
+			.transp .asignar-wrap { flex-direction: column; align-items: stretch; }
+			.transp .asignar-wrap form,
+			.transp .asignar-wrap .boton { width: 100%; }
+			.transp .asignar-wrap .boton { justify-content: center; }
+
+			.transp .masiva-bar { padding: 1rem; }
+			.transp .masiva-form { flex-direction: column; align-items: stretch; }
+			.transp .masiva-form .campo { flex: none; width: 100%; }
+			.transp .masiva-form .boton { width: 100%; justify-content: center; }
+			.transp .asignar-fila { width: 100%; }
+			.transp .asignar-fila form { width: 100%; }
+			.transp .asignar-fila select,
+			.transp .asignar-fila .boton { flex: 1 1 100%; }
+			.transp .asignar-fila .boton { justify-content: center; }
+
+			.transp .tabla tbody tr.tabla--vacia td { display: block; text-align: center; }
+			.transp .tabla tbody tr.tabla--vacia td::before { content: none; }
+		}
+		@media (max-width: 480px) {
+			.transp .hero-icono { display: none; }
+		}
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-car-side"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">SALIDAS DEL DÍA</span>
+			<h1>Salidas y transporte</h1>
+			<p>
+				Asigne placa y destino a las personas con programación confirmada.
+			</p>
+		</div>
+	</section>
+
+	<!-- ======== FILTRO DÍA ======== -->
+	<form class="filtros" th:action="@{/transporte}" method="get">
+		<i class="fas fa-calendar-days barra-icono" aria-hidden="true"></i>
+		<div class="campo">
+			<label class="campo__etiqueta" for="filtro-dia">Día</label>
+			<input id="filtro-dia" type="date" name="dia" th:value="${dia}">
+		</div>
+		<div class="filtros__fin">
+			<button type="submit" class="boton">
+				<i class="fas fa-calendar-day"></i> Ver día
+			</button>
+		</div>
+	</form>
+
+	<!-- ======== NUEVA SALIDA ======== -->
+	<details class="tarjeta tarjeta--nueva detalle">
+		<summary class="tarjeta__cabecera detalle__cabecera">
+			<span class="sec-icono sec-icono--oro" aria-hidden="true"><i class="fas fa-car-side"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Nueva salida</h2>
+				<p>Vehículo que recoge al personal cuando termina su turno.</p>
+			</div>
+			<span class="detalle__flecha" aria-hidden="true"><i class="fas fa-chevron-down"></i></span>
+		</summary>
+
+		<div class="tarjeta__cuerpo">
+			<form th:action="@{/transporte/viajes}" method="post">
+				<input type="hidden" name="tipo" value="SALIDA">
+
+				<div class="bloque-form">
+					<div class="bloque-form__cabecera">
+						<div class="bloque-form__icono"><i class="fas fa-route"></i></div>
+						<div>
+							<h3>Datos de la salida</h3>
+							<p>La hora de salida se toma como referencia para el reporte del día.</p>
+						</div>
+					</div>
+					<div class="bloque-form__cuerpo">
+						<div class="rejilla-3">
+							<label class="campo">
+								<span class="campo__etiqueta">Salida</span>
+								<input type="datetime-local" name="salida" th:value="${dia + 'T19:00'}" required>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Hasta (opcional)</span>
+								<input type="date" name="hasta" th:attr="min=${dia}"
+									   title="Deje vacío para una sola salida">
+								<span class="campo__ayuda">Repite la misma salida cada día hasta esa fecha; los días que ya la tienen se saltan.</span>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Vehículo / placa</span>
+								<select name="vehiculoId" required>
+									<option value="">Seleccione vehículo</option>
+									<option th:each="vehiculo : ${vehiculos}" th:value="${vehiculo.id}"
+											th:text="${vehiculo.placa + ' · capacidad ' + vehiculo.capacidad}">Placa</option>
+								</select>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Destino</span>
+								<select name="destinoId" required>
+									<option value="">Seleccione destino</option>
+									<option th:each="destino : ${destinos}" th:value="${destino.id}"
+											th:text="${destino.nombre + (destino.zona != null ? ' · ' + destino.zona : '')}">Destino</option>
+								</select>
+							</label>
+						</div>
+					</div>
+				</div>
+
+				<div class="form-actions-bar">
+					<button type="submit" class="boton boton--primario">
+						<i class="fas fa-car-side"></i> Crear salida
+					</button>
+				</div>
+			</form>
+		</div>
+	</details>
+
+	<!-- ======== NUEVO INGRESO ======== -->
+	<details class="tarjeta tarjeta--nueva detalle">
+		<summary class="tarjeta__cabecera detalle__cabecera">
+			<span class="sec-icono sec-icono--verde" aria-hidden="true"><i class="fas fa-right-to-bracket"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Nuevo ingreso</h2>
+				<p>Vehículo que recoge al personal antes de que empiece su turno.</p>
+			</div>
+			<span class="detalle__flecha" aria-hidden="true"><i class="fas fa-chevron-down"></i></span>
+		</summary>
+
+		<div class="tarjeta__cuerpo">
+			<form th:action="@{/transporte/viajes}" method="post">
+				<input type="hidden" name="tipo" value="INGRESO">
+
+				<div class="bloque-form">
+					<div class="bloque-form__cabecera">
+						<div class="bloque-form__icono"><i class="fas fa-route"></i></div>
+						<div>
+							<h3>Datos del ingreso</h3>
+							<p>La hora de entrada se toma como referencia para el reporte del día.</p>
+						</div>
+					</div>
+					<div class="bloque-form__cuerpo">
+						<div class="rejilla-3">
+							<label class="campo">
+								<span class="campo__etiqueta">Entrada</span>
+								<input type="datetime-local" name="salida" th:value="${dia + 'T05:00'}" required>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Hasta (opcional)</span>
+								<input type="date" name="hasta" th:attr="min=${dia}"
+									   title="Deje vacío para un solo ingreso">
+								<span class="campo__ayuda">Repite el mismo ingreso cada día hasta esa fecha; los días que ya lo tienen se saltan.</span>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Vehículo / placa</span>
+								<select name="vehiculoId" required>
+									<option value="">Seleccione vehículo</option>
+									<option th:each="vehiculo : ${vehiculos}" th:value="${vehiculo.id}"
+											th:text="${vehiculo.placa + ' · capacidad ' + vehiculo.capacidad}">Placa</option>
+								</select>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Destino</span>
+								<select name="destinoId" required>
+									<option value="">Seleccione destino</option>
+									<option th:each="destino : ${destinos}" th:value="${destino.id}"
+											th:text="${destino.nombre + (destino.zona != null ? ' · ' + destino.zona : '')}">Destino</option>
+								</select>
+							</label>
+						</div>
+					</div>
+				</div>
+
+				<div class="form-actions-bar">
+					<button type="submit" class="boton boton--primario">
+						<i class="fas fa-right-to-bracket"></i> Crear ingreso
+					</button>
+				</div>
+			</form>
+		</div>
+	</details>
+
+	<!-- ======== TABLA SALIDAS DEL DÍA ======== -->
+	<div class="tarjeta tarjeta--salidas">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--azul" aria-hidden="true"><i class="fas fa-list-check"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Salidas del día</h2>
+				<p>Vehículos que recogen al personal al terminar su turno.</p>
+			</div>
+			<span class="etiqueta" th:text="${#lists.size(salidas)} + ' salida(s)'">0 salidas</span>
+			<a class="etiqueta" th:href="@{/transporte/reporte(dia=${dia}, tipo='SALIDA')}" target="_blank">
+				<i class="fas fa-file-pdf"></i> PDF
+			</a>
+			<a class="etiqueta" th:href="@{/transporte/historial}">
+				<i class="fas fa-clock-rotate-left"></i> Ver historial
+			</a>
+		</div>
+
+		<div class="tabla-envoltura">
+			<table class="tabla tabla--salidas">
+				<thead>
+				<tr>
+					<th>Hora</th>
+					<th>Vehículo</th>
+					<th>Destino</th>
+					<th class="tabla__num">Pasajeros</th>
+					<th class="tabla__acciones">Acción</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr th:each="viaje : ${salidas}">
+					<td class="celda-hora" data-label="Hora">
+						<span class="hora" th:text="${#temporals.format(viaje.salida, 'HH:mm')}">19:00</span>
+						<a th:href="@{/transporte/reporte(dia=${dia}, viaje=${viaje.id})}" target="_blank"
+						   class="boton boton--fantasma boton--chico">
+							<i class="fas fa-file-pdf"></i> Reporte / PDF
+						</a>
+					</td>
+					<td data-label="Vehículo">
+						<span class="placa" th:text="${viaje.vehiculo.placa}">ABC123</span>
+						<span class="tabla__secundario" th:if="${viaje.vehiculo.proveedor != null}"
+							  th:text="${'Proveedor: ' + viaje.vehiculo.proveedor}">Proveedor</span>
+					</td>
+					<td data-label="Destino">
+						<span th:text="${viaje.destino.nombre}">Destino</span>
+						<span class="tabla__secundario" th:if="${viaje.destino.direccion != null}"
+							  th:text="${viaje.destino.direccion}">Dirección</span>
+						<span class="tabla__secundario" th:if="${viaje.destino.referencia != null}"
+							  th:text="${viaje.destino.referencia}">Referencia</span>
+					</td>
+					<td class="tabla__num" data-label="Pasajeros">
+						<span class="pasajeros"
+							  th:text="${conteos[viaje.id]} + ' / ' + ${viaje.vehiculo.capacidad}">0 / 4</span>
+					</td>
+					<td class="tabla__acciones" data-label="Acción">
+						<!--
+							Antes no había forma de quitar una salida: se creaba y se
+							quedaba en la lista. Ahora se elimina, con su confirmación,
+							y solo si el coordinador lo pide de verdad.
+						-->
+						<form th:action="@{/transporte/viajes/{id}/eliminar(id=${viaje.id})}"
+							  method="post" class="form-linea"
+							  th:attr="data-confirm=|¿Eliminar la salida de las ${#temporals.format(viaje.salida, 'HH:mm')}? Se quitan también sus pasajeros.|,data-confirm-peligro='true'">
+							<input type="hidden" name="dia" th:value="${dia}">
+							<button type="submit" class="boton boton--peligro boton--chico">
+								<i class="fas fa-trash-can"></i> Eliminar
+							</button>
+						</form>
+					</td>
+				</tr>
+				<tr th:if="${#lists.isEmpty(salidas)}" class="tabla--vacia">
+					<td colspan="5" data-label="Aviso">
+						<i class="fas fa-van-shuttle vacio-icono" aria-hidden="true"></i>
+						<strong>Sin salidas configuradas</strong><br>
+						No hay salidas para este día. Cree la primera con el formulario de arriba.
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+	<!-- ======== TABLA INGRESOS DEL DÍA ======== -->
+	<div class="tarjeta tarjeta--salidas">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--verde" aria-hidden="true"><i class="fas fa-right-to-bracket"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Ingresos del día</h2>
+				<p>Vehículos que recogen al personal antes de que empiece su turno.</p>
+			</div>
+			<span class="etiqueta" th:text="${#lists.size(ingresos)} + ' ingreso(s)'">0 ingresos</span>
+			<a class="etiqueta" th:href="@{/transporte/reporte(dia=${dia}, tipo='INGRESO')}" target="_blank">
+				<i class="fas fa-file-pdf"></i> PDF
+			</a>
+			<a class="etiqueta" th:href="@{/transporte/historial}">
+				<i class="fas fa-clock-rotate-left"></i> Ver historial
+			</a>
+		</div>
+
+		<div class="tabla-envoltura">
+			<table class="tabla tabla--ingresos">
+				<thead>
+				<tr>
+					<th>Hora</th>
+					<th>Vehículo</th>
+					<th>Destino</th>
+					<th class="tabla__num">Pasajeros</th>
+					<th class="tabla__acciones">Acción</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr th:each="viaje : ${ingresos}">
+					<td class="celda-hora" data-label="Hora">
+						<span class="hora" th:text="${#temporals.format(viaje.salida, 'HH:mm')}">05:00</span>
+						<a th:href="@{/transporte/reporte(dia=${dia}, viaje=${viaje.id})}" target="_blank"
+						   class="boton boton--fantasma boton--chico">
+							<i class="fas fa-file-pdf"></i> Reporte / PDF
+						</a>
+					</td>
+					<td data-label="Vehículo">
+						<span class="placa" th:text="${viaje.vehiculo.placa}">ABC123</span>
+						<span class="tabla__secundario" th:if="${viaje.vehiculo.proveedor != null}"
+							  th:text="${'Proveedor: ' + viaje.vehiculo.proveedor}">Proveedor</span>
+					</td>
+					<td data-label="Destino">
+						<span th:text="${viaje.destino.nombre}">Destino</span>
+						<span class="tabla__secundario" th:if="${viaje.destino.direccion != null}"
+							  th:text="${viaje.destino.direccion}">Dirección</span>
+						<span class="tabla__secundario" th:if="${viaje.destino.referencia != null}"
+							  th:text="${viaje.destino.referencia}">Referencia</span>
+					</td>
+					<td class="tabla__num" data-label="Pasajeros">
+						<span class="pasajeros"
+							  th:text="${conteos[viaje.id]} + ' / ' + ${viaje.vehiculo.capacidad}">0 / 4</span>
+					</td>
+					<td class="tabla__acciones" data-label="Acción">
+						<form th:action="@{/transporte/viajes/{id}/eliminar(id=${viaje.id})}"
+							  method="post" class="form-linea"
+							  th:attr="data-confirm=|¿Eliminar el ingreso de las ${#temporals.format(viaje.salida, 'HH:mm')}? Se quitan también sus pasajeros.|,data-confirm-peligro='true'">
+							<input type="hidden" name="dia" th:value="${dia}">
+							<button type="submit" class="boton boton--peligro boton--chico">
+								<i class="fas fa-trash-can"></i> Eliminar
+							</button>
+						</form>
+					</td>
+				</tr>
+				<tr th:if="${#lists.isEmpty(ingresos)}" class="tabla--vacia">
+					<td colspan="5" data-label="Aviso">
+						<i class="fas fa-right-to-bracket vacio-icono" aria-hidden="true"></i>
+						<strong>Sin ingresos configurados</strong><br>
+						No hay ingresos para este día. Cree el primero con el formulario de arriba.
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+	<!-- ======== PERSONAS PENDIENTES ======== -->
+	<div class="tarjeta tarjeta--personas">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--verde" aria-hidden="true"><i class="fas fa-user-clock"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Personas pendientes de asignar</h2>
+				<!--
+					La lista es por el FIN del turno a propósito: la persona aparece
+					el día en que termina de trabajar, que es cuando el vehículo la
+					puede recoger. Antes se listaba por el día de entrada y un turno
+					que cruzaba la medianoche aparecía donde ninguna salida servía.
+				-->
+				<p>Aparecen quienes terminan su turno hoy (para las salidas) y quienes lo
+					empiezan hoy (para los ingresos), con programación aprobada, ajustada o
+					notificada.</p>
+			</div>
+		</div>
+
+		<!--
+			Asignación masiva: una salida y muchas personas de una vez. Los
+			checkboxes de la tabla viajan con este form por el atributo HTML5
+			"form", así el desplegable y el botón de cada fila pueden seguir
+			siendo formularios propios sin anidarse (un form dentro de otro no
+			existe en HTML).
+		-->
+		<div class="masiva-bar" th:unless="${#lists.isEmpty(programaciones)}">
+			<form id="masiva-form" th:action="@{/transporte/asignacion-masiva}" method="post" class="masiva-form">
+				<input type="hidden" name="dia" th:value="${dia}">
+				<label class="campo masiva-bar__salida">
+					<span class="campo__etiqueta">Asignar a viaje</span>
+					<select name="viajeId" required th:disabled="${#lists.isEmpty(viajes)}">
+						<option value="" disabled selected hidden th:if="${#lists.isEmpty(viajes)}">
+							Cree primero un viaje del día
+						</option>
+						<option th:each="viaje : ${viajes}" th:value="${viaje.id}"
+								th:text="${(viaje.tipo.name() == 'INGRESO' ? 'Ingreso · ' : 'Salida · ') + viaje.vehiculo.placa + ' · ' + viaje.destino.nombre + ' · ' + #temporals.format(viaje.salida, 'HH:mm') + ' · ' + cupos[viaje.id] + ' lugar(es)'}">Viaje</option>
+					</select>
+				</label>
+				<button type="submit" name="modo" value="auto" class="boton boton--primario"
+						th:disabled="${#lists.isEmpty(viajes)}">
+					<i class="fas fa-wand-magic-sparkles"></i> Asignar todos los compatibles
+				</button>
+				<button type="submit" name="modo" value="seleccion" class="boton boton--contorno"
+						th:disabled="${#lists.isEmpty(viajes)}">
+					<i class="fas fa-user-check"></i> Asignar seleccionados
+				</button>
+			</form>
+			<p class="masiva-ayuda">
+				"Compatibles" = en una salida, quienes ya terminan su turno antes de
+				esa hora (dentro de las 8 horas posteriores a su fin); en un ingreso,
+				quienes empiezan su turno después de ella (dentro de las 8 horas
+				anteriores). En ambos casos, que aún quepan en el vehículo. También
+				puede marcar casillas y usar "seleccionados".
+			</p>
+		</div>
+
+		<div class="tabla-envoltura">
+			<table class="tabla tabla--pendientes">
+				<thead>
+				<tr>
+					<th>Persona</th>
+					<th>Hora</th>
+					<th>Área</th>
+					<th>Asignar a salida</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr th:each="programacion : ${programaciones}">
+					<td class="celda-persona" data-label="Persona">
+						<div class="persona">
+							<span class="inicial" aria-hidden="true"
+								  th:text="${#strings.toUpperCase(#strings.substring(programacion.colaborador.nombreCompleto, 0, 1))}">N</span>
+							<span class="tabla__principal" th:text="${programacion.colaborador.nombreCompleto}">Persona</span>
+							<!--
+								La persona se lleva en el vehículo porque alguien la propuso y
+								Talento Humano la aprobó. Marcar aquí de dónde salió la excepción
+								es lo que permite preguntarle a quien coordina el viaje por qué esa
+								salida se armó con alguien sin los requisitos.
+							-->
+							<span class="etiqueta etiqueta--alerta etiqueta--chico"
+								  th:if="${programacion.esEmergencia}"
+								  th:title="${programacion.referenciaEvento != null ? 'Evento: ' + programacion.referenciaEvento : 'Emergencia sin evento'}">
+								emergencia
+							</span>
+							<span class="etiqueta etiqueta--error etiqueta--chico"
+								  th:if="${programacion.incumpleAptitud}"
+								  title="Se escogió sin la aptitud de la operación">sin aptitud</span>
+						</div>
+					</td>
+					<td class="tabla__num" data-label="Hora">
+						<!--
+							La hora que importa para asignar vehículo es la de salida de la
+							persona, es decir cuando termina su turno (fin efectivo), no la
+							de entrada: el vehículo se programa para recoger a la persona
+							cuando sale, no cuando entra.
+						-->
+						<span class="hora" th:text="${#temporals.format(programacion.finEfectivo, 'HH:mm')}">22:00</span>
+						<span class="tabla__secundario" th:text="'Entra ' + ${#temporals.format(programacion.inicioEfectivo, 'HH:mm')}">Entra 19:00</span>
+					</td>
+					<td data-label="Área" th:text="${programacion.area.nombre}">Área</td>
+					<td class="celda-asignar" data-label="Asignar">
+						<!--
+							Si la persona ya subió a una salida, los botones de asignar se
+							quitan y en su lugar queda dicho a cuál vehículo se subió.
+						-->
+						<div class="asignar-wrap" th:if="${viajeDeProgramacion.containsKey(programacion.id)}">
+							<p class="asignado">
+								<i class="fas fa-circle-check" aria-hidden="true"></i>
+								<span th:text="'Ya se le asignó el vehículo ' + ${viajeDeProgramacion[programacion.id].vehiculo.placa} + ', que sale a las ' + ${#temporals.format(viajeDeProgramacion[programacion.id].salida, 'HH:mm')}">Ya se le asignó el vehículo ABC123, que sale a las 22:00</span>
+							</p>
+							<!--
+								Se desvincula y no se borra: si la persona subió al vehículo
+								equivocado hay que poder quitarla de esa salida sin perder su
+								programación aprobada ni el vehículo.
+							-->
+							<form th:action="@{/transporte/pasajeros/{id}/quitar(id=${programacion.id})}"
+								  method="post" class="form-linea"
+								  th:attr="data-confirm=|¿Quitar a ${programacion.colaborador.nombreCompleto} del vehículo ${viajeDeProgramacion[programacion.id].vehiculo.placa}? Solo se desvincula del transporte: la programación y el vehículo siguen existiendo.|,data-confirm-peligro='true',data-confirm-ok='Sí, quitar'">
+								<input type="hidden" name="dia" th:value="${dia}">
+								<button type="submit" class="boton boton--peligro boton--chico">
+									<i class="fas fa-user-minus"></i> Desvincular
+								</button>
+							</form>
+						</div>
+						<div class="asignar-wrap" th:unless="${viajeDeProgramacion.containsKey(programacion.id)}">
+							<div class="asignar-fila">
+								<!--
+									Para la asignación masiva: la casilla viaja en el form
+									de la barra de arriba (atributo "form") y el desplegable
+									solo ofrece salidas donde esta persona sí puede subir
+									(la salida no puede ser antes de que termine su turno,
+									ni estar llena).
+								-->
+								<input type="checkbox" class="masiva-check" name="programacionIds"
+									   th:value="${programacion.id}" form="masiva-form"
+									   title="Marcar para asignación masiva"
+									   th:disabled="${#lists.isEmpty(viajes)}">
+								<form th:id="'fila-' + programacion.id" th:action="@{/transporte/pasajeros}"
+									  method="post">
+									<input type="hidden" name="programacionId" th:value="${programacion.id}">
+									<input type="hidden" name="dia" th:value="${dia}">
+									<select name="viajeId" required
+											th:disabled="${#lists.isEmpty(salidasCompatibles[programacion.id])}"
+											aria-label="Salida para asignar">
+										<option th:each="viaje : ${salidasCompatibles[programacion.id]}"
+												th:value="${viaje.id}"
+												th:text="${viaje.vehiculo.placa + ' · ' + viaje.destino.nombre + ' · ' + #temporals.format(viaje.salida, 'HH:mm')}">Salida</option>
+									</select>
+									<button type="submit" class="boton boton--primario boton--chico"
+											th:disabled="${#lists.isEmpty(salidasCompatibles[programacion.id])}">
+										<i class="fas fa-paper-plane"></i> Enviar
+									</button>
+								</form>
+							</div>
+							<span class="tenue" th:if="${#lists.isEmpty(salidasCompatibles[programacion.id])}"
+								  th:text="${#lists.isEmpty(viajes) ? 'Cree un viaje para asignar'
+										  : 'Sin viaje posible: el vehículo debe salir a las ' + #temporals.format(programacion.finEfectivo, 'HH:mm') + ' o después'}">Sin salidas</span>
+						</div>
+					</td>
+				</tr>
+				<tr th:if="${#lists.isEmpty(programaciones)}" class="tabla--vacia">
+					<td colspan="4" data-label="Aviso">
+						<i class="fas fa-user-check vacio-icono" aria-hidden="true"></i>
+						<strong>Sin personas pendientes</strong><br>
+						No hay personas aprobadas pendientes para este día.
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+</div>
+</body>
+</html>

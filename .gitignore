@@ -1,0 +1,59 @@
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Logs de compilacion y pruebas ###
+*.log
+
+### Variables de entorno y secretos locales ###
+# Nunca versionar archivos con credenciales reales.
+# Usa .env.example como plantilla (sin valores reales).
+.env
+.env.*
+!.env.example
+
+### Reportes de seguridad y SBOM generados por CI ###
+target/dependency-check-report*
+target/sbom*
+target/surefire-reports/
+outputs/
+
+### Material local de coordinación y archivos duplicados ###
+.devin/
+.github/modernize/
+docs/orquestacion/
+docs/ENTREGA_REPOSITORIO.md
+/CASOS_USO_Y_PRUEBAS.drawio
+/RECURSOS_SERVIDOR.md
+*.dtmp
+~$*

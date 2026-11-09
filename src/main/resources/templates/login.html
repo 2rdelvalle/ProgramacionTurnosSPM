@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<meta charset="UTF-8">
+	<!--
+		Materializamos el token CSRF aquí, antes de escribir todo el CSS
+		inline. Sin esto, el token se resuelve al llegar al <form> (línea
+		~343), cuando ya se superó el buffer de 8 KB de Tomcat y la
+		respuesta está "committed". En ese punto el Set-Cookie se descarta
+		y el POST a /login es rechazado por CSRF.
+	-->
+	<meta name="_csrf" th:content="${_csrf.token}"/>
+	<meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+	<title>Acceso · Mardique</title>
+	<link rel="stylesheet" th:href="@{/vendor/fontawesome/css/all.min.css}">
+	<link rel="stylesheet" th:href="@{/css/app.css}">
+	<link rel="icon"
+		  href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230b1929'/><text x='16' y='23' font-size='17' font-family='sans-serif' font-weight='bold' text-anchor='middle' fill='%23f09a36'>M</text></svg>">
+	<script th:src="@{/js/app.js}" defer></script>
+
+	<!--
+		Diseño de la pantalla de acceso:
+
+		- Escritorio (≥980px): dos mitades al 50%. Izquierda, el relato de
+		  marca sobre el panel azul con onda lateral. Derecha, la tarjeta
+		  del formulario centrada sobre el fondo claro.
+
+		- Móvil (<980px): el panel azul NO se oculta. Se convierte en un
+		  hero horizontal arriba con el logo, el titular y el lema. Debajo
+		  va la tarjeta del formulario. Así la identidad de marca se ve
+		  igual en cualquier dispositivo, en vez de desaparecer.
+	-->
+	<style>
+		body.acceso {
+			display: flex;
+			flex-direction: column;
+			align-items: stretch;
+			justify-content: flex-start;
+			gap: 0;
+			padding: 0;
+			min-height: 100vh;
+			min-height: 100dvh;
+			background: var(--fondo);
+		}
+
+		/* -----------------------------------------------------------------
+		   Panel de marca (azul con la onda)
+		   En escritorio: columna izquierda, 50%.
+		   En móvil: hero horizontal arriba, 100%.
+		   ----------------------------------------------------------------- */
+		.acceso__relato {
+			position: relative;
+			flex: 0 0 auto;
+			width: 100%;
+			min-height: 22rem;
+			padding: 2rem 1.5rem 3rem;
+			display: flex;
+			flex-direction: column;
+			align-items: flex-start;
+			justify-content: flex-start;
+			text-align: left;
+			overflow: hidden;
+			color: #fff;
+			background:
+					radial-gradient(640px 420px at 18% 20%, rgba(0, 163, 224, .10), transparent 60%),
+					radial-gradient(520px 420px at 88% 84%, rgba(240, 154, 54, .08), transparent 60%),
+					linear-gradient(165deg, var(--marca-900) 0%, var(--marca-800) 55%, #152c45 100%);
+			clip-path: url(#mdqOnda);
+		}
+
+		.acceso__relato::after {
+			content: "";
+			position: absolute;
+			inset: 0;
+			background-image: radial-gradient(rgba(255, 255, 255, .07) 1px, transparent 1px);
+			background-size: 24px 24px;
+			-webkit-mask-image: radial-gradient(900px 700px at 30% 35%, #000 0%, transparent 72%);
+			mask-image: radial-gradient(900px 700px at 30% 35%, #000 0%, transparent 72%);
+			pointer-events: none;
+		}
+
+		.acceso__icono-fondo {
+			position: absolute;
+			color: #fff;
+			opacity: .05;
+			pointer-events: none;
+			z-index: 0;
+		}
+
+		.acceso__icono-fondo--1 { top: 8%; right: 18%; font-size: 4.5rem; transform: rotate(8deg); }
+		.acceso__icono-fondo--2 { top: 16%; left: 8%; font-size: 2.5rem; transform: rotate(-12deg); }
+		.acceso__icono-fondo--3 { bottom: 12%; left: 10%; font-size: 3rem; transform: rotate(-6deg); }
+		.acceso__icono-fondo--4 { bottom: 18%; right: 16%; font-size: 2.75rem; transform: rotate(10deg); }
+
+		.acceso__relato > *:not(.acceso__icono-fondo) {
+			position: relative;
+			z-index: 1;
+		}
+
+		.acceso__relato-interior {
+			width: 100%;
+			max-width: 29rem;
+		}
+
+		/* Logo con marco degradado (oro → cian) */
+		.acceso__logo-marco {
+			position: relative;
+			display: block;
+			width: fit-content;
+			margin: 0 auto 1.5rem;
+			padding: 4px;
+			border-radius: 20px;
+			background: linear-gradient(135deg, var(--oro-500), #00a3e0);
+			box-shadow: 0 16px 34px rgba(5, 13, 23, .4);
+		}
+
+		.acceso__logo-placa {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background: #fff;
+			border-radius: 17px;
+			padding: 1rem 1.5rem;
+		}
+
+		.acceso__logo-real {
+			height: 3rem;
+			width: auto;
+			max-width: 240px;
+			object-fit: contain;
+			display: block;
+		}
+
+		.acceso__logo-respaldo {
+			display: none;
+			align-items: center;
+			gap: .625rem;
+			font-weight: 800;
+			font-size: 1.25rem;
+			color: var(--marca-800);
+		}
+
+		.acceso__logo-respaldo .cuadro {
+			width: 2.25rem;
+			height: 2.25rem;
+			border-radius: 10px;
+			display: grid;
+			place-items: center;
+			background: linear-gradient(135deg, var(--oro-500), var(--oro-600));
+			color: #fff;
+			font-size: .9375rem;
+			flex-shrink: 0;
+		}
+
+		.acceso__relato h2 {
+			color: #fff;
+			font-size: 1.75rem;
+			line-height: 1.18;
+			margin: 0 0 .75rem;
+			letter-spacing: -.025em;
+			font-weight: 800;
+			text-align: left;
+		}
+
+		.acceso__relato h2 span {
+			color: var(--oro-500);
+		}
+
+		.acceso__relato p {
+			margin: 0;
+			color: #9fb2c7;
+			font-size: .875rem;
+			line-height: 1.55;
+			font-weight: 500;
+			text-align: left;
+		}
+
+		/* -----------------------------------------------------------------
+		   Columna del formulario
+		   En escritorio: 50% derecha, tarjeta centrada.
+		   En móvil: a todo el ancho, con la tarjeta ligeramente solapada
+		   sobre el panel de marca (efecto de continuidad visual).
+		   ----------------------------------------------------------------- */
+		.acceso__columna {
+			flex: 1 1 auto;
+			width: 100%;
+			display: grid;
+			place-items: start center;
+			padding: 1.5rem 1.25rem 2.5rem;
+			background: var(--fondo);
+		}
+
+		.acceso__columna .acceso__caja {
+			width: 100%;
+			max-width: 24.5rem;
+			background: var(--superficie);
+			border: 1px solid var(--linea);
+			border-radius: 22px;
+			box-shadow: var(--sombra-3);
+			overflow: hidden;
+		}
+
+		.acceso__columna .acceso__cabecera {
+			padding: 1.75rem 1.5rem 1.25rem;
+			text-align: center;
+			border-bottom: 1px solid var(--linea);
+		}
+
+		.acceso__columna .acceso__cabecera::after {
+			display: none;
+		}
+
+		.acceso__columna .acceso__cabecera h1 {
+			font-size: 1.25rem;
+		}
+
+		.acceso__columna .acceso__cabecera p {
+			margin-top: .25rem;
+			font-size: .8125rem;
+			color: var(--tinta-media);
+		}
+
+		.acceso__columna .acceso__cuerpo {
+			padding: 1.5rem 1.5rem 1.75rem;
+		}
+
+		.acceso__columna .campo input {
+			border-radius: 11px;
+			border-color: var(--linea);
+			background: var(--fondo);
+		}
+
+		.acceso__columna .campo input:focus {
+			background: #fff;
+			box-shadow: 0 0 0 4px rgba(0, 163, 224, .12);
+		}
+
+		.acceso__columna .campo input:-webkit-autofill {
+			-webkit-box-shadow: 0 0 0 1000px var(--fondo) inset;
+			-webkit-text-fill-color: var(--tinta);
+			transition: background-color 9999s ease-in-out 0s;
+		}
+
+		.acceso__columna .boton--bloque {
+			border-radius: 11px;
+			font-size: .875rem;
+			padding: .8125rem 1.25rem;
+			margin-top: .25rem;
+		}
+
+		/* -----------------------------------------------------------------
+		   Escritorio: dos columnas lado a lado
+		   ----------------------------------------------------------------- */
+		@media (min-width: 980px) {
+			body.acceso {
+				flex-direction: row;
+				align-items: stretch;
+			}
+
+			.acceso__relato {
+				flex: 1 1 50%;
+				width: 50%;
+				min-height: 100vh;
+				min-height: 100dvh;
+				padding: 3rem clamp(3rem, 6vw, 6rem);
+				justify-content: center;
+			}
+
+			.acceso__relato-interior {
+				max-width: 29rem;
+			}
+
+			.acceso__logo-marco {
+				margin: 0 auto 2rem;
+				padding: 5px;
+				border-radius: 22px;
+			}
+
+			.acceso__logo-placa {
+				padding: 1.125rem 1.75rem;
+				border-radius: 18px;
+			}
+
+			.acceso__logo-real {
+				height: 3.5rem;
+				max-width: 280px;
+			}
+
+			.acceso__logo-respaldo {
+				font-size: 1.375rem;
+			}
+
+			.acceso__logo-respaldo .cuadro {
+				width: 2.5rem;
+				height: 2.5rem;
+				font-size: 1rem;
+			}
+
+			.acceso__relato h2 {
+				font-size: 2.25rem;
+				margin-bottom: .875rem;
+			}
+
+			.acceso__relato p {
+				font-size: .9375rem;
+			}
+
+			.acceso__columna {
+				flex: 1 1 50%;
+				width: 50%;
+				place-items: center;
+				padding: 2rem 1.5rem;
+			}
+
+			.acceso__columna .acceso__cabecera {
+				padding: 2.25rem 2rem 1.625rem;
+			}
+
+			.acceso__columna .acceso__cabecera h1 {
+				font-size: 1.3125rem;
+			}
+
+			.acceso__columna .acceso__cuerpo {
+				padding: 1.75rem 2rem 2rem;
+			}
+		}
+
+		/* -----------------------------------------------------------------
+		   Móvil: ajustes finos
+		   ----------------------------------------------------------------- */
+		@media (max-width: 640px) {
+			.acceso__relato {
+				min-height: 0;
+				padding: 1.75rem 1.25rem 2.5rem;
+			}
+
+			.acceso__relato h2 {
+				font-size: 1.5rem;
+			}
+
+			.acceso__logo-real {
+				height: 2.5rem;
+				max-width: 220px;
+			}
+
+			.acceso__logo-marco {
+				margin-bottom: 1.25rem;
+				padding: 3px;
+				border-radius: 16px;
+			}
+
+			.acceso__logo-placa {
+				padding: .875rem 1.25rem;
+				border-radius: 13px;
+			}
+
+			/* La tarjeta sube para solaparse ligeramente con el panel azul */
+			.acceso__columna {
+				padding: 0 1rem 2rem;
+				margin-top: -1.75rem;
+			}
+
+			.acceso__columna .acceso__caja {
+				position: relative;
+				z-index: 2;
+			}
+
+			.acceso__icono-fondo--1,
+			.acceso__icono-fondo--4 {
+				display: none;
+			}
+		}
+	</style>
+</head>
+
+<body class="acceso">
+
+<!-- La onda lateral solo tiene sentido en escritorio; en móvil la forma
+     se recorta igual pero el panel es horizontal y no se nota. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+	<defs>
+		<clipPath id="mdqOnda" clipPathUnits="objectBoundingBox">
+			<path d="M0,0
+					H0.975
+					C0.955,0.33 0.995,0.66 0.965,1
+					H0
+					Z" />
+		</clipPath>
+	</defs>
+</svg>
+
+<!-- ===== PANEL DE MARCA ===== -->
+<aside class="acceso__relato">
+	<i class="fas fa-truck acceso__icono-fondo acceso__icono-fondo--1"></i>
+	<i class="fas fa-user-clock acceso__icono-fondo acceso__icono-fondo--2"></i>
+	<i class="fas fa-anchor acceso__icono-fondo acceso__icono-fondo--3"></i>
+	<i class="fas fa-comment-sms acceso__icono-fondo acceso__icono-fondo--4"></i>
+
+	<div class="acceso__relato-interior">
+		<span class="acceso__logo-marco">
+			<span class="acceso__logo-placa">
+				<img class="acceso__logo-real" th:src="@{/images/Logo.png}" alt="Sociedad Portuaria Mardique"
+					 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+				<span class="acceso__logo-respaldo">
+					<span class="cuadro">M</span> MARDIQUE
+				</span>
+			</span>
+		</span>
+
+		<h2>Programación de <span>turnos</span>, transporte y horas extra</h2>
+		<p>Reemplaza el Excel y el WhatsApp por un flujo con aprobación y trazabilidad.</p>
+	</div>
+</aside>
+
+<!-- ===== TARJETA DEL FORMULARIO ===== -->
+<div class="acceso__columna">
+	<div class="acceso__caja">
+
+		<div class="acceso__cabecera">
+			<h1>Programación de turnos</h1>
+			<p>Sociedad Portuaria Mardique S.A.</p>
+		</div>
+
+		<div class="acceso__cuerpo">
+
+			<div class="alerta alerta--error" th:if="${param.error}">
+				<span class="alerta__icono"><i class="fas fa-circle-xmark"></i></span>
+				<div>
+					<strong>No se pudo ingresar</strong>
+					Usuario o contraseña incorrectos, o la cuenta está inactiva.
+				</div>
+			</div>
+
+			<div class="alerta alerta--ok" th:if="${param.salir}">
+				<span class="alerta__icono"><i class="fas fa-circle-check"></i></span>
+				<div>
+					<strong>Sesión cerrada</strong>
+					Su sesión se cerró correctamente.
+				</div>
+			</div>
+
+			<div class="alerta alerta--aviso" th:if="${param.expirado}">
+				<span class="alerta__icono"><i class="fas fa-triangle-exclamation"></i></span>
+				<div>
+					<strong>Sesión expirada</strong>
+					La sesión expiró por inactividad. Ingrese de nuevo.
+				</div>
+			</div>
+
+			<form th:action="@{/login}" method="post" autocomplete="on">
+				<!-- CSRF explícito: evita que SpringActionTagProcessor lo inyecte
+				     implícitamente y toque la sesión HTTP tras el commit del
+				     redirect de logout. Con CookieCsrfTokenRepository el token
+				     se resuelve desde la cookie XSRF-TOKEN. -->
+				<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+				<label class="campo">
+					<span class="campo__etiqueta">Usuario</span>
+					<input type="text" name="username" autocomplete="username" required autofocus
+						   spellcheck="false" placeholder="th, operaciones, basculas">
+				</label>
+
+				<label class="campo">
+					<span class="campo__etiqueta">Contraseña</span>
+					<input type="password" name="password" autocomplete="current-password" required
+						   placeholder="••••••••">
+				</label>
+
+				<button type="submit" class="boton boton--primario boton--bloque">
+					<i class="fas fa-right-to-bracket"></i> Ingresar
+				</button>
+			</form>
+
+		</div>
+	</div>
+</div>
+
+</body>
+
+</html>

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es" th:replace="~{fragments/layout :: pagina('Propuesta de extendido', 'nueva', ~{::contenido})}">
+
+<body>
+<div th:fragment="contenido" class="enviada">
+
+	<!--
+		Esta pantalla usa los componentes del sistema visual (hero-inicio,
+		tarjeta, etiqueta, boton, lista-datos) con la paleta sobria de
+		colaboradores.html y transporte.html.
+
+		En móvil:
+		- El hero se apila en una columna.
+		- La ficha de datos pasa a una sola columna.
+		- El pie con botones se apila y cada botón ocupa todo el ancho.
+	-->
+	<style>
+		/* =================================================================
+		   Propuesta enviada · estilos locales
+		   ================================================================= */
+		.enviada {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+		.enviada > .hero-inicio,
+		.enviada > .tarjeta { margin-bottom: 1.25rem; }
+
+		/* ---- Portada ---- */
+		.enviada .hero-inicio,
+		.enviada .hero-inicio * { animation: none; }
+		.enviada .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.enviada .hero-inicio::before,
+		.enviada .hero-inicio::after { content: none; }
+		.enviada .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.enviada .hero-inicio__contenido { max-width: 46rem; flex: 1 1 auto; min-width: 0; }
+		.enviada .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+			text-transform: uppercase;
+		}
+		.enviada .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.enviada .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+		.enviada .hero-inicio__acciones {
+			display: flex;
+			align-items: center;
+			gap: .625rem;
+			flex-wrap: wrap;
+			margin-top: 1rem;
+		}
+		.enviada .hero-inicio__acciones .boton {
+			padding: .625rem 1.125rem;
+			border: 1px solid rgba(255, 255, 255, .22);
+			border-radius: 10px;
+			background: rgba(255, 255, 255, .08);
+			color: #fff;
+			font-weight: 700;
+			font-size: .8125rem;
+			box-shadow: none;
+		}
+		.enviada .hero-inicio__acciones .boton::after { display: none; }
+		.enviada .hero-inicio__acciones .boton:hover {
+			background: rgba(255, 255, 255, .16);
+			border-color: rgba(255, 255, 255, .4);
+			transform: none;
+			filter: none;
+		}
+
+		/* ---- Tarjeta y cabecera ---- */
+		.enviada .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+			overflow: hidden;
+		}
+		.enviada .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.enviada .tarjeta__cabecera {
+			display: flex;
+			align-items: center;
+			gap: .625rem;
+			flex-wrap: wrap;
+			padding: 1.375rem 1.5rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.enviada .tarjeta__cabecera h2 {
+			margin: 0;
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+		}
+		.enviada .tarjeta__cabecera h2::before { display: none; }
+		.enviada .tarjeta__cabecera .meta {
+			margin: 0;
+			font-size: .875rem;
+			color: var(--a-tenue);
+			font-weight: 500;
+		}
+		.enviada .tarjeta__cuerpo { padding: 1.5rem; }
+
+		/* ---- Etiquetas ---- */
+		.enviada .etiqueta {
+			padding: .375rem .875rem;
+			border: 0;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+			white-space: nowrap;
+		}
+		.enviada .etiqueta::before { content: none; display: none; animation: none; }
+		.enviada .etiqueta--ok { background: #dff3e6; color: #1f6b43; }
+		.enviada .etiqueta--alerta { background: #fdf0d9; color: #9a5a0a; }
+		.enviada .etiqueta--error { background: #fdecec; color: #b42318; }
+		.enviada .etiqueta--info { background: #e6effa; color: #24406a; }
+		.enviada .etiqueta--gris { background: #eceff3; color: var(--a-tenue); }
+		.enviada .etiqueta--chico { padding: .1875rem .5rem; font-size: .625rem; }
+
+		/* ---- Botones ---- */
+		.enviada .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.enviada .boton::after { display: none; }
+		.enviada .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.enviada .boton--primario,
+		.enviada .boton--primario:hover {
+			border-color: var(--a-accion);
+			background: var(--a-accion);
+			box-shadow: 0 3px 10px rgba(221, 145, 44, .28);
+		}
+		.enviada .boton--primario:hover {
+			border-color: var(--a-accion-hover);
+			background: var(--a-accion-hover);
+			box-shadow: 0 4px 12px rgba(221, 145, 44, .36);
+		}
+		.enviada .boton--fantasma {
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.enviada .boton--fantasma:hover {
+			border: 1px solid #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+
+		/* ---- Rejilla de datos (dl/dt/dd) ---- */
+		.enviada .rejilla-datos {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 1.25rem 1.75rem;
+			margin: 0;
+		}
+		.enviada .rejilla-datos dt {
+			margin-bottom: .3125rem;
+			font-size: .6875rem;
+			font-weight: 700;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+			color: var(--a-tenue);
+		}
+		.enviada .rejilla-datos dd {
+			margin: 0;
+			font-size: .9375rem;
+			font-weight: 700;
+			color: var(--a-navy);
+			line-height: 1.5;
+			overflow-wrap: anywhere;
+		}
+		.enviada .rejilla-datos .ancho { grid-column: 1 / -1; }
+
+		/* ---- Etiqueta "sin nivelar" ---- */
+		.enviada .marca-nivelacion {
+			margin-left: .375rem;
+			vertical-align: middle;
+		}
+
+		/* ---- Pie con acciones ---- */
+		.enviada .tarjeta__pie--acciones {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: .625rem;
+			flex-wrap: wrap;
+			padding-top: 1.25rem;
+			margin-top: 1.5rem;
+			border-top: 1px solid var(--a-borde);
+		}
+		.enviada .tarjeta__pie--acciones--fin {
+			justify-content: flex-end;
+		}
+
+		.enviada .form-linea { display: inline-flex; margin: 0; }
+
+		/* =================================================================
+		   Móvil
+		   ================================================================= */
+		@media (max-width: 768px) {
+			.enviada .hero-inicio { padding: 1.25rem; min-height: 0; flex-wrap: wrap; }
+			.enviada .hero-inicio h1 { font-size: 1.5rem; }
+			.enviada .hero-inicio__acciones { width: 100%; }
+			.enviada .hero-inicio__acciones .boton { flex: 1 1 auto; justify-content: center; }
+			.enviada .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.enviada .tarjeta__cuerpo { padding: 1rem; }
+
+			.enviada .rejilla-datos { grid-template-columns: 1fr; gap: 1rem; }
+
+			.enviada .tarjeta__pie--acciones,
+			.enviada .tarjeta__pie--acciones--fin {
+				flex-direction: column;
+				align-items: stretch;
+			}
+			.enviada .tarjeta__pie--acciones .boton,
+			.enviada .form-linea,
+			.enviada .form-linea .boton { width: 100%; justify-content: center; }
+		}
+
+		@media (max-width: 480px) {
+			.enviada .hero-icono { display: none; }
+		}
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-file-signature"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">PROPUESTA ORIGINAL</span>
+			<h1>Propuesta de extendido</h1>
+			<p>
+				Revise lo que va a enviar. Lo que se registre aquí queda como propuesta
+				original y no se modifica aunque después Talento Humano la ajuste.
+			</p>
+			<div class="hero-inicio__acciones">
+				<a th:href="@{/programaciones/nueva}" class="boton boton--fantasma">
+					<i class="fas fa-plus"></i> Proponer otra
+				</a>
+			</div>
+		</div>
+	</section>
+
+	<!-- ======== FICHA ======== -->
+	<div class="tarjeta">
+		<div class="tarjeta__cabecera">
+			<h2 th:text="${programacion.colaborador.nombreCompleto}">Persona</h2>
+			<p class="meta">
+				<span th:text="${programacion.colaborador.documento}">CC</span>
+				·
+				<span th:text="${grupo}">Área</span>
+			</p>
+		</div>
+
+		<div class="tarjeta__cuerpo">
+
+			<dl class="rejilla-datos">
+				<div>
+					<dt>Estado</dt>
+					<dd>
+						<span class="etiqueta etiqueta--gris" th:text="${programacion.estado}">BORRADOR</span>
+					</dd>
+				</div>
+
+				<div>
+					<dt>Tipo</dt>
+					<dd>
+						<span th:text="${programacion.tipo}">EXTENDIDO</span>
+						<span class="etiqueta etiqueta--alerta etiqueta--chico marca-nivelacion"
+							  th:if="${programacion.requeriaNivelacion}"
+							  title="Se eligió aun con la etiqueta de nivelación">
+							sin nivelar
+						</span>
+					</dd>
+				</div>
+
+				<div>
+					<dt>Operación</dt>
+					<dd th:text="${programacion.tipoOperacion != null ? programacion.tipoOperacion.nombre : 'Sin operación'}">
+						Operación
+					</dd>
+				</div>
+
+				<div>
+					<dt>Inicio</dt>
+					<dd th:text="${#temporals.format(programacion.inicioProgramado, 'dd/MM/yyyy HH:mm')}">
+						inicio
+					</dd>
+				</div>
+
+				<div>
+					<dt>Fin</dt>
+					<dd th:text="${#temporals.format(programacion.finProgramado, 'dd/MM/yyyy HH:mm')}">
+						fin
+					</dd>
+				</div>
+
+				<div>
+					<dt>Horas</dt>
+					<dd th:text="${#numbers.formatDecimal(programacion.horasProgramadas, 1, 'COMMA', 2, 'POINT')}">
+						0
+					</dd>
+				</div>
+
+				<div class="ancho">
+					<dt>Motivo</dt>
+					<dd th:text="${programacion.motivo}">motivo</dd>
+				</div>
+
+				<div class="ancho" th:if="${programacion.requeriaNivelacion || programacion.incumpleAptitud}">
+					<dt>Motivo de la excepción</dt>
+					<dd th:text="${programacion.motivoExcepcionCandidato}">motivo</dd>
+				</div>
+
+				<!--
+					El evento se muestra aunque no haya excepción. Una emergencia puede
+					haber saltado un choque sin que nadie quede fuera de aptitud, y el
+					evento es justamente lo que justifica el salto.
+				-->
+				<div class="ancho" th:if="${programacion.esEmergencia}">
+					<dt>Evento de la emergencia</dt>
+					<dd th:text="${programacion.referenciaEvento}">evento</dd>
+				</div>
+			</dl>
+
+			<div class="tarjeta__pie--acciones" th:if="${programacion.estado.name() == 'BORRADOR'}">
+				<a th:href="@{/programaciones}" class="boton boton--fantasma">
+					<i class="fas fa-arrow-left"></i> Volver al listado
+				</a>
+				<!--
+					Enviar saca la propuesta de las manos del coordinador y la pone en
+					la cola de Talento Humano. Si se arrepiente después puede cancelar
+					desde el listado, pero no desde acá, así que el data-confirm evita
+					el envío por error.
+				-->
+				<form th:action="@{/programaciones/{id}/enviar(id=${programacion.id})}" method="post"
+					  th:attr="data-confirm=|¿Enviar a Talento Humano la propuesta de ${programacion.colaborador.nombreCompleto}? Deja de ser editable por el coordinador.|"
+					  th:attrappend="data-confirm-ok='Sí, enviar'" class="form-linea">
+					<button type="submit" class="boton boton--primario">
+						<i class="fas fa-paper-plane"></i> Enviar a Talento Humano
+					</button>
+				</form>
+			</div>
+
+			<div class="tarjeta__pie--acciones tarjeta__pie--acciones--fin"
+				 th:unless="${programacion.estado.name() == 'BORRADOR'}">
+				<a th:href="@{/programaciones}" class="boton boton--primario">
+					<i class="fas fa-arrow-left"></i> Volver al listado
+				</a>
+			</div>
+
+		</div>
+	</div>
+
+</div>
+</body>
+
+</html>

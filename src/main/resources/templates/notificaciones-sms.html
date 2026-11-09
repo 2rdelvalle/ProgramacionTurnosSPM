@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="es" th:replace="~{fragments/layout :: pagina('Notificaciones', 'notificaciones-sms', ~{::contenido})}">
+<body>
+<div th:fragment="contenido" class="sms-band">
+
+	<!--
+		La bandeja de la cola de SMS: lo que quedó para enviar, con estado,
+		intentos y último error. Es la cara visible del proceso programado que
+		reintenta cada minuto; si un mensaje se quedó FALLIDO, aquí se ve por
+		qué sin tocar la base.
+
+		El mensaje no lleva datos sensibles (ni salario ni documento) por
+		diseño; el botón de WhatsApp abre wa.me con ese mismo texto para avisar
+		por la vía gratuita.
+
+		Estilo: mismo sistema de colaboradores.html y transporte.html.
+		Todas las reglas van prefijadas con .sms-band.
+	-->
+	<style>
+		/* =================================================================
+		   Notificaciones SMS · bandeja
+		   ================================================================= */
+		.sms-band {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+		.sms-band > .hero-inicio,
+		.sms-band > .tarjeta { margin-bottom: 1.25rem; }
+
+		/* ---- Portada ---- */
+		.sms-band .hero-inicio,
+		.sms-band .hero-inicio * { animation: none; }
+		.sms-band .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.sms-band .hero-inicio::before,
+		.sms-band .hero-inicio::after { content: none; }
+		.sms-band .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.sms-band .hero-inicio__contenido { max-width: 44rem; }
+		.sms-band .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+			text-transform: uppercase;
+		}
+		.sms-band .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.sms-band .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+
+		/* ---- Tarjeta y cabecera ---- */
+		.sms-band .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+			overflow: hidden;
+		}
+		.sms-band .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.sms-band .tarjeta__cabecera {
+			justify-content: flex-start;
+			padding: 1.375rem 1.5rem;
+			gap: 1rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.sms-band .tarjeta__titulo-grupo { flex: 1 1 16rem; }
+		.sms-band .tarjeta__titulo-grupo h2 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+		}
+		.sms-band .tarjeta__cabecera h2::before,
+		.sms-band .tarjeta__titulo-grupo h2::before { display: none; }
+		.sms-band .tarjeta__titulo-grupo p {
+			margin-top: .25rem;
+			max-width: 62ch;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+
+		/* ---- Íconos de sección ---- */
+		.sms-band .sec-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.25rem;
+		}
+		.sms-band .sec-icono--azul { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+
+		/* ---- Filtros dentro de la tarjeta ---- */
+		.sms-band .filtros {
+			align-items: flex-end;
+			gap: 1rem;
+			padding: 1.25rem 1.5rem;
+			background: #fff;
+			border: 0;
+			border-bottom: 1px solid var(--a-borde);
+			border-radius: 0;
+			box-shadow: none;
+		}
+		.sms-band .filtros .campo { flex: 1 1 12rem; margin-bottom: 0; }
+		.sms-band .filtros__fin { margin-left: auto; display: flex; gap: .5rem; }
+		.sms-band .campo__etiqueta,
+		.sms-band .campo:focus-within .campo__etiqueta {
+			margin-bottom: .375rem;
+			color: var(--a-navy);
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+		.sms-band select {
+			padding: .625rem .875rem;
+			padding-right: 2.5rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background-color: #fff;
+			font-size: .9375rem;
+			font-weight: 500;
+			color: var(--a-texto);
+		}
+		.sms-band select:hover { border-color: #b9c9dc; }
+		.sms-band select:focus {
+			border-color: var(--a-azul);
+			box-shadow: 0 0 0 3px rgba(23, 68, 117, .14);
+		}
+
+		/* ---- Botones ---- */
+		.sms-band .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.sms-band .boton::after { display: none; }
+		.sms-band .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.sms-band .boton--chico { padding: .5rem .875rem; font-size: .75rem; }
+		.sms-band .boton--contorno {
+			border: 1px solid #cfe0f2;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.sms-band .boton--contorno:hover:not(:disabled) {
+			border: 1px solid #b6cfe9;
+			background: #e9f1fa;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+
+		/* ---- Etiquetas ---- */
+		.sms-band .etiqueta {
+			padding: .375rem .875rem;
+			border: 0;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+			white-space: nowrap;
+		}
+		.sms-band .etiqueta::before { content: none; display: none; animation: none; }
+		.sms-band .etiqueta--info { background: #e6effa; color: #24406a; }
+		.sms-band .etiqueta--gris { background: #eceff3; color: var(--a-tenue); }
+		.sms-band .etiqueta--ok { background: #dff3e6; color: #1f6b43; }
+		.sms-band .etiqueta--alerta { background: #fdf0d9; color: #9a5a0a; }
+		.sms-band .etiqueta--error { background: #fdecec; color: #b42318; }
+
+		/* ---- Tabla dentro de recuadro ---- */
+		.sms-band .tabla-envoltura {
+			margin: 1.25rem 1.5rem 1.5rem;
+			border: 1px solid #dfe8f3;
+			border-radius: 12px;
+			background: #fff;
+			overflow-x: auto;
+			-webkit-overflow-scrolling: touch;
+		}
+		.sms-band .tabla thead th {
+			padding: .875rem 1.125rem;
+			background: var(--a-suave);
+			color: #2f4a70;
+			border-bottom: 1px solid #e3ebf4;
+			font-size: .75rem;
+			font-weight: 600;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+			white-space: nowrap;
+		}
+		.sms-band .tabla thead tr th:first-child { border-left: 0; }
+		.sms-band .tabla thead th.tabla__num { text-align: right; }
+		.sms-band .tabla tbody td {
+			padding: 1rem 1.125rem;
+			border-bottom: 1px solid #edf2f8;
+			vertical-align: middle;
+			color: var(--a-texto);
+		}
+		.sms-band .tabla tbody tr { animation: none; }
+		.sms-band .tabla tbody tr:nth-child(even) { background: transparent; }
+		.sms-band .tabla tbody tr:hover { background: #f7fafd; }
+		.sms-band .tabla tbody tr:hover td:first-child { box-shadow: none; }
+		.sms-band .tabla tbody tr:last-child td { border-bottom: 0; }
+		.sms-band .tabla__principal { color: var(--a-navy); font-weight: 700; }
+		.sms-band .tabla__num { text-align: right; font-variant-numeric: tabular-nums; }
+		.sms-band .tabla .mensaje {
+			display: block;
+			max-width: 34rem;
+			white-space: normal;
+			line-height: 1.5;
+			font-size: .8125rem;
+			color: var(--a-texto);
+		}
+		.sms-band .tabla .tenue { font-size: .75rem; color: var(--a-tenue); font-weight: 500; }
+		.sms-band .tabla .tenue + .tenue { display: block; margin-top: .125rem; }
+		.sms-band .form-linea { display: inline-flex; align-items: center; gap: .375rem; margin: 0; }
+
+		/* ---- Estado vacío ---- */
+		.sms-band .tabla--vacia td {
+			white-space: normal;
+			line-height: 1.6;
+			text-align: center;
+			padding: 2rem 1rem 2.25rem;
+			color: var(--a-tenue);
+			font-size: .75rem;
+		}
+		.sms-band .tabla tr.tabla--vacia:hover { background: transparent; }
+		.sms-band .vacio-icono { display: block; margin-bottom: .625rem; color: #1f4b7a; font-size: 2rem; }
+		.sms-band .tabla--vacia strong { display: block; margin-bottom: .375rem; color: var(--a-navy); font-size: .875rem; font-weight: 700; }
+
+		/* ---- Pie de página ---- */
+		.sms-band .pie-paginas {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 1rem;
+			padding: 1rem 1.5rem;
+			background: #f8fafd;
+			border-top: 1px solid var(--a-borde);
+			font-size: .875rem;
+			font-weight: 600;
+			color: var(--a-tenue);
+		}
+
+		/* =================================================================
+		   Móvil: tabla → tarjeta por mensaje
+		   ================================================================= */
+		@media (max-width: 768px) {
+			.sms-band .hero-inicio { padding: 1.25rem; min-height: 0; }
+			.sms-band .hero-inicio h1 { font-size: 1.5rem; }
+			.sms-band .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.sms-band .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.sms-band .filtros { padding: 1rem; flex-direction: column; align-items: stretch; }
+			.sms-band .filtros .campo,
+			.sms-band .filtros__fin { width: 100%; min-width: 0; flex-basis: 100%; margin-left: 0; }
+			.sms-band .filtros__fin .boton { width: 100%; justify-content: center; }
+			.sms-band .tabla-envoltura { margin: 1rem 1rem 1.25rem; }
+
+			.sms-band select { font-size: 16px; }
+
+			.sms-band .tabla tbody tr { display: flex; flex-direction: column; }
+			.sms-band .tabla tbody td {
+				display: block;
+				text-align: left;
+				padding: .5rem .875rem;
+				border-bottom: 1px dashed #edf2f8;
+			}
+			.sms-band .tabla tbody td:last-child { border-bottom: 0; }
+			.sms-band .tabla tbody td::before {
+				content: attr(data-label);
+				display: block;
+				margin-bottom: .25rem;
+				font-size: .625rem;
+				font-weight: 800;
+				letter-spacing: .06em;
+				text-transform: uppercase;
+				color: var(--a-tenue);
+			}
+			.sms-band .tabla tbody td.tabla__num { text-align: left; }
+
+			/* El colaborador sube como encabezado de la tarjeta */
+			.sms-band .tabla tbody td.celda-nombre {
+				order: -1;
+				padding: .875rem;
+				background: var(--a-suave);
+				border-bottom: 1px solid var(--a-borde);
+			}
+			.sms-band .tabla tbody td.celda-nombre::before { content: none; }
+			.sms-band .tabla tbody td.celda-nombre .tabla__principal { font-size: 1rem; }
+
+			/* El mensaje no se recorta y se alinea a la izquierda */
+			.sms-band .tabla .mensaje { max-width: none; text-align: left; }
+
+			/* La acción (reintentar) va al final y a todo el ancho */
+			.sms-band .tabla tbody td.celda-accion {
+				order: 1;
+				padding: .875rem;
+				background: var(--a-suave);
+			}
+			.sms-band .tabla tbody td.celda-accion::before { display: block; margin-bottom: .625rem; }
+			.sms-band .tabla tbody td.celda-accion .form-linea { width: 100%; }
+			.sms-band .tabla tbody td.celda-accion .boton { width: 100%; justify-content: center; }
+
+			.sms-band .tabla tbody tr.tabla--vacia td { display: block; text-align: center; }
+			.sms-band .tabla tbody tr.tabla--vacia td::before { content: none; }
+
+			.sms-band .pie-paginas { flex-direction: column; align-items: stretch; padding: 1rem; }
+			.sms-band .pie-paginas .boton { width: 100%; justify-content: center; }
+		}
+		@media (max-width: 480px) {
+			.sms-band .hero-icono { display: none; }
+		}
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-comment-sms"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">COLA DE NOTIFICACIONES</span>
+			<h1>Notificaciones SMS</h1>
+			<p>Mensajes dejados para enviar, con su estado y sus reintentos. La cola reintenta solo cada minuto.</p>
+		</div>
+	</section>
+
+	<!-- ======== FILTROS + TABLA ======== -->
+	<div class="tarjeta">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--azul" aria-hidden="true"><i class="fas fa-inbox"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Bandeja</h2>
+				<p><span th:text="${total}">0</span> mensaje(s) · mostrando la página actual de 50.</p>
+			</div>
+		</div>
+
+		<form class="filtros" th:action="@{/notificaciones/sms}" method="get">
+			<div class="campo">
+				<label class="campo__etiqueta" for="filtro-estado">Estado</label>
+				<select id="filtro-estado" name="estado">
+					<option value="">Todos</option>
+					<option value="PENDIENTE" th:selected="${estado == 'PENDIENTE'}">Pendientes</option>
+					<option value="ENVIADO" th:selected="${estado == 'ENVIADO'}">Enviados</option>
+					<option value="FALLIDO" th:selected="${estado == 'FALLIDO'}">Fallidos</option>
+				</select>
+			</div>
+			<div class="filtros__fin">
+				<button type="submit" class="boton"><i class="fas fa-filter"></i> Consultar</button>
+			</div>
+		</form>
+
+		<div class="tabla-envoltura">
+			<table class="tabla">
+				<thead>
+				<tr>
+					<th>Creado</th>
+					<th>Colaborador</th>
+					<th>Tipo</th>
+					<th>Celular</th>
+					<th>Mensaje</th>
+					<th>Estado</th>
+					<th class="tabla__num">Intentos</th>
+					<th>Detalle</th>
+					<th>Acción</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr th:each="sms : ${mensajes}">
+					<td data-label="Creado"
+						th:text="${sms.createdAt != null ? #temporals.format(sms.createdAt, 'dd/MM/yyyy HH:mm') : '—'}">07/10/2026 18:00</td>
+					<td class="celda-nombre" data-label="Colaborador">
+						<span class="tabla__principal" th:text="${sms.colaborador.nombreCompleto}">Nombre</span>
+						<small class="tenue" th:if="${sms.programacion != null}">
+							<span th:text="${sms.programacion.tipo}">EXTENDIDO</span>
+							· <span th:text="${#temporals.format(sms.programacion.inicioEfectivo, 'dd/MM HH:mm')}">07/10 18:00</span>
+						</small>
+					</td>
+					<td data-label="Tipo">
+						<span class="etiqueta etiqueta--info" th:text="${sms.tipo}">CONFIRMACION</span>
+					</td>
+					<td data-label="Celular" th:text="${sms.celularDestino}">3000000000</td>
+					<td data-label="Mensaje"><span class="mensaje" th:text="${sms.mensaje}">Mardique: …</span></td>
+					<td data-label="Estado">
+						<span class="etiqueta"
+							  th:classappend="${sms.estado.name() == 'ENVIADO' ? 'etiqueta--ok' : (sms.estado.name() == 'FALLIDO') ? 'etiqueta--error' : 'etiqueta--info'}"
+							  th:text="${sms.estado}">PENDIENTE</span>
+					</td>
+					<td class="tabla__num" data-label="Intentos" th:text="${sms.intentos}">0</td>
+					<td data-label="Detalle">
+						<span class="tenue" th:if="${sms.ultimoError != null}" th:text="${sms.ultimoError}">error</span>
+						<!--
+							Un ENVIADO simulado no es un envío: el id del proveedor empezado
+							por FAKE delata al puerto de desarrollo y el texto de al lado
+							impide confundirlo con una entrega real. El real, además, deja
+							el SID de Twilio para poder rastrearlo en la consola.
+						-->
+						<span class="tenue"
+							  th:if="${sms.ultimoError == null and sms.idMensajeProveedor != null and #strings.startsWith(sms.idMensajeProveedor, 'FAKE-')}">
+							simulado · no llegó a ningún teléfono
+						</span>
+						<span class="tenue"
+							  th:if="${sms.ultimoError == null and sms.enviadoAt != null and (sms.idMensajeProveedor == null or !#strings.startsWith(sms.idMensajeProveedor, 'FAKE-'))}"
+							  th:text="'enviado ' + ${#temporals.format(sms.enviadoAt, 'dd/MM HH:mm')}">enviado</span>
+						<span class="tenue"
+							  th:if="${sms.ultimoError == null and sms.idMensajeProveedor != null and !#strings.startsWith(sms.idMensajeProveedor, 'FAKE-')}"
+							  th:text="'SID ' + ${sms.idMensajeProveedor}">SID SM...</span>
+						<span class="tenue" th:if="${sms.ultimoError == null and sms.enviadoAt == null}">—</span>
+					</td>
+					<td class="celda-accion" data-label="Acción">
+						<!--
+							La cola automática se rinde al tope de intentos: este botón
+							vuelve a poner el mensaje en cola con las cuentas a cero,
+							para cuando ya se corrigió el celular o el proveedor volvió.
+						-->
+						<form th:if="${sms.estado.name() == 'FALLIDO'}"
+							  th:action="@{/notificaciones/sms/{id}/reintentar(id=${sms.id})}" method="post"
+							  th:attr="data-confirm=|¿Reintentar el envío a ${sms.celularDestino}?|" data-confirm-ok='Sí, reintentar'>
+							<input type="hidden" name="estado" th:value="${estado}">
+							<button type="submit" class="boton boton--chico boton--contorno">
+								<i class="fas fa-rotate-right"></i> Reintentar
+							</button>
+						</form>
+						<span class="tenue" th:if="${sms.estado.name() != 'FALLIDO'}">—</span>
+					</td>
+				</tr>
+
+				<tr th:if="${#lists.isEmpty(mensajes)}" class="tabla--vacia">
+					<td colspan="9" data-label="Aviso">
+						<i class="fas fa-inbox vacio-icono" aria-hidden="true"></i>
+						<strong>Bandeja vacía</strong>
+						Todavía no hay mensajes con este filtro.
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="pie-paginas" th:if="${haySiguiente}">
+			<span>Mostrando 50 mensajes de esta página.</span>
+			<a class="boton boton--chico" th:href="@{/notificaciones/sms(estado=${estado}, pagina=${pagina + 1})}">
+				<i class="fas fa-arrow-right"></i> Ver anteriores
+			</a>
+		</div>
+	</div>
+
+</div>
+</body>
+</html>

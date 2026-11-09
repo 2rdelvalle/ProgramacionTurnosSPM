@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+	  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+	  th:fragment="pagina(titulo, activo, contenido)">
+
+<!--
+	Plantilla maestra de las pantallas internas.
+
+	Se usa así desde cada página:
+
+	  <html th:replace="~{fragments/layout :: pagina('Título', 'clave-nav', ~{::contenido})}">
+	    <body>
+	      <div th:fragment="contenido"> ... </div>
+	    </body>
+	  </html>
+
+	Un solo fragmento, y sobre <html> a propósito. Antes el archivo declaraba
+	dos fragmentos con el mismo nombre y la misma firma, uno en <head> y otro en
+	<body>: Thymeleaf tomaba el primero en orden de documento, el contenido de
+	cada página terminaba dentro del <head> y la barra lateral no se dibujaba
+	nunca. Con un fragmento único no hay ambigüedad posible.
+
+	La clave de navegación es la que marca el enlace activo de la barra lateral,
+	así que no hay que mantener el resaltado a mano en cada vista.
+
+	El bloque de mensaje sale de un atributo flash: lo escriben los controladores
+	con RedirectAttributes y sobrevive al redirect, que es lo único que funciona
+	cuando la acción termina con "redirect:..." y el modelo se pierde.
+
+	Esta versión trae el diseño sobrio del boceto de Meriendas y cenas:
+	  - Barra lateral azul marino con grupos en texto simple, ítem activo con
+	    barra naranja y onda decorativa sobre la tarjeta de usuario.
+	  - Barra superior clara con ruta de navegación (inicio > página), campana
+	    de notificaciones y fecha.
+	  - Botón hamburguesa, velo oscuro y botón X para el menú en móvil/tablet
+	    (también se cierra con Esc, con el velo y deslizando hacia la izquierda;
+	    se abre deslizando desde el borde izquierdo).
+	  - Tarjeta de usuario al pie de la barra lateral (saludo según la hora,
+	    rol y botón de salir con confirmación).
+	  - Inmersión mínima: entrada suave de página y barra de progreso de scroll.
+	    Ninguna animación parte de opacidad 0: el contenido siempre es visible.
+	  - Aviso flotante cuando se pierde o vuelve la conexión.
+
+	El CSS base de esta plantilla (barra lateral, hamburguesa, velo, aviso de
+	conexión y diálogo) vive en app.css, en las secciones 3 y 4. El bloque de
+	estilos del encabezado lo redefine con el aspecto del boceto; el logo y el
+	comportamiento móvil no se tocan. Las piezas que son solo de este layout
+	llevan el prefijo "lyt-". El JS de abajo es el único código propio.
+-->
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+	<meta name="theme-color" content="#1e3a5f">
+	<meta name="robots" content="noindex, nofollow, noarchive">
+	<title th:text="${titulo} + ' · Mardique'">Mardique</title>
+
+	<!--
+		Iconografía y tipografía locales, no de CDN. El aplicativo es interno y
+		corre en la red del puerto, donde a veces no hay salida a internet: una
+		hoja de estilos que dependa de un servidor externo deja la pantalla en
+		blanco justo cuando hace falta.
+	-->
+	<link rel="stylesheet" th:href="@{/vendor/fontawesome/css/all.min.css}">
+	<link rel="stylesheet" th:href="@{/css/app.css}">
+
+	<!--
+		Aspecto del layout según el boceto. Va después de app.css para
+		redefinir sus reglas. NO toca el logo (.lateral__logo queda exactamente
+		como estaba); solo reordena .lateral__marca para que el nombre del
+		sistema quede en su propia franja bajo el logo, y todo lo
+		que cambia la posición o el despliegue en móvil queda como está en
+		app.css.
+	-->
+	<style>
+		:root {
+			--lyt-fondo: #f4f8fc;
+			--lyt-navy-1: #0a2038;
+			--lyt-navy-2: #0e2a47;
+			--lyt-navy-3: #11315a;
+			--lyt-oro: #e09837;
+			--lyt-texto: #b9c8da;
+			--lyt-grupo: #8fa6c0;
+		}
+		html { background: var(--lyt-fondo); }
+
+		/* ======================= BARRA LATERAL ======================= */
+		.lateral {
+			color: var(--lyt-texto);
+			background: linear-gradient(180deg, var(--lyt-navy-1) 0%, var(--lyt-navy-2) 62%, var(--lyt-navy-3) 100%);
+			box-shadow: none;
+			border-right: 1px solid rgba(255, 255, 255, .04);
+		}
+		.lateral::before { display: none; }
+
+		/* Onda decorativa sobre la tarjeta de usuario */
+		.lateral::after {
+			content: "";
+			position: absolute;
+			left: 0;
+			right: 0;
+			bottom: 4.25rem;
+			height: 7.5rem;
+			z-index: 0;
+			pointer-events: none;
+			opacity: .55;
+			background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 120' preserveAspectRatio='none' fill='none'><path d='M0 92 C40 70 70 108 118 86 C170 62 205 84 256 52' stroke='%23e09837' stroke-width='1.2' opacity='.75'/><path d='M0 100 C44 80 78 116 128 94 C178 72 214 94 256 64' stroke='%23e09837' stroke-width='1' opacity='.5'/><path d='M0 108 C48 90 86 122 138 102 C188 82 222 102 256 76' stroke='%236f9fd0' stroke-width='1' opacity='.55'/><path d='M0 116 C52 100 92 126 148 110 C196 94 228 110 256 90' stroke='%236f9fd0' stroke-width='1' opacity='.4'/></svg>") center bottom / 100% 100% no-repeat;
+		}
+
+		.lateral__scroll { padding: 1.25rem .75rem .5rem; }
+
+		/* ---- Marca: logo centrado y, bajo una línea fina, el nombre del sistema ----
+		   El logo conserva su placa tal cual (.lateral__logo no se toca).
+		   app.css fuerza en .lateral__nombre una columna y mayúsculas
+		   diminutas para todo <span>: por eso aquí los selectores llevan
+		   .lateral__nombre delante y se fija flex-direction: row. */
+		.lateral__marca {
+			flex-direction: column;
+			align-items: center;
+			gap: .75rem;
+			padding: 1rem 1.25rem .875rem;
+		}
+		.lateral__marca > .lateral__cerrar {
+			position: absolute;
+			top: .625rem;
+			right: .625rem;
+			margin: 0;
+		}
+		.lateral__marca .lateral__nombre {
+			align-self: stretch;
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			gap: .75rem;
+			padding: .75rem .125rem 0;
+			border-top: 1px solid rgba(255, 255, 255, .08);
+			font-size: .8125rem;
+			font-weight: 400;
+			letter-spacing: 0;
+			line-height: 1.35;
+			text-align: left;
+		}
+
+		/* Insignia del módulo: placa naranja con calendario de turnos */
+		.lateral__nombre .lateral__sistema-icono {
+			position: relative;
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 2.625rem;
+			height: 2.625rem;
+			margin: 0;
+			border: 1px solid rgba(255, 255, 255, .2);
+			border-radius: 12px;
+			background: linear-gradient(145deg, #eeb255 0%, var(--lyt-oro) 52%, #c77d20 100%);
+			box-shadow:
+					0 6px 14px rgba(224, 152, 55, .28),
+					inset 0 1px 0 rgba(255, 255, 255, .38),
+					inset 0 -2px 4px rgba(120, 66, 8, .22);
+			color: #fff;
+			font-size: 0;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+		.lateral__nombre .lateral__sistema-icono svg {
+			display: block;
+			width: 1.5rem;
+			height: 1.5rem;
+			filter: drop-shadow(0 1px 1px rgba(120, 66, 8, .35));
+		}
+
+		.lateral__nombre .lateral__sistema-texto {
+			min-width: 0;
+			display: flex;
+			flex-direction: column;
+			gap: .1875rem;
+			text-transform: none;
+		}
+		.lateral__nombre .lateral__sistema-texto strong {
+			color: #fff;
+			font-size: .9375rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			line-height: 1.2;
+			text-transform: none;
+		}
+		.lateral__nombre .lateral__sistema-texto span {
+			margin: 0;
+			color: var(--lyt-texto);
+			font-size: .6875rem;
+			font-weight: 400;
+			letter-spacing: 0;
+			line-height: 1.4;
+			text-transform: none;
+		}
+		@media (max-height: 480px) and (max-width: 900px) {
+			.lateral__marca { gap: .5rem; padding-top: .625rem; padding-bottom: .625rem; }
+			.lateral__marca .lateral__nombre { padding-top: .5rem; }
+			.lateral__nombre .lateral__sistema-texto span { display: none; }
+		}
+
+		/* Grupos: texto simple en mayúsculas, separados por una línea fina */
+		.lateral__seccion { margin: 0 0 .25rem; }
+		.lateral__seccion + .lateral__seccion { margin-top: .5rem; padding-top: 1rem; }
+		.lateral__seccion + .lateral__seccion::before {
+			left: .5rem;
+			right: .5rem;
+			background: rgba(255, 255, 255, .08);
+		}
+		.lateral__grupo {
+			margin: 0 0 .5rem;
+			padding: 0 .75rem;
+			font-size: .6875rem;
+			font-weight: 700;
+			letter-spacing: .12em;
+			color: var(--lyt-grupo);
+		}
+		.lateral__grupo::before { display: none; }
+
+		/* Enlaces: sin barrido dorado ni cascada de entrada */
+		.lateral__nav { gap: 2px; }
+		.lateral__enlace {
+			padding: .6875rem .75rem;
+			border-radius: 8px;
+			color: var(--lyt-texto);
+			font-size: .875rem;
+			font-weight: 500;
+			animation: none;
+		}
+		.lateral__enlace::after { display: none; }
+		.lateral__icono { color: #7f96b3; font-size: 1rem; width: 1.5rem; transition: color .2s ease; }
+		.lateral__enlace:hover {
+			background: rgba(255, 255, 255, .06);
+			color: #fff;
+		}
+		.lateral__enlace:hover .lateral__icono { color: #c7d6e8; transform: none; }
+		.lateral__enlace:focus-visible { outline: 2px solid var(--lyt-oro); outline-offset: -2px; }
+
+		.lateral__enlace.activo {
+			color: #fff;
+			font-weight: 600;
+			background: rgba(255, 255, 255, .09);
+		}
+		.lateral__enlace.activo .lateral__icono { color: var(--lyt-oro); }
+		.lateral__enlace.activo::before {
+			top: 0;
+			bottom: 0;
+			width: 4px;
+			border-radius: 8px 0 0 8px;
+			background: var(--lyt-oro);
+			box-shadow: none;
+		}
+
+		/* Tarjeta de usuario */
+		.lateral__usuario {
+			flex-wrap: nowrap;
+			align-items: center;
+			gap: .75rem;
+			padding: .875rem 1rem;
+			background: rgba(6, 22, 40, .55);
+			border-top: 1px solid rgba(255, 255, 255, .07);
+			box-shadow: none;
+		}
+		.lateral__usuario::before,
+		.lateral__usuario::after { display: none; }
+		.lateral__avatar {
+			width: 2.75rem;
+			height: 2.75rem;
+			border-radius: 50%;
+			background: var(--lyt-oro);
+			font-size: 1rem;
+			font-weight: 700;
+			box-shadow: none;
+		}
+		.lateral__usuario:hover .lateral__avatar { transform: none; box-shadow: none; }
+		.lateral__meta { flex: 1 1 auto; min-width: 0; }
+		.lateral__saludo {
+			margin-bottom: 1px;
+			font-size: .625rem;
+			font-weight: 600;
+			letter-spacing: .06em;
+			color: var(--lyt-grupo);
+		}
+		.lateral__persona {
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			color: #fff;
+		}
+		/* El rol pasa a ser una línea de texto bajo el nombre */
+		.lateral__rol {
+			display: block;
+			max-width: none;
+			margin: 1px 0 0;
+			padding: 0;
+			border: 0;
+			border-radius: 0;
+			background: none;
+			color: var(--lyt-grupo);
+			font-size: .625rem;
+			font-weight: 600;
+			letter-spacing: .04em;
+		}
+		.lateral__salir {
+			width: 2.125rem;
+			height: 2.125rem;
+			border-radius: 50%;
+			border: 1px solid rgba(255, 255, 255, .12);
+			background: transparent;
+			color: var(--lyt-grupo);
+			font-size: .875rem;
+		}
+		.lateral__salir:hover {
+			background: #c0392b;
+			border-color: #c0392b;
+			color: #fff;
+			transform: none;
+			box-shadow: none;
+		}
+
+		/* ======================= BARRA SUPERIOR ======================= */
+		.superior__migas { gap: .625rem; font-size: .875rem; font-weight: 500; color: #5b7191; }
+		.superior__migas i { opacity: .8; font-size: .6875rem; }
+		.superior__inicio {
+			display: inline-grid;
+			place-items: center;
+			width: 2rem;
+			height: 2rem;
+			border-radius: 8px;
+			color: #174475;
+			font-size: 1.0625rem;
+			text-decoration: none;
+			transition: background .15s ease;
+		}
+		.superior__inicio:hover { background: #e9f0f8; }
+		.superior__migas strong { color: #12304f; font-weight: 700; }
+
+		.superior__acciones { display: flex; align-items: center; gap: .75rem; flex-shrink: 0; }
+		.superior__campana {
+			position: relative;
+			display: inline-grid;
+			place-items: center;
+			width: 2.5rem;
+			height: 2.5rem;
+			border-radius: 50%;
+			color: #174475;
+			font-size: 1.125rem;
+			text-decoration: none;
+			transition: background .15s ease;
+		}
+		.superior__campana:hover { background: #e9f0f8; }
+		.superior__punto {
+			position: absolute;
+			top: .5rem;
+			right: .5625rem;
+			width: .5625rem;
+			height: .5625rem;
+			border-radius: 50%;
+			background: #e5484d;
+			border: 2px solid var(--lyt-fondo);
+			box-sizing: content-box;
+		}
+		.superior__fecha {
+			padding: .5625rem .875rem;
+			border-radius: 10px;
+			background: #fff;
+			border: 1px solid #dfe8f3;
+			font-size: .8125rem;
+			font-weight: 600;
+			color: #12304f;
+		}
+		.superior__fecha i { color: #174475; }
+
+		/* La barra superior clara solo en escritorio: en móvil se conserva la de app.css */
+		@media (min-width: 901px) {
+			.superior {
+				background: rgba(244, 248, 252, .92);
+				border-bottom: 1px solid #e4ecf5;
+			}
+			.superior::after { display: none; }
+		}
+
+		/* Móvil: solo el título de la página, como antes */
+		@media (max-width: 640px) {
+			.superior__inicio,
+			.superior__migas > span { display: none; }
+			.superior__acciones { gap: .25rem; }
+		}
+
+		/* Hamburguesa móvil con el mismo azul */
+		.lyt-hamburguesa { background: #174475; box-shadow: 0 4px 12px rgba(10, 32, 56, .25); }
+
+		/* Barra de progreso: un solo color */
+		.lyt-progreso { background: var(--lyt-oro); }
+	</style>
+	<link rel="icon"
+		  href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230b1929'/><text x='16' y='23' font-size='17' font-family='sans-serif' font-weight='bold' text-anchor='middle' fill='%23f09a36'>M</text></svg>">
+
+</head>
+
+<body>
+
+<div class="lyt-progreso" id="lytProgreso" aria-hidden="true"></div>
+
+<button type="button" class="lyt-hamburguesa" id="lytAbrir" aria-label="Abrir menú"
+		aria-controls="lytLateral" aria-expanded="false">
+	<i class="fas fa-bars"></i>
+</button>
+<div class="lyt-velo" id="lytVelo"></div>
+
+<div class="app">
+
+	<aside class="lateral" id="lytLateral">
+		<div class="lateral__marca">
+			<div class="lateral__logo">
+				<img th:src="@{/images/Logo.png}" alt="Sociedad Portuaria Mardique"
+					 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+				<span class="lateral__logo-respaldo"><b>M</b> MARDIQUE</span>
+			</div>
+			<div class="lateral__nombre">
+				<span class="lateral__sistema-icono" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<rect x="3" y="5" width="18" height="16" rx="3.2" stroke="currentColor" stroke-width="1.7"/>
+						<path d="M3 10h18" stroke="currentColor" stroke-width="1.7"/>
+						<path d="M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+						<circle cx="8" cy="14" r="1.05" fill="currentColor"/>
+						<circle cx="12" cy="14" r="1.05" fill="currentColor"/>
+						<circle cx="16" cy="14" r="1.05" fill="currentColor" opacity=".5"/>
+						<circle cx="8" cy="17.5" r="1.05" fill="currentColor"/>
+						<circle cx="12" cy="17.5" r="1.05" fill="currentColor" opacity=".5"/>
+					</svg>
+				</span>
+				<span class="lateral__sistema-texto">
+					<strong>Programación de turnos</strong>
+					<span>Organiza, gestiona y controla los turnos del personal de la operación.</span>
+				</span>
+			</div>
+			<button type="button" class="lateral__cerrar" id="lytCerrar" aria-label="Cerrar menú">
+				<i class="fas fa-xmark"></i>
+			</button>
+		</div>
+
+		<div class="lateral__scroll" id="lytScroll">
+
+			<div class="lateral__seccion">
+				<div class="lateral__grupo">Operación</div>
+				<nav class="lateral__nav" aria-label="Operación">
+					<a th:href="@{/}" class="lateral__enlace" th:classappend="${activo} == 'inicio' ? 'activo' : ''"
+					   th:attr="aria-current=${activo == 'inicio' ? 'page' : null}">
+						<span class="lateral__icono"><i class="fas fa-table-columns"></i></span> Inicio
+					</a>
+					<a th:href="@{/colaboradores}" class="lateral__enlace"
+					   th:classappend="${activo} == 'colaboradores' ? 'activo' : ''"
+					   th:attr="aria-current=${activo == 'colaboradores' ? 'page' : null}">
+						<span class="lateral__icono"><i class="fas fa-users"></i></span> Colaboradores
+					</a>
+					<!--
+						Catálogo de turnos y de las horas que se repiten al programar:
+						antes estaba sembrado a fuego y no se podía tocar desde la
+						pantalla.
+					-->
+					<a th:href="@{/turnos}" class="lateral__enlace"
+					   th:classappend="${activo} == 'turnos' ? 'activo' : ''"
+					   th:attr="aria-current=${activo == 'turnos' ? 'page' : null}"
+					   sec:authorize="hasAnyRole('TALENTO_HUMANO','ADMIN')">
+						<span class="lateral__icono"><i class="fas fa-clock"></i></span> Turnos
+					</a>
+					<a th:href="@{/programaciones}" class="lateral__enlace"
+					   th:classappend="${activo} == 'programaciones' ? 'activo' : ''"
+					   th:attr="aria-current=${activo == 'programaciones' ? 'page' : null}">
+						<span class="lateral__icono"><i class="fas fa-calendar-days"></i></span> Programaciones
+					</a>
+					<a th:href="@{/programaciones/nueva}" class="lateral__enlace"
+					   th:classappend="${activo} == 'nueva' ? 'activo' : ''"
+					   th:attr="aria-current=${activo == 'nueva' ? 'page' : null}"
+					   sec:authorize="hasAnyRole('COORD_OPERACIONES','COORD_AREA','TALENTO_HUMANO','ADMIN')">
+						<span class="lateral__icono"><i class="fas fa-circle-plus"></i></span> Proponer extendido
+					</a>
+				</nav>
+			</div>
+
+			<!--
+				El título "Control" aparece para cualquiera que vea al menos uno de
+				sus enlaces. Antes solo lo veían Talento Humano y Admin, así que un
+				coordinador de operaciones veía "Operaciones" sin título encima.
+			-->
+			<div class="lateral__seccion" sec:authorize="hasAnyRole('COORD_OPERACIONES','TALENTO_HUMANO','ADMIN')">
+				<div class="lateral__grupo">Control</div>
+				<nav class="lateral__nav" aria-label="Control">
+					<a th:href="@{/programaciones/revision}" class="lateral__enlace"
+					   th:classappend="${activo} == 'revision' ? 'activo' : ''"
+					   th:attr="aria-current=${activo == 'revision' ? 'page' : null}"
+					   sec:authorize="hasAnyRole('TALENTO_HUMANO','ADMIN')">
+						<span class="lateral__icono"><i class="fas fa-clipboard-check"></i></span> Por aprobar
+					</a>
+					<a th:href="@{/transporte}" class="lateral__enlace"
+					   th:classappend="${activo} == 'transporte' ? 'activo' : ''"
+					   th:attr="aria-current=${activo == 'transporte' ? 'page' : null}"
+					   sec:authorize="hasAnyRole('TALENTO_HUMANO','ADMIN')">
+						<span class="lateral__icono"><i class="fas fa-car-side"></i></span> Transporte
+					</a>
+					<!--
+						El catálogo de vehículos y destinos se separó de la pantalla de
+						salidas: esta es su entrada en el menú, con los mismos permisos.
+					-->
+					<a th:href="@{/transporte/vehiculos}" class="lateral__enlace"
+					   th:classappend="${activo} == 'vehiculos' ? 'activo' : ''"
+					   th:attr="aria-current=${activo == 'vehiculos' ? 'page' : null}"
+					   sec:authorize="hasAnyRole('TALENTO_HUMANO','ADMIN')">
+						<span class="lateral__icono"><i class="fas fa-truck"></i></span> Vehículos
+					</a>
+					<!--
+						Meriendas y cenas: se arma el día como en transporte pero por
+						horas de programa, y la lista se guarda como documento.
+					-->
+					<a th:href="@{/alimentacion}" class="lateral__enlace"
+					   th:classappend="${activo} == 'alimentacion' ? 'activo' : ''"
+					   th:attr="aria-current=${activo == 'alimentacion' ? 'page' : null}"
+					   sec:authorize="hasAnyRole('TALENTO_HUMANO','ADMIN')">
+						<span class="lateral__icono"><i class="fas fa-utensils"></i></span> Meriendas y cenas
+					</a>
+					<a th:href="@{/operaciones}" class="lateral__enlace"
+					   th:classappend="${activo} == 'operaciones' ? 'activo' : ''"
+					   th:attr="aria-current=${activo == 'operaciones' ? 'page' : null}"
+					   sec:authorize="hasAnyRole('COORD_OPERACIONES','TALENTO_HUMANO','ADMIN')">
+						<span class="lateral__icono"><i class="fas fa-gears"></i></span> Operaciones
+					</a>
+					<!--
+						Los cursos y aptitudes también se separaron: antes todo cabía en
+						una sola pantalla con dos altas y dos listados.
+					-->
+					<a th:href="@{/operaciones/aptitudes}" class="lateral__enlace"
+					   th:classappend="${activo} == 'aptitudes' ? 'activo' : ''"
+					   th:attr="aria-current=${activo == 'aptitudes' ? 'page' : null}"
+					   sec:authorize="hasAnyRole('COORD_OPERACIONES','TALENTO_HUMANO','ADMIN')">
+						<span class="lateral__icono"><i class="fas fa-graduation-cap"></i></span> Aptitudes y cursos
+					</a>
+				</nav>
+			</div>
+
+			<div class="lateral__seccion">
+				<div class="lateral__grupo">Datos</div>
+				<nav class="lateral__nav" aria-label="Datos">
+					<!--
+                        Salarios y Auditoría salieron de este menú. El salario vive ahora en
+                        la pantalla de horas extra (primera columna), y la auditoría queda
+                        reservada a un rol de sistemas que todavía no existe: mientras tanto
+                        no se enlaza desde ningún lado.
+                    -->
+					<a th:href="@{/horas-extra/ejecucion}" class="lateral__enlace"
+					   th:classappend="${activo} == 'horas-ejecucion' ? 'activo' : ''"
+					   th:attr="aria-current=${activo == 'horas-ejecucion' ? 'page' : null}"
+					   sec:authorize="hasAnyRole('COORD_OPERACIONES','COORD_AREA','TALENTO_HUMANO','NOMINA')">
+						<span class="lateral__icono"><i class="fas fa-user-clock"></i></span> Horas ejecutadas
+					</a>
+					<a th:href="@{/notificaciones/sms}" class="lateral__enlace"
+					   th:classappend="${activo} == 'notificaciones-sms' ? 'activo' : ''"
+					   th:attr="aria-current=${activo == 'notificaciones-sms' ? 'page' : null}"
+					   sec:authorize="hasAnyRole('TALENTO_HUMANO','NOMINA','ADMIN')">
+						<span class="lateral__icono"><i class="fas fa-comment-sms"></i></span> Notificaciones
+					</a>
+					<!--
+						La pantalla de horas extra es la de la quincena (antes
+						"nivelación"): una sola entrada para una sola pantalla,
+						con el mismo filtro de roles que exige su ruta.
+					-->
+					<a th:href="@{/horas-extra/nivelacion}" class="lateral__enlace"
+					   th:classappend="${activo} == 'horas-extra' ? 'activo' : ''"
+					   th:attr="aria-current=${activo == 'horas-extra' ? 'page' : null}"
+					   sec:authorize="hasAnyRole('TALENTO_HUMANO','NOMINA')">
+						<span class="lateral__icono"><i class="fas fa-scale-balanced"></i></span> Horas extra
+					</a>
+					<!--
+						El panel de nivelación: la misma sobrecarga de horas extra,
+						pero leída como porcentaje frente al límite del área, con
+						gráfica. Comparte el filtro de roles de la pantalla anterior.
+					-->
+					<a th:href="@{/nivelacion}" class="lateral__enlace"
+					   th:classappend="${activo} == 'nivelacion' ? 'activo' : ''"
+					   th:attr="aria-current=${activo == 'nivelacion' ? 'page' : null}"
+					   sec:authorize="hasAnyRole('TALENTO_HUMANO','NOMINA')">
+						<span class="lateral__icono"><i class="fas fa-chart-column"></i></span> Nivelación
+					</a>
+				</nav>
+			</div>
+
+		</div>
+
+		<!-- Tarjeta de usuario: saludo según la hora, rol y salida con confirmación -->
+		<div class="lateral__usuario" th:if="${principalActual != null}">
+			<div class="lateral__avatar"
+				 th:text="${#strings.toUpperCase(#strings.substring(principalActual.nombreCompleto(), 0, 1))}">U</div>
+
+			<div class="lateral__meta">
+				<div class="lateral__saludo" id="lytSaludo">Hola</div>
+				<div class="lateral__persona" th:text="${principalActual.nombreCompleto}">Usuario</div>
+				<div class="lateral__rol">
+					<!--
+						El nombre del rol sale tal cual, con sus guiones bajos: es el
+						código que coincide con lo que dice la bitácora y con lo que
+						mira quien depura permisos. Cambiarlo por un texto "bonito"
+						rompe esa correspondencia sin ganar nada.
+					-->
+					<span th:text="${#strings.listJoin(principalActual.nombresDeRol(), ' · ')}">ROL</span>
+				</div>
+			</div>
+
+			<form th:action="@{/logout}" method="post" id="lytFormSalir">
+				<button type="submit" class="lateral__salir" aria-label="Cerrar sesión" title="Cerrar sesión">
+					<i class="fas fa-arrow-right-from-bracket"></i>
+				</button>
+			</form>
+		</div>
+	</aside>
+
+	<div class="principal">
+		<header class="superior">
+			<div class="superior__migas">
+				<a th:href="@{/}" class="superior__inicio" aria-label="Ir al inicio" title="Inicio">
+					<i class="fas fa-house"></i>
+				</a>
+				<i class="fas fa-angle-right"></i>
+				<span>Mardique</span>
+				<i class="fas fa-angle-right"></i>
+				<strong th:text="${titulo}">Inicio</strong>
+			</div>
+
+			<div class="superior__acciones">
+				<!--
+					La campana lleva a las notificaciones (solo quien tiene acceso a esa
+					pantalla). El punto rojo sale únicamente si el controlador publica
+					"notificacionesPendientes" con un valor mayor que cero; si no existe,
+					no se pinta.
+				-->
+				<a th:href="@{/notificaciones/sms}" class="superior__campana" title="Notificaciones"
+				   aria-label="Notificaciones"
+				   sec:authorize="hasAnyRole('TALENTO_HUMANO','NOMINA','ADMIN')">
+					<i class="far fa-bell"></i>
+					<span class="superior__punto"
+						  th:if="${notificacionesPendientes != null and notificacionesPendientes > 0}"></span>
+				</a>
+
+				<div class="superior__fecha">
+					<i class="far fa-calendar"></i>
+					<span id="lytFecha">Hoy</span>
+				</div>
+			</div>
+		</header>
+
+		<main class="contenido">
+
+			<!--
+				Los mensajes de una acción no van acá: quedaban arriba del contenido
+				y en una pantalla alta o con tabla larga había que subir hasta el
+				principio para ver qué pasó. Ahora salen como aviso flotante, al pie
+				de este mismo archivo, y se cierran solos.
+			-->
+			<th:block th:replace="${contenido}"></th:block>
+		</main>
+	</div>
+</div>
+
+<!-- Aviso flotante de conexión -->
+<div class="lyt-red" id="lytRed" role="status" aria-live="polite">
+	<div class="lyt-red__caja">
+		<span class="lyt-red__punto"></span>
+		<div class="lyt-red__texto">
+			<strong id="lytRedTitulo">En línea</strong>
+			<span id="lytRedSub"></span>
+		</div>
+		<button type="button" class="lyt-red__reintentar" id="lytRedReintentar" title="Reintentar ahora" aria-label="Reintentar">
+			<i class="fas fa-rotate-right"></i>
+		</button>
+	</div>
+</div>
+
+<!--
+	Aviso flotante de resultado: el mensaje o el error de la última acción.
+
+	Los avisos de error llevan role="alert" para que un lector de pantalla los
+	anuncie al aparecer; los de éxito no lo llevan: no interrumpen, solo
+	informan. El texto queda escrito en el HTML y el JavaScript solo lo oculta,
+	así que sigue ahí aunque el script no cargue.
+-->
+<div class="lyt-avisos" id="lytAvisos">
+	<div class="lyt-aviso lyt-aviso--error" role="alert" th:if="${error != null}">
+		<span class="lyt-aviso__icono"><i class="fas fa-circle-exclamation"></i></span>
+		<div class="lyt-aviso__texto" th:text="${error}">Algo salio mal.</div>
+		<button type="button" class="lyt-aviso__cerrar" aria-label="Cerrar aviso">
+			<i class="fas fa-xmark"></i>
+		</button>
+	</div>
+	<div class="lyt-aviso" th:if="${mensaje != null}">
+		<span class="lyt-aviso__icono"><i class="fas fa-circle-check"></i></span>
+		<div class="lyt-aviso__texto" th:text="${mensaje}">Listo.</div>
+		<button type="button" class="lyt-aviso__cerrar" aria-label="Cerrar aviso">
+			<i class="fas fa-xmark"></i>
+		</button>
+	</div>
+</div>
+
+<script th:src="@{/js/app.js}"></script>
+
+<script>
+	(function () {
+		'use strict';
+
+		var MOVIL = 900;
+		var abrir = document.getElementById('lytAbrir');
+		var cerrar = document.getElementById('lytCerrar');
+		var velo = document.getElementById('lytVelo');
+		var lateral = document.getElementById('lytLateral');
+		var temporizador = null;
+
+		/* -------------------------------------------------------------
+		   Menú móvil: hamburguesa, X, velo, Esc y gestos
+		   ------------------------------------------------------------- */
+		function abierto() { return lateral.classList.contains('open'); }
+
+		function abrirMenu() {
+			if (abierto()) return;
+			clearTimeout(temporizador);
+			lateral.classList.add('open');
+			velo.classList.add('show');
+			abrir.classList.add('oculto');
+			abrir.setAttribute('aria-expanded', 'true');
+			document.body.style.overflow = 'hidden';
+			if (cerrar) setTimeout(function () { cerrar.focus(); }, 120);
+		}
+
+		/* El botón reaparece cuando el menú ya terminó de deslizarse, para no
+		   montarse encima de él. */
+		function cerrarMenu(devolverFoco) {
+			lateral.classList.remove('open');
+			velo.classList.remove('show');
+			abrir.setAttribute('aria-expanded', 'false');
+			document.body.style.overflow = '';
+			clearTimeout(temporizador);
+			temporizador = setTimeout(function () {
+				if (!abierto()) {
+					abrir.classList.remove('oculto');
+					if (devolverFoco) abrir.focus();
+				}
+			}, 300);
+		}
+
+		abrir.addEventListener('click', abrirMenu);
+		cerrar.addEventListener('click', function () { cerrarMenu(true); });
+		velo.addEventListener('click', function () { cerrarMenu(false); });
+
+		/* Al navegar desde el menú móvil, se cierra para no tapar la pantalla */
+		lateral.addEventListener('click', function (e) {
+			var enlace = e.target.closest ? e.target.closest('.lateral__enlace') : null;
+			if (enlace && window.innerWidth <= MOVIL) cerrarMenu(false);
+		});
+
+		/* -------------------------------------------------------------
+		   Avisos flotantes de resultado
+
+		   El mensaje ya está en el HTML cuando llega esta parte del script:
+		   acá solo se encarga de que se vaya solo, de poder cerrarlo a mano y
+		   de que quede fuera de vista cuando ya cumplió. Si el script no
+		   carga, el aviso se queda visible, que es el comportamiento
+		   mínimo: nunca puede ser la razón por la que no se vea un error.
+		   ------------------------------------------------------------- */
+		var avisos = document.getElementById('lytAvisos');
+		var temporizadoresAviso = [];
+		var DEMORA_AVISO = 8000;
+
+		function ocultarAviso(aviso) {
+			if (!aviso || aviso.classList.contains('ya-se-va')) return;
+			aviso.classList.add('ya-se-va');
+			setTimeout(function () { aviso.style.display = 'none'; }, 320);
+		}
+
+		function cerrarAvisos() {
+			if (!avisos) return;
+			temporizadoresAviso.forEach(clearTimeout);
+			temporizadoresAviso = [];
+			Array.prototype.forEach.call(avisos.querySelectorAll('.lyt-aviso'), ocultarAviso);
+		}
+
+		if (avisos) {
+			var listaAvisos = avisos.querySelectorAll('.lyt-aviso');
+			Array.prototype.forEach.call(listaAvisos, function (aviso) {
+				temporizadoresAviso.push(setTimeout(function () { ocultarAviso(aviso); }, DEMORA_AVISO));
+			});
+			avisos.addEventListener('click', function (e) {
+				var boton = e.target.closest ? e.target.closest('.lyt-aviso__cerrar') : null;
+				if (!boton) return;
+				temporizadoresAviso.forEach(clearTimeout);
+				temporizadoresAviso = [];
+				ocultarAviso(boton.closest('.lyt-aviso'));
+			});
+		}
+
+		document.addEventListener('keydown', function (e) {
+			if (e.key !== 'Escape') return;
+			if (abierto()) {
+				cerrarMenu(true);
+				return;
+			}
+			cerrarAvisos();
+		});
+
+		/* Si se agranda la ventana con el menú abierto, se restablece todo */
+		window.addEventListener('resize', function () {
+			if (window.innerWidth > MOVIL && (abierto() || abrir.classList.contains('oculto'))) {
+				lateral.classList.remove('open');
+				velo.classList.remove('show');
+				abrir.classList.remove('oculto');
+				abrir.setAttribute('aria-expanded', 'false');
+				document.body.style.overflow = '';
+			}
+		});
+
+		/* Gestos: deslizar desde el borde izquierdo abre; hacia la izquierda cierra */
+		var tx = 0, ty = 0, tocando = false;
+		document.addEventListener('touchstart', function (e) {
+			if (window.innerWidth > MOVIL || e.touches.length !== 1) { tocando = false; return; }
+			tx = e.touches[0].clientX;
+			ty = e.touches[0].clientY;
+			tocando = true;
+		}, { passive: true });
+		document.addEventListener('touchend', function (e) {
+			if (!tocando) return;
+			tocando = false;
+			var t = e.changedTouches[0];
+			var dx = t.clientX - tx;
+			var dy = Math.abs(t.clientY - ty);
+			if (dy > 60) return;
+			if (!abierto() && tx < 24 && dx > 70) abrirMenu();
+			else if (abierto() && dx < -70) cerrarMenu(false);
+		}, { passive: true });
+
+		/* -------------------------------------------------------------
+		   Saludo, fecha y enlace activo a la vista
+		   ------------------------------------------------------------- */
+		var saludo = document.getElementById('lytSaludo');
+		if (saludo) {
+			var h = new Date().getHours();
+			saludo.textContent = h < 12 ? 'Buenos días' : (h < 18 ? 'Buenas tardes' : 'Buenas noches');
+		}
+
+		var fecha = document.getElementById('lytFecha');
+		if (fecha) {
+			try {
+				var f = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
+				fecha.textContent = f.charAt(0).toUpperCase() + f.slice(1);
+			} catch (err) { /* navegador sin Intl: queda el texto por defecto */ }
+		}
+
+		var activo = document.querySelector('.lateral__enlace.activo');
+		var zona = document.getElementById('lytScroll');
+		if (activo && zona) {
+			setTimeout(function () {
+				var a = activo.getBoundingClientRect();
+				var z = zona.getBoundingClientRect();
+				var arriba = a.top - z.top + zona.scrollTop - 60;
+				zona.scrollTo({ top: arriba < 0 ? 0 : arriba, behavior: 'smooth' });
+			}, 100);
+		}
+
+		/* -------------------------------------------------------------
+		   Barra de progreso de lectura
+		   ------------------------------------------------------------- */
+		var barra = document.getElementById('lytProgreso');
+		var pendiente = false;
+		function pintarProgreso() {
+			pendiente = false;
+			var d = document.documentElement;
+			var total = d.scrollHeight - d.clientHeight;
+			barra.style.width = (total > 0 ? Math.min(100, (d.scrollTop / total) * 100) : 0) + '%';
+		}
+		window.addEventListener('scroll', function () {
+			if (!pendiente) { pendiente = true; requestAnimationFrame(pintarProgreso); }
+		}, { passive: true });
+		pintarProgreso();
+
+		/* -------------------------------------------------------------
+		   Confirmación para cerrar sesión
+
+		   Usa el mismo sistema de diálogos que el resto del aplicativo
+		   (window.mdqConfirm), así no hay dos lenguajes visuales para el
+		   mismo tipo de componente. Si app.js falla en cargar o mdqConfirm
+		   no existe, el formulario se envía normal y la sesión se cierra
+		   igual: la confirmación no puede ser la razón de que nadie pueda
+		   salir del sistema.
+		   ------------------------------------------------------------- */
+		var formSalir = document.getElementById('lytFormSalir');
+
+		if (formSalir && typeof window.mdqConfirm === 'function') {
+			formSalir.addEventListener('submit', function (e) {
+				e.preventDefault();
+				window.mdqConfirm('¿Desea cerrar la sesión actual en el sistema?', {
+					titulo: 'Confirmar cierre de sesión',
+					icono: 'warning',
+					peligroso: true,
+					textoAceptar: 'Sí, cerrar sesión',
+					textoCancelar: 'Cancelar'
+				}).then(function (aceptado) {
+					if (aceptado) {
+						formSalir.submit();
+					}
+				});
+			});
+		}
+
+		/* -------------------------------------------------------------
+		   Aviso de conexión: solo al cambiar el estado, nunca al cargar
+		   ------------------------------------------------------------- */
+		var red = document.getElementById('lytRed');
+		var redTitulo = document.getElementById('lytRedTitulo');
+		var redSub = document.getElementById('lytRedSub');
+		var reintentar = document.getElementById('lytRedReintentar');
+		var temporizadorRed = null;
+		var estadoAnterior = navigator.onLine;
+
+		function avisarRed(enLinea) {
+			clearTimeout(temporizadorRed);
+			red.classList.toggle('sin-red', !enLinea);
+			redTitulo.textContent = enLinea ? 'En línea' : 'Sin conexión';
+			redSub.textContent = enLinea
+					? 'Conexión restaurada. Ya puede continuar.'
+					: 'Los cambios no se guardarán hasta que vuelva la red.';
+			red.classList.add('show');
+			temporizadorRed = setTimeout(function () { red.classList.remove('show'); }, enLinea ? 3200 : 6000);
+		}
+
+		function alCambiarRed() {
+			var ahora = navigator.onLine;
+			if (ahora === estadoAnterior) return;
+			estadoAnterior = ahora;
+			avisarRed(ahora);
+		}
+
+		window.addEventListener('online', alCambiarRed);
+		window.addEventListener('offline', alCambiarRed);
+		if (reintentar) reintentar.addEventListener('click', function () { location.reload(); });
+	})();
+</script>
+
+</body>
+
+</html>t

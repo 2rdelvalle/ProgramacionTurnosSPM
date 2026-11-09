@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es" th:replace="~{fragments/layout :: pagina('Historial de listas', 'alimentacion', ~{::contenido})}">
+<body>
+<div th:fragment="contenido" class="ali">
+
+	<!--
+		Historial completo de las listas de meriendas y cenas ya guardadas.
+		Es el espejo del historial de transporte: fecha, tipo, cuántas personas
+		lleva, quién la armó, y las mismas acciones de ver/imprimir y eliminar.
+
+		Estilo: mismo sistema de colaboradores.html y transporte.html.
+		Todas las reglas van prefijadas con .ali y anulan las de app.css.
+	-->
+	<style>
+		.ali {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+		.ali > .hero-inicio,
+		.ali > .tarjeta { margin-bottom: 1.25rem; }
+
+		/* ---- Portada (para foto: --foto: url('/img/x.jpg') en .hero-inicio) ---- */
+		.ali .hero-inicio,
+		.ali .hero-inicio * { animation: none; }
+		.ali .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.ali .hero-inicio::before,
+		.ali .hero-inicio::after { content: none; }
+		.ali .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.ali .hero-inicio__contenido { max-width: 44rem; }
+		.ali .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+			text-transform: uppercase;
+		}
+		.ali .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.ali .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+
+		/* ---- Tarjeta y cabecera ---- */
+		.ali .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+		}
+		.ali .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.ali .tarjeta__cabecera {
+			justify-content: flex-start;
+			padding: 1.375rem 1.5rem;
+			gap: 1rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.ali .sec-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.25rem;
+		}
+		.ali .sec-icono--verde { background: #2d7a55; box-shadow: 0 3px 10px rgba(45, 122, 85, .25); }
+		.ali .tarjeta__titulo-grupo { flex: 1 1 16rem; }
+		.ali .tarjeta__titulo-grupo h2 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+		}
+		.ali .tarjeta__cabecera h2::before,
+		.ali .tarjeta__titulo-grupo h2::before { display: none; }
+		.ali .tarjeta__titulo-grupo p {
+			margin-top: .25rem;
+			max-width: 62ch;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+
+		/* ---- Etiquetas (sin punto parpadeante) ---- */
+		.ali .etiqueta {
+			padding: .375rem .875rem;
+			border: 0;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+			white-space: nowrap;
+		}
+		.ali .etiqueta::before { content: none; display: none; animation: none; }
+		.ali .tarjeta__cabecera > .etiqueta { align-self: center; }
+
+		/* ---- Botones ---- */
+		.ali .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.ali .boton::after { display: none; }
+		.ali .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.ali .boton--chico { padding: .5rem .875rem; font-size: .75rem; }
+		.ali .boton--contorno {
+			border: 1px solid #cfe0f2;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.ali .boton--contorno:hover:not(:disabled) {
+			border: 1px solid #b6cfe9;
+			background: #e9f1fa;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.ali .boton--peligro {
+			border: 1px solid #f0c4c4;
+			background: #fff;
+			color: #b42318;
+			box-shadow: none;
+		}
+		.ali .boton--peligro:hover {
+			border: 1px solid #e6a8a8;
+			background: #fdf3f3;
+			color: #b42318;
+			box-shadow: none;
+		}
+
+		/* ---- Tabla dentro de recuadro ---- */
+		.ali .tabla-envoltura {
+			margin: 1.25rem 1.5rem 1.5rem;
+			border: 1px solid #dfe8f3;
+			border-radius: 12px;
+			background: #fff;
+			overflow-x: auto;
+			-webkit-overflow-scrolling: touch;
+		}
+		.ali .tabla thead th {
+			padding: .875rem 1.125rem;
+			background: var(--a-suave);
+			color: #2f4a70;
+			border-bottom: 1px solid #e3ebf4;
+			font-size: .75rem;
+			font-weight: 600;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+		}
+		.ali .tabla thead tr th:first-child { border-left: 0; }
+		.ali .tabla thead th.tabla__num { text-align: right; }
+		.ali .tabla tbody td {
+			padding: 1rem 1.125rem;
+			border-bottom: 1px solid #edf2f8;
+			vertical-align: middle;
+			color: var(--a-texto);
+		}
+		.ali .tabla tbody tr { animation: none; }
+		.ali .tabla tbody tr:nth-child(even) { background: transparent; }
+		.ali .tabla tbody tr:hover { background: #f7fafd; }
+		.ali .tabla tbody tr:hover td:first-child { box-shadow: none; }
+		.ali .tabla tbody tr:last-child td { border-bottom: 0; }
+		.ali .tabla__principal { color: var(--a-navy); font-weight: 700; }
+		.ali .form-linea { display: inline-flex; align-items: center; gap: .375rem; margin: 0; }
+
+		/* ---- Agrupador de acciones ---- */
+		.ali .asignar-wrap {
+			display: flex;
+			flex-wrap: wrap;
+			gap: .5rem;
+			align-items: center;
+		}
+
+		/* ---- Estado vacío ---- */
+		.ali .tabla--vacia td {
+			white-space: normal;
+			line-height: 1.6;
+			text-align: center;
+			padding: 2rem 1rem 2.25rem;
+			color: var(--a-tenue);
+			font-size: .75rem;
+		}
+		.ali .tabla tr.tabla--vacia:hover { background: transparent; }
+		.ali .vacio-icono { display: block; margin-bottom: .625rem; color: #1f4b7a; font-size: 2rem; }
+		.ali .tabla--vacia strong { display: block; margin-bottom: .375rem; color: var(--a-navy); font-size: .875rem; font-weight: 700; }
+
+		/* ---- Móvil: tabla → tarjeta ---- */
+		@media (max-width: 768px) {
+			.ali .hero-inicio { padding: 1.25rem; min-height: 0; }
+			.ali .hero-inicio h1 { font-size: 1.5rem; }
+			.ali .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.ali .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.ali .tabla-envoltura { margin: 1rem 1rem 1.25rem; }
+
+			.ali .tabla tbody tr { display: flex; flex-direction: column; }
+			.ali .tabla tbody td {
+				display: block;
+				text-align: left;
+				padding: .5rem .875rem;
+			}
+			.ali .tabla tbody td::before {
+				content: attr(data-label);
+				display: block;
+				margin-bottom: .25rem;
+				font-size: .625rem;
+				font-weight: 800;
+				letter-spacing: .06em;
+				text-transform: uppercase;
+				color: var(--a-tenue);
+			}
+
+			/* La fecha sube como encabezado de la tarjeta */
+			.ali .tabla tbody td.celda-fecha {
+				order: -1;
+				padding: .875rem;
+				background: var(--a-suave);
+				border-bottom: 1px solid var(--a-borde);
+			}
+			.ali .tabla tbody td.celda-fecha::before { content: none; }
+
+			/* La acción va al final y a todo el ancho */
+			.ali .tabla tbody td.celda-accion {
+				order: 1;
+				padding: .875rem;
+				background: var(--a-suave);
+			}
+			.ali .tabla tbody td.celda-accion::before { display: block; margin-bottom: .625rem; }
+			.ali .asignar-wrap { flex-direction: column; align-items: stretch; }
+			.ali .asignar-wrap > a,
+			.ali .asignar-wrap > form { width: 100%; }
+			.ali .asignar-wrap .boton { width: 100%; justify-content: center; }
+
+			.ali .tabla tbody tr.tabla--vacia td { display: block; text-align: center; }
+			.ali .tabla tbody tr.tabla--vacia td::before { content: none; }
+		}
+		@media (max-width: 480px) {
+			.ali .hero-icono { display: none; }
+		}
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-clock-rotate-left"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">LISTAS ANTERIORES</span>
+			<h1>Historial de meriendas y cenas</h1>
+			<p>
+				Todas las listas guardadas, de la más reciente a la más antigua.
+				Vuelva a abrirlas para imprimirlas.
+			</p>
+		</div>
+	</section>
+
+	<div class="tarjeta">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--verde" aria-hidden="true"><i class="fas fa-clipboard-list"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Listas guardadas</h2>
+				<p>Cada lista es un documento: muestra las personas y el área que
+					tuvieron el día que se armó.</p>
+			</div>
+			<span class="etiqueta" th:text="${#lists.size(listas)} + ' lista(s)'">0 lista(s)</span>
+		</div>
+
+		<div class="tabla-envoltura">
+			<table class="tabla tabla--historial">
+				<thead>
+				<tr>
+					<th>Fecha</th>
+					<th>Tipo</th>
+					<th class="tabla__num">Personas</th>
+					<th>Creada por</th>
+					<th class="tabla__acciones">Acción</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr th:each="lista : ${listas}">
+					<td class="celda-fecha" data-label="Fecha" th:text="${#temporals.format(lista.fecha, 'dd/MM/yyyy')}">12/10/2026</td>
+					<td data-label="Tipo">
+						<span class="tabla__principal"
+							  th:text="${lista.tipo.name() == 'MERIENDA' ? 'Merienda' : 'Cena'}">Cena</span>
+					</td>
+					<td class="tabla__num" data-label="Personas">
+						<span class="etiqueta" th:text="${conteos[lista.id] ?: 0} + ' persona(s)'">0 persona(s)</span>
+					</td>
+					<td data-label="Creada por" th:text="${lista.creadoPor.nombreCompleto}">Usuario</td>
+					<td class="tabla__acciones celda-accion" data-label="Acción">
+						<div class="asignar-wrap">
+							<a th:href="@{/alimentacion/listas/{id}(id=${lista.id})}" target="_blank"
+							   class="boton boton--contorno boton--chico">
+								<i class="fas fa-file-pdf"></i> Ver / Imprimir
+							</a>
+							<form th:action="@{/alimentacion/listas/{id}/eliminar(id=${lista.id})}"
+								  method="post" class="form-linea"
+								  th:attr="data-confirm=|¿Eliminar la lista de ${lista.tipo.name() == 'MERIENDA' ? 'meriendas' : 'cenas'} del ${#temporals.format(lista.fecha, 'dd/MM/yyyy')}? Las personas quedan disponibles para otra lista.|,data-confirm-peligro='true'">
+								<input type="hidden" name="dia" th:value="${lista.fecha}">
+								<button type="submit" class="boton boton--peligro boton--chico">
+									<i class="fas fa-trash-can"></i> Eliminar
+								</button>
+							</form>
+						</div>
+					</td>
+				</tr>
+				<tr th:if="${#lists.isEmpty(listas)}" class="tabla--vacia">
+					<td colspan="5" data-label="Aviso">
+						<i class="fas fa-clipboard-list vacio-icono" aria-hidden="true"></i>
+						<strong>Historial vacío</strong>
+						Todavía no se ha guardado ninguna lista de meriendas o cenas.
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+	  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+	  th:replace="~{fragments/layout :: pagina('Colaboradores', 'colaboradores', ~{::contenido})}">
+<body>
+<div th:fragment="contenido" class="colab">
+
+	<!--
+		Esta pantalla usa los componentes de app.css (hero-inicio, tarjeta,
+		filtros, tabla, boton) con el mismo estilo sobrio de Alimentación:
+		una sola paleta azul corporativa, sin degradados ni animaciones.
+
+		En móvil la tabla se convierte en una tarjeta por colaborador: el
+		nombre va arriba como encabezado, los datos debajo con su título, y el
+		bloque de gestión (perfil y turno) al final, ocupando todo el ancho.
+	-->
+	<style>
+		/* =================================================================
+		   Colaboradores · estilos locales
+		   Misma paleta del boceto de Alimentación: azul marino profundo,
+		   azul de acción y naranja de marca solo en acciones principales.
+		   Variables editables al inicio.
+		   ================================================================= */
+		.colab {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+
+		.colab > .hero-inicio,
+		.colab > .tarjeta { margin-bottom: 1.25rem; }
+		.colab .tarjeta { animation: none; }
+
+		/* ---- Portada ----
+		   Para poner una foto: en .hero-inicio agregue
+		   style="--colab-foto: url('/img/colaboradores.jpg')" */
+		.colab .hero-inicio,
+		.colab .hero-inicio * { animation: none; }
+		.colab .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--colab-foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.colab .hero-inicio::before,
+		.colab .hero-inicio::after { content: none; }
+		.colab .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.colab .hero-inicio__contenido { max-width: 36rem; }
+		.colab .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+		}
+		.colab .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.colab .hero-inicio .hero-inicio__contenido p {
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+		.colab .hero-inicio__accion { margin-left: auto; flex: none; }
+
+		/* ---- Tarjeta y cabecera ---- */
+		.colab .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+		}
+		.colab .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.colab .tarjeta__cabecera {
+			padding: 1.375rem 1.5rem;
+			gap: 1rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.colab .sec-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.25rem;
+		}
+		.colab .sec-icono--azul { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+		.colab .tarjeta__titulo-grupo h2 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+		}
+		.colab .tarjeta__cabecera h2::before,
+		.colab .tarjeta__titulo-grupo h2::before { display: none; }
+		.colab .tarjeta__titulo-grupo p {
+			margin-top: .25rem;
+			max-width: 62ch;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+
+		/* ---- Botones ---- */
+		.colab .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.colab .boton::after { display: none; }
+		.colab .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.colab .boton--primario,
+		.colab .boton--primario:hover {
+			border-color: var(--a-accion);
+			background: var(--a-accion);
+			box-shadow: 0 3px 10px rgba(221, 145, 44, .28);
+		}
+		.colab .boton--primario:hover {
+			border-color: var(--a-accion-hover);
+			background: var(--a-accion-hover);
+			box-shadow: 0 4px 12px rgba(221, 145, 44, .36);
+		}
+		.colab .boton--chico { padding: .5rem .875rem; font-size: .75rem; }
+		.colab .boton--contorno {
+			border: 1px solid #cfe0f2;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.colab .boton--contorno:hover:not(:disabled) {
+			border: 1px solid #b6cfe9;
+			background: #e9f1fa;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.colab .masiva-acciones .boton--contorno + .boton--contorno {
+			border-color: #dce5ef;
+			background: #fff;
+		}
+		.colab .boton--fantasma {
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.colab .boton--fantasma:hover {
+			border: 1px solid #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+
+		/* ---- Filtros (dentro de la tarjeta) ---- */
+		.colab .tarjeta .filtros {
+			align-items: flex-end;
+			gap: 1rem;
+			padding: 1.25rem 1.5rem;
+			background: #fff;
+			border: 0;
+			border-bottom: 1px solid var(--a-borde);
+			border-radius: 0;
+			box-shadow: none;
+		}
+		.colab .filtros .campo { flex: 1 1 11rem; }
+		.colab .filtros .campo--buscar { flex: 2 1 15rem; }
+		.colab .campo__etiqueta {
+			margin-bottom: .375rem;
+			color: var(--a-navy);
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+		.colab input[type="search"],
+		.colab input[type="date"],
+		.colab select {
+			padding: .625rem .875rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background-color: #fff;
+			font-size: .9375rem;
+			font-weight: 500;
+			color: var(--a-texto);
+		}
+		.colab select { padding-right: 2.5rem; }
+		.colab input[type="search"]:focus,
+		.colab input[type="date"]:focus,
+		.colab select:focus {
+			border-color: var(--a-azul);
+			box-shadow: 0 0 0 3px rgba(23, 68, 117, .14);
+		}
+
+		/* ---- Barra de aptitud masiva (solo Talento Humano) ---- */
+		.colab .masiva-bar { padding: 1.25rem 1.5rem; background: #eff6fd; border-bottom: 1px solid #dbe8f5; }
+		.colab .masiva-acciones { display: flex; flex-wrap: wrap; gap: .75rem; align-items: flex-end; }
+		.colab .masiva-acciones .campo { flex: 1 1 12rem; margin-bottom: 0; }
+		.colab .masiva-ayuda { margin: .75rem 0 0; font-size: .75rem; color: var(--a-tenue); line-height: 1.5; }
+		.colab .masiva-check {
+			flex: none;
+			width: 1.25rem;
+			height: 1.25rem;
+			accent-color: var(--a-azul);
+			cursor: pointer;
+		}
+		.colab .celda-sel { width: 4rem; text-align: center; }
+
+		/* ---- Tabla ---- */
+		.colab .tabla-envoltura {
+			margin: 1.25rem 1.5rem 1.5rem;
+			border: 1px solid #dfe8f3;
+			border-radius: 12px;
+			background: #fff;
+		}
+		.colab .tabla thead th {
+			padding: .875rem 1.125rem;
+			background: var(--a-suave);
+			color: #2f4a70;
+			border-bottom: 1px solid #e3ebf4;
+			font-size: .75rem;
+			font-weight: 600;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+		}
+		.colab .tabla thead tr th:first-child { border-left: 0; }
+		.colab .tabla thead th.tabla__num { text-align: right; }
+		.colab .tabla tbody td {
+			padding: 1rem 1.125rem;
+			border-bottom: 1px solid #edf2f8;
+			vertical-align: middle;
+			color: var(--a-texto);
+		}
+		.colab .tabla tbody tr { animation: none; }
+		.colab .tabla tbody tr:nth-child(even) { background: transparent; }
+		.colab .tabla tbody tr:hover { background: #f7fafd; }
+		.colab .tabla tbody tr:hover td:first-child { box-shadow: none; }
+		.colab .tabla tbody tr:last-child td { border-bottom: 0; }
+		.colab .tabla__principal { color: var(--a-navy); font-weight: 700; }
+		.colab .tenue { color: var(--a-tenue); }
+
+		/* ---- Persona: inicial + nombre ---- */
+		.colab .persona { display: flex; align-items: center; gap: .875rem; min-width: 0; }
+		.colab .inicial {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 2.5rem;
+			height: 2.5rem;
+			border-radius: 50%;
+			background: #2c5f94;
+			color: #fff;
+			font-size: .9375rem;
+			font-weight: 600;
+			box-shadow: none;
+		}
+		.colab .codigo-area {
+			display: block;
+			margin-top: .125rem;
+			font-size: .6875rem;
+			font-weight: 700;
+			letter-spacing: .06em;
+			color: var(--a-tenue);
+		}
+		.colab .sin-registro { color: var(--a-tenue); font-style: italic; font-weight: 500; }
+
+		/* Etiqueta de turno */
+		.colab .etiqueta {
+			padding: .375rem .875rem;
+			border: 0;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+		}
+		.colab .etiqueta--gris { background: #eceff3; color: var(--a-tenue); }
+
+		/* ---- Gestión: perfil y turno ---- */
+		.colab .gestion { display: flex; flex-direction: row; flex-wrap: wrap; gap: .5rem; min-width: 0; }
+
+		/* ---- Pie de la tarjeta ---- */
+		.colab .tarjeta__pie {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			flex-wrap: wrap;
+			gap: .5rem 1rem;
+			padding: 1rem 1.5rem;
+			background: #f8fafd;
+			border-top: 1px solid var(--a-borde);
+			color: var(--a-tenue);
+			font-size: .875rem;
+			font-weight: 600;
+		}
+
+		/* ---- Lista vacía ---- */
+		.colab .tabla--vacia td {
+			white-space: normal;
+			line-height: 1.6;
+			text-align: center;
+			padding: 2rem 1rem 2.25rem;
+			color: var(--a-tenue);
+			font-size: .75rem;
+		}
+		.colab .tabla tr.tabla--vacia:hover { background: transparent; }
+		.colab .vacio-icono { display: block; margin-bottom: .625rem; color: #1f4b7a; font-size: 2rem; }
+		.colab .tabla--vacia strong { color: var(--a-navy); font-size: .875rem; font-weight: 700; }
+
+		/* =================================================================
+		   Móvil: una tarjeta por colaborador
+		   ================================================================= */
+		@media (max-width: 768px) {
+			.colab .campo input,
+			.colab .campo select { font-size: 16px; }
+			.colab .tarjeta .filtros { padding: 1rem; }
+			.colab .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.colab .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.colab .masiva-bar { padding: 1rem; }
+			.colab .masiva-acciones { flex-direction: column; align-items: stretch; }
+			.colab .masiva-acciones .boton { width: 100%; justify-content: center; }
+			.colab .tabla-envoltura { margin: 1rem 1rem 1.25rem; }
+			.colab .tarjeta__pie { padding: 1rem; }
+			.colab .hero-inicio { padding: 1.25rem; min-height: 0; flex-wrap: wrap; }
+			.colab .hero-inicio__accion { margin-left: 0; width: 100%; }
+			.colab .hero-inicio__accion .boton { width: 100%; justify-content: center; }
+			.colab .hero-inicio h1 { font-size: 1.5rem; }
+
+			.colab .tabla tbody tr { display: flex; flex-direction: column; }
+
+			/* El nombre sube como encabezado de la tarjeta */
+			.colab .tabla tbody td.celda-nombre {
+				order: -1;
+				display: block;
+				padding: .875rem .875rem .75rem;
+				text-align: left;
+				background: var(--a-suave);
+				border-bottom: 1px solid var(--a-borde);
+			}
+			.colab .tabla tbody td.celda-nombre::before { content: none; }
+			.colab .celda-nombre .persona { font-size: 1rem; }
+			.colab .celda-nombre .inicial { width: 2.5rem; height: 2.5rem; font-size: .9375rem; }
+
+			/* Bloque de gestión al final y a todo el ancho */
+			.colab .tabla tbody td.celda-gestion {
+				order: 1;
+				display: block;
+				padding: .875rem;
+				text-align: left;
+				background: var(--a-suave);
+			}
+			.colab .tabla tbody td.celda-gestion::before { display: block; margin-bottom: .625rem; }
+			.colab .gestion { flex-direction: column; }
+			.colab .gestion > .boton { width: 100%; }
+
+			/* El aviso de lista vacía se centra en vez de repartirse en columnas */
+			.colab .tabla tbody tr.tabla--vacia td { display: block; text-align: center; }
+			.colab .tabla tbody tr.tabla--vacia td::before { content: none; }
+		}
+
+		@media (max-width: 640px) {
+			.colab .tarjeta__pie { flex-direction: column; align-items: flex-start; }
+		}
+		@media (max-width: 480px) {
+			.colab .hero-icono { display: none; }
+		}
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-users"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">PERSONAL ACTIVO</span>
+			<h1>Colaboradores</h1>
+			<p th:text="'Personal activo de las ' + ${#lists.size(areas)} + ' área(s) que tiene en alcance.'">
+				Personal activo de su alcance.
+			</p>
+		</div>
+		<a th:href="@{/colaboradores/nuevo}" sec:authorize="hasRole('TALENTO_HUMANO')"
+		   class="boton boton--primario hero-inicio__accion">
+			<i class="fas fa-user-plus"></i> Nuevo colaborador
+		</a>
+	</section>
+
+	<!-- ======== FILTROS + TABLA ======== -->
+	<div class="tarjeta tarjeta--personas">
+
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--azul" aria-hidden="true"><i class="fas fa-users"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Personal en su alcance</h2>
+				<p>Filtre por área o busque por nombre o documento.</p>
+			</div>
+		</div>
+
+		<form class="filtros" th:action="@{/colaboradores}" method="get">
+			<div class="campo">
+				<label class="campo__etiqueta" for="filtro-area">Área</label>
+				<select id="filtro-area" name="area">
+					<option value="">Todas las de su alcance</option>
+					<option th:each="area : ${areas}" th:value="${area.id}" th:text="${area.nombre}"
+							th:selected="${area.id == areaSeleccionada}">Área</option>
+				</select>
+			</div>
+
+			<div class="campo campo--buscar">
+				<label class="campo__etiqueta" for="filtro-q">Buscar</label>
+				<input id="filtro-q" type="search" name="q" th:value="${busqueda}" placeholder="Nombre o documento">
+			</div>
+
+			<div class="filtros__fin">
+				<a th:href="@{/colaboradores}" class="boton boton--fantasma"><i class="fas fa-xmark"></i> Limpiar</a>
+				<button type="submit" class="boton"><i class="fas fa-magnifying-glass"></i> Filtrar</button>
+			</div>
+		</form>
+
+		<!--
+			Aptitud masiva: la misma aptitud para todas las personas marcadas,
+			en un solo envío. La casilla por fila y la barra viajan en este
+			form; los filtros de arriba quedan en campos ocultos para volver a
+			la misma vista con el mismo área y búsqueda después de asignar.
+			Para quien no es Talento Humano la barra y las casillas no se
+			pintan (además del 403 del servidor) y el form queda inerte.
+		-->
+		<form id="aptitud-masiva" th:action="@{/colaboradores/aptitudes/masiva}" method="post">
+			<input type="hidden" name="area" th:value="${areaSeleccionada}">
+			<input type="hidden" name="q" th:value="${busqueda}">
+
+			<div class="masiva-bar" sec:authorize="hasRole('TALENTO_HUMANO')"
+				 th:if="${habilitaciones != null and !#lists.isEmpty(habilitaciones) and !#lists.isEmpty(colaboradores)}">
+				<div class="masiva-acciones">
+					<label class="campo">
+						<span class="campo__etiqueta">Aptitud</span>
+						<select name="habilitacionId" required>
+							<option value="">Seleccione la aptitud</option>
+							<option th:each="habilitacion : ${habilitaciones}" th:value="${habilitacion.id}"
+									th:text="${habilitacion.nombre}">Aptitud</option>
+						</select>
+					</label>
+					<label class="campo">
+						<span class="campo__etiqueta">Vigente desde</span>
+						<input type="date" name="vigenteDesde" th:value="${hoy}" required>
+					</label>
+					<button type="button" class="boton boton--contorno"
+							onclick="mdqMarcar('aptitud-masiva', true)">
+						<i class="fas fa-check"></i> Marcar todos
+					</button>
+					<button type="button" class="boton boton--contorno"
+							onclick="mdqMarcar('aptitud-masiva', false)">
+						<i class="fas fa-ban"></i> Ninguno
+					</button>
+					<button type="submit" class="boton boton--primario">
+						<i class="fas fa-graduation-cap"></i> Asignar aptitud
+					</button>
+				</div>
+				<p class="masiva-ayuda">
+					Marque a quiénes se les asigna: queda con vigencia abierta desde la
+					fecha indicada y se puede ajustar o retirar después en su ficha.
+				</p>
+			</div>
+
+			<div class="tabla-envoltura">
+				<table class="tabla">
+					<thead>
+					<tr>
+						<th class="celda-sel" sec:authorize="hasRole('TALENTO_HUMANO')">Elegir</th>
+						<th>Documento</th>
+						<th>Nombre</th>
+						<th>Área</th>
+						<th>Cargo</th>
+						<th>Turno</th>
+						<!-- La misma expresión que la celda: si una se oculta y la otra no,
+						     la fila queda desalineada respecto al encabezado. -->
+						<th sec:authorize="hasAnyRole('TALENTO_HUMANO','COORD_OPERACIONES','COORD_AREA')">Gestionar</th>
+					</tr>
+					</thead>
+					<tbody>
+					<tr th:each="fila : ${colaboradores}">
+						<td class="celda-sel" data-label="Elegir"
+							sec:authorize="hasRole('TALENTO_HUMANO')">
+							<input type="checkbox" class="masiva-check" name="ids" th:value="${fila.id}"
+								   title="Marcar para la aptitud masiva">
+						</td>
+						<td class="tenue" data-label="Documento" th:text="${fila.documento}">CC</td>
+
+						<td class="celda-nombre" data-label="Nombre">
+							<div class="persona">
+								<span class="inicial" aria-hidden="true"
+									  th:text="${#strings.toUpperCase(#strings.substring(fila.nombreCompleto, 0, 1))}">N</span>
+								<span class="tabla__principal" th:text="${fila.nombreCompleto}">Nombre</span>
+							</div>
+						</td>
+
+						<td data-label="Área">
+							<div>
+								<span th:text="${fila.areaNombre}">Área</span>
+								<span class="codigo-area" th:text="${fila.areaCodigo}">OPE</span>
+							</div>
+						</td>
+
+						<td data-label="Cargo" th:text="${fila.cargoNombre}">Cargo</td>
+
+						<td data-label="Turno">
+							<span class="etiqueta" th:classappend="${fila.turnoNombre == null} ? 'etiqueta--gris' : ''"
+								  th:text="${fila.turnoNombre} ?: 'Sin turno'">Turno</span>
+						</td>
+
+						<!--
+							Antes cada fila traía un salario, un "desde" y un "guardar" que
+							ocupaban la mitad de la tabla. El registro del salario quedó en la
+							ficha del colaborador y su lectura en la pantalla de horas extra;
+							aquí solo quedan los botones de gestión.
+						-->
+						<td class="celda-gestion" data-label="Gestionar"
+							sec:authorize="hasAnyRole('TALENTO_HUMANO','COORD_OPERACIONES','COORD_AREA')">
+							<div class="gestion">
+								<a th:href="@{/colaboradores/{id}/editar(id=${fila.id})}"
+								   sec:authorize="hasRole('TALENTO_HUMANO')"
+								   class="boton boton--fantasma boton--chico">
+									<i class="fas fa-pen"></i> Perfil
+								</a>
+								<a th:href="@{/colaboradores/{id}/turno(id=${fila.id})}"
+								   sec:authorize="hasAnyRole('TALENTO_HUMANO','COORD_OPERACIONES','COORD_AREA')"
+								   class="boton boton--fantasma boton--chico">
+									<i class="fas fa-clock"></i> Turno
+								</a>
+							</div>
+						</td>
+					</tr>
+
+					<tr th:if="${#lists.isEmpty(colaboradores)}" class="tabla--vacia">
+						<td colspan="7" data-label="Aviso">
+							<i class="fas fa-users vacio-icono" aria-hidden="true"></i>
+							<strong>No hay colaboradores que mostrar</strong><br>
+							<span th:if="${areaSeleccionada != null}">El filtro no arrojó resultados.</span>
+							<span th:unless="${areaSeleccionada != null}">No hay personal activo en las áreas de su alcance.</span>
+						</td>
+					</tr>
+					</tbody>
+				</table>
+			</div>
+		</form>
+
+		<div class="tarjeta__pie">
+			<span th:text="${#lists.size(colaboradores)} + ' colaborador(es)'">0</span>
+		</div>
+	</div>
+
+	<script>
+		// Marca o desmarca todas las casillas habilitadas de la barra masiva.
+		function mdqMarcar(formId, estado) {
+			document.querySelectorAll('#' + formId + ' input[name="ids"]:not(:disabled)')
+					.forEach(function (casilla) { casilla.checked = estado; });
+		}
+	</script>
+
+</div>
+</body>
+</html>

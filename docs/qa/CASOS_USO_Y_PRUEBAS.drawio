@@ -1,0 +1,528 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" modified="2026-10-30T12:00:00.000Z" version="24.7.17" type="device">
+  <diagram id="p1" name="01 - Casos de uso y actores">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" page="1" pageWidth="1800" pageHeight="2200">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="MARDIQUE | Casos de uso • Referencias CP en páginas siguientes" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="60" y="20" width="1560" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="coord" value="Coordinador de área / operaciones" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=0;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="60" y="170" width="220" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="th" value="Talento Humano" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=0;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="60" y="530" width="220" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="nom" value="Nómina" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=0;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="60" y="890" width="220" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="adm" value="Administrador" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=0;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1400" y="200" width="220" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="aud" value="Auditor" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=0;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1400" y="570" width="220" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="sms" value="Proveedor SMS simulado" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=0;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1400" y="930" width="220" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="CU-01" value="CU-01&#10;Autenticarse y salir" style="ellipse;whiteSpace=wrap;html=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="400" y="120" width="370" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-010" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="coord" target="CU-01">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-011" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="th" target="CU-01">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-012" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="nom" target="CU-01">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-013" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="adm" target="CU-01">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-014" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="aud" target="CU-01">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="CU-02" value="CU-02&#10;Consultar dentro del alcance" style="ellipse;whiteSpace=wrap;html=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="870" y="120" width="370" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-020" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="coord" target="CU-02">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-021" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="th" target="CU-02">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="CU-03" value="CU-03&#10;Gestionar personal y vigencias" style="ellipse;whiteSpace=wrap;html=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="400" y="295" width="370" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-030" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="th" target="CU-03">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="CU-04" value="CU-04&#10;Gestionar turnos y catálogos" style="ellipse;whiteSpace=wrap;html=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="870" y="295" width="370" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-040" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="th" target="CU-04">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-041" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="adm" target="CU-04">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-042" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="coord" target="CU-04">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="CU-05" value="CU-05&#10;Proponer programación" style="ellipse;whiteSpace=wrap;html=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="400" y="470" width="370" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-050" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="coord" target="CU-05">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-051" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="th" target="CU-05">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-052" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="adm" target="CU-05">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="CU-06" value="CU-06&#10;Preparar lotes y repetir" style="ellipse;whiteSpace=wrap;html=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="870" y="470" width="370" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-060" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="coord" target="CU-06">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-061" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="th" target="CU-06">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-062" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="adm" target="CU-06">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="CU-07" value="CU-07&#10;Aprobar, ajustar y rechazar" style="ellipse;whiteSpace=wrap;html=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="400" y="645" width="370" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-070" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="th" target="CU-07">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-071" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="adm" target="CU-07">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="CU-08" value="CU-08&#10;Registrar ejecución y cerrar" style="ellipse;whiteSpace=wrap;html=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="870" y="645" width="370" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-080" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="coord" target="CU-08">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-081" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="th" target="CU-08">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-082" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="nom" target="CU-08">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="CU-09" value="CU-09&#10;Consultar nivelación y salarios" style="ellipse;whiteSpace=wrap;html=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="400" y="820" width="370" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-090" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="th" target="CU-09">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-091" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="nom" target="CU-09">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="CU-10" value="CU-10&#10;Organizar transporte" style="ellipse;whiteSpace=wrap;html=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="870" y="820" width="370" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-100" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="th" target="CU-10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-101" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="adm" target="CU-10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="CU-11" value="CU-11&#10;Generar alimentación" style="ellipse;whiteSpace=wrap;html=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="400" y="995" width="370" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-110" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="th" target="CU-11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-111" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="adm" target="CU-11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="CU-12" value="CU-12&#10;Gestionar notificaciones" style="ellipse;whiteSpace=wrap;html=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="870" y="995" width="370" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-120" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="th" target="CU-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-121" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="nom" target="CU-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-122" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="adm" target="CU-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-123" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="sms" target="CU-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="CU-13" value="CU-13&#10;Consultar auditoría" style="ellipse;whiteSpace=wrap;html=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="400" y="1170" width="370" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-130" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="th" target="CU-13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-131" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="adm" target="CU-13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-132" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="aud" target="CU-13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="CU-14" value="CU-14&#10;Validar controles transversales" style="ellipse;whiteSpace=wrap;html=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="870" y="1170" width="370" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="eCU-140" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="th" target="CU-14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="note" value="Permisos detallados en GUIA_QA.md. ADMIN no implica acceso a salarios. CU-04 y CU-08 tienen permisos diferentes por acción. CU-14 representa validación QA transversal, no una pantalla." style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="390" y="1400" width="930" height="110" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="p2" name="02 - Flujo de programación">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" page="1" pageWidth="1800" pageHeight="2200">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="h" value="Estados válidos del dominio | La UI puede omitir pasos intermedios" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="80" y="20" width="1450" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="BORRADOR" value="BORRADOR" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="80" y="160" width="240" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="ENVIADA" value="ENVIADA" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="400" y="160" width="240" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="EN_REVISION_TH" value="EN_REVISION_TH" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="730" y="160" width="240" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="APROBADA" value="APROBADA" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="400" y="420" width="240" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="AJUSTADA" value="AJUSTADA" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="730" y="420" width="240" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="RECHAZADA" value="RECHAZADA" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="420" width="240" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="NOTIFICADA" value="NOTIFICADA" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="400" y="680" width="240" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="EJECUTADA" value="EJECUTADA" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="730" y="680" width="240" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="CERRADA" value="CERRADA" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="680" width="240" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="CANCELADA" value="CANCELADA" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="980" width="240" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="BORRADOR_ENVIADA" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="BORRADOR" target="ENVIADA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="BORRADOR_CANCELADA" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="BORRADOR" target="CANCELADA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ENVIADA_EN_REVISION_TH" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="ENVIADA" target="EN_REVISION_TH">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ENVIADA_APROBADA" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="ENVIADA" target="APROBADA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ENVIADA_AJUSTADA" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="ENVIADA" target="AJUSTADA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ENVIADA_RECHAZADA" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="ENVIADA" target="RECHAZADA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ENVIADA_CANCELADA" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="ENVIADA" target="CANCELADA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="EN_REVISION_TH_APROBADA" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="EN_REVISION_TH" target="APROBADA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="EN_REVISION_TH_AJUSTADA" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="EN_REVISION_TH" target="AJUSTADA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="EN_REVISION_TH_RECHAZADA" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="EN_REVISION_TH" target="RECHAZADA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="EN_REVISION_TH_CANCELADA" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="EN_REVISION_TH" target="CANCELADA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="APROBADA_NOTIFICADA" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="APROBADA" target="NOTIFICADA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="APROBADA_CANCELADA" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="APROBADA" target="CANCELADA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="APROBADA_EN_REVISION_TH" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="APROBADA" target="EN_REVISION_TH">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="AJUSTADA_NOTIFICADA" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="AJUSTADA" target="NOTIFICADA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="AJUSTADA_CANCELADA" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="AJUSTADA" target="CANCELADA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="AJUSTADA_EN_REVISION_TH" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="AJUSTADA" target="EN_REVISION_TH">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RECHAZADA_ENVIADA" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="RECHAZADA" target="ENVIADA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RECHAZADA_CANCELADA" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="RECHAZADA" target="CANCELADA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="NOTIFICADA_EJECUTADA" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="NOTIFICADA" target="EJECUTADA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="NOTIFICADA_CANCELADA" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="NOTIFICADA" target="CANCELADA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="EJECUTADA_CERRADA" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="EJECUTADA" target="CERRADA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="EJECUTADA_CANCELADA" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;" edge="1" parent="1" source="EJECUTADA" target="CANCELADA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n" value="CP-019 a CP-025: flujo, decisiones y cierre. CERRADA/CANCELADA son terminales. Cancelar y reclamar revisión existen en el dominio; confirmar canal de ejecución disponible antes de probar: no se identificó ruta web de cancelación." style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="80" y="1180" width="1300" height="120" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="p3" name="03 - Pruebas CP-001 a CP-004">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" page="1" pageWidth="1800" pageHeight="2200">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="header" value="QA | Casos ejecutables • Todos pendientes de ejecución" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="60" y="20" width="1590" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-001" value="CP-001 | CU-01 | Ingreso y cierre de sesión&#10;&#10;Rol: Todos&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Usuario activo con clave exclusiva de QA&#10;&#10;PASOS&#10;1. Ingresar con clave válida. 2. Abrir inicio. 3. Cerrar sesión. 4. Reutilizar URL privada.&#10;&#10;RESULTADO ESPERADO&#10;Ingreso correcto; después del cierre se exige autenticación.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: security/SecurityConfig.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="60" y="110" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-002" value="CP-002 | CU-01 | Clave incorrecta y usuario inactivo&#10;&#10;Rol: Todos&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Usuario activo y otro inactivo&#10;&#10;PASOS&#10;1. Probar contraseña incorrecta. 2. Probar usuario inactivo. 3. Revisar respuesta y registros.&#10;&#10;RESULTADO ESPERADO&#10;Se rechaza el ingreso sin revelar claves ni información técnica.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: security/UsuarioDetailsServiceImpl.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="880" y="110" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-003" value="CP-003 | CU-02 | Lectura y escritura entre áreas&#10;&#10;Rol: COORD_AREA A&#10;Prioridad: Alta | Seguridad&#10;&#10;PRECONDICIONES&#10;Áreas A/B y programación de B&#10;&#10;PASOS&#10;1. Abrir listados como A. 2. Sustituir ID por uno de B en URL. 3. Repetir en solicitud de escritura con CSRF válido.&#10;&#10;RESULTADO ESPERADO&#10;No se revelan datos de B ni se modifica su programación; rechazo de acceso verificable.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: service/AlcanceAreaService.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="60" y="880" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-004" value="CP-004 | CU-02 | Permisos por rol en rutas directas&#10;&#10;Rol: Roles separados&#10;Prioridad: Alta | Seguridad&#10;&#10;PRECONDICIONES&#10;Sesiones TH, NOMINA, ADMIN, AUDITOR, COORD_AREA&#10;&#10;PASOS&#10;1. Probar revisión, salario, ejecución y auditoría con cada rol. 2. Repetir POST directo.&#10;&#10;RESULTADO ESPERADO&#10;Permisos coinciden con matriz de la guía; ocultar botones no sustituye rechazo del servidor.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: web/ConsultaController.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="880" y="880" width="770" height="700" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="p4" name="04 - Pruebas CP-005 a CP-008">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" page="1" pageWidth="1800" pageHeight="2200">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="header" value="QA | Casos ejecutables • Todos pendientes de ejecución" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="60" y="20" width="1590" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-005" value="CP-005 | CU-03 | Alta y edición de colaborador&#10;&#10;Rol: TALENTO_HUMANO&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Área y cargo activos; documento ficticio QA único&#10;&#10;PASOS&#10;1. Crear colaborador. 2. Editar cargo/datos. 3. Consultarlo de nuevo.&#10;&#10;RESULTADO ESPERADO&#10;Datos persistidos; aparece solo en alcance permitido y queda trazabilidad.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: web/ConsultaController.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="60" y="110" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-006" value="CP-006 | CU-03 | Documento repetido y campos inválidos&#10;&#10;Rol: TALENTO_HUMANO&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Colaborador QA existente&#10;&#10;PASOS&#10;1. Repetir documento. 2. Omitir campos obligatorios. 3. Enviar tamaños superiores al límite del formulario.&#10;&#10;RESULTADO ESPERADO&#10;Error controlado; no se duplica persona ni se guarda registro parcial.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: web/FormularioColaborador.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="880" y="110" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-007" value="CP-007 | CU-03 | Salario y vigencia&#10;&#10;Rol: TALENTO_HUMANO / NOMINA&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Persona QA y valor sintético&#10;&#10;PASOS&#10;1. Registrar salario con vigencia. 2. Consultar perfil con TH/NOMINA. 3. Repetir con coordinador y ADMIN sin otro rol.&#10;&#10;RESULTADO ESPERADO&#10;Consulta restringida a TH/NOMINA; vigencias y valores coinciden con los registrados.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: security/Autoridades.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="60" y="880" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-008" value="CP-008 | CU-03 | Aptitudes individuales, masivas y retiro&#10;&#10;Rol: TALENTO_HUMANO&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Dos personas QA y aptitud activa&#10;&#10;PASOS&#10;1. Asignar aptitud individual. 2. Asignar masivamente. 3. Retirar. 4. Consultar candidatos.&#10;&#10;RESULTADO ESPERADO&#10;No hay duplicados; asignación/retiro afectan elegibilidad y respetan permisos.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: web/ConsultaController.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="880" y="880" width="770" height="700" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="p5" name="05 - Pruebas CP-009 a CP-012">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" page="1" pageWidth="1800" pageHeight="2200">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="header" value="QA | Casos ejecutables • Todos pendientes de ejecución" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="60" y="20" width="1590" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-009" value="CP-009 | CU-03 | Novedad de ausencia y eliminación&#10;&#10;Rol: TALENTO_HUMANO&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Persona disponible y fechas de QA&#10;&#10;PASOS&#10;1. Registrar ausencia. 2. Consultar candidatos durante y fuera del rango. 3. Eliminar novedad.&#10;&#10;RESULTADO ESPERADO&#10;Disponibilidad cambia solo en fechas afectadas y se restablece tras retiro.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: web/ConsultaController.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="60" y="110" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-010" value="CP-010 | CU-04 | Turnos y horarios frecuentes&#10;&#10;Rol: TH / ADMIN&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Código QA único&#10;&#10;PASOS&#10;1. Crear turno. 2. Editarlo. 3. Crear horario frecuente. 4. Asignar turno a persona. 5. Eliminar horario de QA.&#10;&#10;RESULTADO ESPERADO&#10;Cambios consistentes en formularios y consultas; restricciones de permisos aplicadas.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: web/TurnoController.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="880" y="110" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-011" value="CP-011 | CU-04 | Operaciones, requisitos y maquinaria&#10;&#10;Rol: COORD_OPERACIONES / TH / ADMIN&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Catálogos ficticios QA&#10;&#10;PASOS&#10;1. Crear operación y aptitud. 2. Vincular requisito. 3. Crear maquinaria. 4. Retirar requisito.&#10;&#10;RESULTADO ESPERADO&#10;Candidatos reflejan requisitos vigentes; catálogo persiste sin duplicados inesperados.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: web/OperacionController.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="60" y="880" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-012" value="CP-012 | CU-04 | Baja de elementos referenciados&#10;&#10;Rol: Rol autorizado&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Elemento libre y elemento con referencias&#10;&#10;PASOS&#10;1. Eliminar elemento libre. 2. Intentar eliminar referenciado. 3. Consultar históricos.&#10;&#10;RESULTADO ESPERADO&#10;Baja o rechazo controlado según regla; históricos y referencias quedan íntegros.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: web/OperacionController.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="880" y="880" width="770" height="700" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="p6" name="06 - Pruebas CP-013 a CP-016">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" page="1" pageWidth="1800" pageHeight="2200">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="header" value="QA | Casos ejecutables • Todos pendientes de ejecución" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="60" y="20" width="1590" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-013" value="CP-013 | CU-05 | Crear propuesta válida&#10;&#10;Rol: Coordinador A&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Persona A activa, apta y disponible; turno 08:00–10:00&#10;&#10;PASOS&#10;1. Seleccionar persona, operación, fecha y motivo. 2. Guardar. 3. Consultar detalle.&#10;&#10;RESULTADO ESPERADO&#10;Propuesta creada; horas equivalen a 2,00; área/solicitante correctos. Registrar estado mostrado por flujo UI.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: service/ProgramacionService.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="60" y="110" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-014" value="CP-014 | CU-05 | Horario inválido y cruce de medianoche&#10;&#10;Rol: Coordinador A&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Persona disponible&#10;&#10;PASOS&#10;1. Probar inicio igual a fin. 2. Probar fin anterior. 3. Probar 22:00 a 02:00 del día siguiente.&#10;&#10;RESULTADO ESPERADO&#10;Rangos inválidos rechazados; cruce válido calcula 4,00 horas sin cambio de fecha accidental.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: service/asignacion/ValidarHorarioRule.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="880" y="110" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-015" value="CP-015 | CU-05 | Solapamiento, ausencia y límite semanal&#10;&#10;Rol: Coordinador A&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Persona ocupada/ausente; parámetro semanal conocido&#10;&#10;PASOS&#10;1. Intentar tramo solapado. 2. Intentar durante ausencia. 3. Probar límite semanal exacto y superior.&#10;&#10;RESULTADO ESPERADO&#10;Reglas se aplican al guardar, no solo en selector; límite se evalúa contra configuración vigente.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: service/asignacion/ValidarSolapamientoRule.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="60" y="880" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-016" value="CP-016 | CU-05 | Excepción y emergencia&#10;&#10;Rol: Coordinador A&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Persona con aptitud faltante y otra ocupada&#10;&#10;PASOS&#10;1. Intentar excepción sin motivo. 2. Agregar motivo. 3. Marcar emergencia sin referencia y luego con referencia.&#10;&#10;RESULTADO ESPERADO&#10;Campos exigidos según regla; excepción queda marcada y auditada. Emergencia omite solapamiento según implementación actual: validar política con TH.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: service/asignacion/ValidarSolapamientoRule.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="880" y="880" width="770" height="700" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="p7" name="07 - Pruebas CP-017 a CP-020">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" page="1" pageWidth="1800" pageHeight="2200">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="header" value="QA | Casos ejecutables • Todos pendientes de ejecución" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="60" y="20" width="1590" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-017" value="CP-017 | CU-06 | Carga masiva y repetición&#10;&#10;Rol: Coordinador A&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Dos personas disponibles, fecha origen y destino libres&#10;&#10;PASOS&#10;1. Crear lote de dos personas. 2. Repetir en otra fecha. 3. Consultar resumen y conteo.&#10;&#10;RESULTADO ESPERADO&#10;Personas/fechas correctas; resumen concuerda con persistencia y no amplía alcance.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: web/ProgramacionController.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="60" y="110" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-018" value="CP-018 | CU-06 | Lote mixto y repetidos&#10;&#10;Rol: Coordinador A&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Una ficha válida y otra inválida&#10;&#10;PASOS&#10;1. Enviar lote mixto. 2. Revisar errores por ficha. 3. Corregir. 4. Probar persona repetida en igual tramo.&#10;&#10;RESULTADO ESPERADO&#10;Error identificable por ficha; no se presentan guardados parciales como éxito completo ni se aceptan duplicados incompatibles.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: service/ProgramacionService.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="880" y="110" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-019" value="CP-019 | CU-07 | Enviar y aprobar&#10;&#10;Rol: Coordinador A + TH&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Propuesta BORRADOR válida&#10;&#10;PASOS&#10;1. Enviar. 2. Abrir revisión como TH. 3. Aprobar. 4. Consultar detalle y auditoría.&#10;&#10;RESULTADO ESPERADO&#10;BORRADOR → ENVIADA → APROBADA; solicitante/revisor y trazabilidad correctos.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: service/TransicionEstadoService.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="60" y="880" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-020" value="CP-020 | CU-07 | Ajustar conservando original&#10;&#10;Rol: TH&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Propuesta ENVIADA 08:00–10:00&#10;&#10;PASOS&#10;1. Ajustar a 08:00–11:00 con motivo. 2. Consultar original y efectivo.&#10;&#10;RESULTADO ESPERADO&#10;Estado AJUSTADA; original 2,00 h conservado y efectivo 3,00 h con motivo/revisor.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: domain/ProgramacionExtendido.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="880" y="880" width="770" height="700" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="p8" name="08 - Pruebas CP-021 a CP-024">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" page="1" pageWidth="1800" pageHeight="2200">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="header" value="QA | Casos ejecutables • Todos pendientes de ejecución" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="60" y="20" width="1590" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-021" value="CP-021 | CU-07 | Rechazar y reenviar&#10;&#10;Rol: TH + coordinador&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Propuesta ENVIADA&#10;&#10;PASOS&#10;1. Rechazar con motivo. 2. Consultar como coordinador. 3. Reenviar si la UI lo permite.&#10;&#10;RESULTADO ESPERADO&#10;RECHAZADA conserva decisión; reenvío solo mediante acción soportada y transición válida.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: service/TransicionEstadoService.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="60" y="110" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-022" value="CP-022 | CU-07 | Aprobación por grupo&#10;&#10;Rol: TH&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Pendientes en dos grupos y fechas diferentes&#10;&#10;PASOS&#10;1. Filtrar día/grupo. 2. Aprobar grupo. 3. Revisar pendientes de otros grupos.&#10;&#10;RESULTADO ESPERADO&#10;Solo conjunto seleccionado y autorizado se procesa; resumen informa aprobadas y omitidas.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: web/ProgramacionController.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="880" y="110" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-023" value="CP-023 | CU-07 | Decisión concurrente&#10;&#10;Rol: Dos sesiones TH&#10;Prioridad: Alta | Aceptación de corrección&#10;&#10;PRECONDICIONES&#10;Misma propuesta ENVIADA&#10;&#10;PASOS&#10;1. Abrir misma fila en ambas sesiones. 2. Aprobar y rechazar simultáneamente. 3. Recargar.&#10;&#10;RESULTADO ESPERADO&#10;Una decisión efectiva; la otra informa conflicto sin sobrescritura silenciosa. Criterio de aceptación de corrección, no verificado.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: service/ProgramacionService.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="60" y="880" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-024" value="CP-024 | CU-08 | Notificar, ejecutar y cerrar&#10;&#10;Rol: TH + coordinador/NOMINA&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Programación APROBADA; SMS simulado&#10;&#10;PASOS&#10;1. Notificar. 2. Registrar horas reales 2,50 y tipo. 3. Cerrar como TH.&#10;&#10;RESULTADO ESPERADO&#10;NOTIFICADA → EJECUTADA → CERRADA; horas/tipo persistidos y cierre trazable.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: web/HorasExtraController.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="880" y="880" width="770" height="700" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="p9" name="09 - Pruebas CP-025 a CP-028">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" page="1" pageWidth="1800" pageHeight="2200">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="header" value="QA | Casos ejecutables • Todos pendientes de ejecución" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="60" y="20" width="1590" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-025" value="CP-025 | CU-08 | Valor inválido y registro cerrado&#10;&#10;Rol: Rol de ejecución&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Programaciones NOTIFICADA y CERRADA&#10;&#10;PASOS&#10;1. Enviar horas negativas, cero y superiores al máximo configurado. 2. Intentar alterar cerrada.&#10;&#10;RESULTADO ESPERADO&#10;Validación controlada según regla; histórico cerrado no cambia. Revisar política explícita de cero horas.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: service/HoraExtraService.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="60" y="110" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-026" value="CP-026 | CU-09 | Filtros, perfil y exportación&#10;&#10;Rol: TH / NOMINA&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Tres personas con horas/salarios sintéticos conocidos&#10;&#10;PASOS&#10;1. Consultar período y área. 2. Comparar totales con datos preparados. 3. Exportar. 4. Revisar perfil.&#10;&#10;RESULTADO ESPERADO&#10;Pantalla, perfil y Excel coinciden en alcance, período, horas y redondeos; coordinador sin permiso no accede.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: web/NivelacionController.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="880" y="110" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-027" value="CP-027 | CU-10 | Vehículo, destino y viaje&#10;&#10;Rol: TH / ADMIN&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Vehículo QA capacidad 2 y destino QA&#10;&#10;PASOS&#10;1. Crear vehículo y destino. 2. Crear viaje. 3. Asignar dos pasajeros elegibles.&#10;&#10;RESULTADO ESPERADO&#10;Viaje conserva vehículo/destino/fecha y ocupación 2 de 2.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: web/TransporteController.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="60" y="880" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-028" value="CP-028 | CU-10 | Capacidad, duplicado y asignación masiva&#10;&#10;Rol: TH / ADMIN&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Viaje lleno con dos pasajeros&#10;&#10;PASOS&#10;1. Intentar tercero. 2. Repetir pasajero. 3. Probar asignación masiva. 4. Quitar uno y reasignar.&#10;&#10;RESULTADO ESPERADO&#10;No excede capacidad ni duplica pasajero; cupo liberado se puede reutilizar.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: service/TransporteService.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="880" y="880" width="770" height="700" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="p10" name="10 - Pruebas CP-029 a CP-032">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" page="1" pageWidth="1800" pageHeight="2200">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="header" value="QA | Casos ejecutables • Todos pendientes de ejecución" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="60" y="20" width="1590" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-029" value="CP-029 | CU-10 | Reporte, historial y bajas&#10;&#10;Rol: TH / ADMIN&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Viaje con pasajeros y vehículo referenciado&#10;&#10;PASOS&#10;1. Abrir reporte/historial por fecha. 2. Probar baja referenciada. 3. Eliminar viaje de QA según regla.&#10;&#10;RESULTADO ESPERADO&#10;Conteos coinciden; bajas no dejan referencias huérfanas ni borran históricos indebidamente.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: web/TransporteController.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="60" y="110" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-030" value="CP-030 | CU-11 | Generación de listas por tipo&#10;&#10;Rol: TH / ADMIN&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Programaciones elegibles conocidas y día QA&#10;&#10;PASOS&#10;1. Crear cada tipo. 2. Crear ambas listas. 3. Abrir detalle.&#10;&#10;RESULTADO ESPERADO&#10;Personas elegibles y fecha/tipo correctos; no aparecen personas fuera del criterio funcional.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: web/AlimentacionController.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="880" y="110" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-031" value="CP-031 | CU-11 | Repetición, historial y eliminación&#10;&#10;Rol: TH / ADMIN&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Lista QA existente&#10;&#10;PASOS&#10;1. Repetir generación. 2. Consultar historial. 3. Eliminar lista QA.&#10;&#10;RESULTADO ESPERADO&#10;No se duplican personas dentro de una lista; repetición tiene resultado explícito e historial coherente.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: service/AlimentacionService.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="60" y="880" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-032" value="CP-032 | CU-12 | Éxito y fallo del proveedor&#10;&#10;Rol: TH / NOMINA / ADMIN&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Proveedor simulado con éxito, rechazo y timeout&#10;&#10;PASOS&#10;1. Generar aviso. 2. Simular éxito. 3. Simular rechazo/timeout en otro aviso. 4. Consultar bandeja.&#10;&#10;RESULTADO ESPERADO&#10;Se registra resultado; fallo no revierte aprobación ni expone credenciales del proveedor.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: service/NotificacionSmsService.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="880" y="880" width="770" height="700" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="p11" name="11 - Pruebas CP-033 a CP-036">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" page="1" pageWidth="1800" pageHeight="2200">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="header" value="QA | Casos ejecutables • Todos pendientes de ejecución" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="60" y="20" width="1590" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-033" value="CP-033 | CU-12 | Reintento y prevención de duplicados&#10;&#10;Rol: TH / NOMINA / ADMIN&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Aviso fallido y otro enviado&#10;&#10;PASOS&#10;1. Reintentar fallido. 2. Repetir clic. 3. Intentar reenvío del ya enviado.&#10;&#10;RESULTADO ESPERADO&#10;Intentos quedan registrados; no hay envío duplicado silencioso. Criterio a verificar con proveedor simulado.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: web/NotificacionesSmsController.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="60" y="110" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-034" value="CP-034 | CU-13 | Trazabilidad y datos sensibles&#10;&#10;Rol: TH / ADMIN / AUDITOR&#10;Prioridad: Alta | Funcional&#10;&#10;PRECONDICIONES&#10;Operaciones anteriores ejecutadas&#10;&#10;PASOS&#10;1. Filtrar auditoría. 2. Revisar creación, decisión y acceso denegado. 3. Buscar salarios, claves y celulares.&#10;&#10;RESULTADO ESPERADO&#10;Actor, acción y fecha identificables; valores sensibles ocultos; no se filtran datos por mensajes de error.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: audit/Redactor.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="880" y="110" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-035" value="CP-035 | CU-14 | CSRF y sesión vencida&#10;&#10;Rol: Todos&#10;Prioridad: Alta | Seguridad&#10;&#10;PRECONDICIONES&#10;Formulario abierto y sesión válida&#10;&#10;PASOS&#10;1. Enviar POST sin token. 2. Con token alterado. 3. Expirar sesión y guardar.&#10;&#10;RESULTADO ESPERADO&#10;No se cambia información; respuesta controlada y reautenticación cuando corresponda.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: security/SecurityConfig.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="60" y="880" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-036" value="CP-036 | CU-14 | XSS y entradas manipuladas&#10;&#10;Rol: QA autorizado&#10;Prioridad: Alta | Seguridad&#10;&#10;PRECONDICIONES&#10;Datos sintéticos y base aislada&#10;&#10;PASOS&#10;1. Introducir texto &lt;script&gt;alert(1)&lt;/script&gt; en campos de texto. 2. Consultar listados/reportes. 3. Probar ID inexistente y parámetros inválidos.&#10;&#10;RESULTADO ESPERADO&#10;Texto no ejecuta scripts; no se revelan trazas, SQL ni datos ajenos.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: web/ErroresControllerAdvice.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="880" y="880" width="770" height="700" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="p12" name="12 - Pruebas CP-037 a CP-040">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" page="1" pageWidth="1800" pageHeight="2200">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="header" value="QA | Casos ejecutables • Todos pendientes de ejecución" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="60" y="20" width="1590" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-037" value="CP-037 | CU-14 | Doble envío y asignación concurrente&#10;&#10;Rol: Dos coordinadores A&#10;Prioridad: Alta | Aceptación de corrección&#10;&#10;PRECONDICIONES&#10;Persona libre e igual horario&#10;&#10;PASOS&#10;1. Enviar misma solicitud dos veces. 2. Crear dos asignaciones incompatibles simultáneamente.&#10;&#10;RESULTADO ESPERADO&#10;Sin duplicados por reintento ni solapamientos indebidos; errores explican conflicto. Criterio de corrección pendiente de verificar.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: service/ProgramacionService.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="60" y="110" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-038" value="CP-038 | CU-14 | Paginación, vacíos y accesibilidad&#10;&#10;Rol: Todos&#10;Prioridad: Media | Funcional&#10;&#10;PRECONDICIONES&#10;Más de una página de resultados y filtro sin coincidencias&#10;&#10;PASOS&#10;1. Navegar páginas con filtros. 2. Buscar inexistente. 3. Operar formulario por teclado y revisar foco/etiquetas.&#10;&#10;RESULTADO ESPERADO&#10;Filtros persisten; conteos correctos; vacíos claros; operación accesible sin pérdida de datos.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: web/ConsultaController.java" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="880" y="110" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-039" value="CP-039 | CU-14 | Migración y restauración aisladas&#10;&#10;Rol: DevOps + QA&#10;Prioridad: Alta | Aceptación de corrección&#10;&#10;PRECONDICIONES&#10;Respaldo sintético y entorno desechable; nunca producción&#10;&#10;PASOS&#10;1. Instalar esquema limpio. 2. Actualizar copia de versión anterior. 3. Restaurar respaldo. 4. Comparar conteos y flujos críticos.&#10;&#10;RESULTADO ESPERADO&#10;Migraciones sin pérdida inesperada; restauración utilizable. Bloquear liberación si quedan scripts destructivos para entorno operativo.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: resources/db/migration" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="60" y="880" width="770" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="CP-040" value="CP-040 | CU-14 | Carga inicial de aceptación&#10;&#10;Rol: QA rendimiento&#10;Prioridad: Alta | Rendimiento&#10;&#10;PRECONDICIONES&#10;Servidor candidato; 10.000 personas y 100.000 programaciones sintéticas&#10;&#10;PASOS&#10;1. Calentar 5 min. 2. Ejecutar 15 min con 20 sesiones, pausa 3–8 s, mezcla 70% consultas/20% escritura/10% reportes. 3. Medir p95, errores, CPU/RAM/DB.&#10;&#10;RESULTADO ESPERADO&#10;Objetivo propuesto: p95 consultas &lt;2 s, escrituras &lt;3 s, reporte 10.000 filas &lt;15 s; errores inesperados &lt;1%, sin pérdida. Acordar umbrales antes de ejecutar.&#10;&#10;Evidencia: captura + ID de registro + fecha + resultado real.&#10;Estado: NO EJECUTADO&#10;Fuente: pom.xml" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=20;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="880" y="880" width="770" height="700" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

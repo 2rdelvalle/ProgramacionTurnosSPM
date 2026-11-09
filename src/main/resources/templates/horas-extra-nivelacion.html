@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="es" th:replace="~{fragments/layout :: pagina('Horas extra', 'horas-extra', ~{::contenido})}">
+<body>
+<div th:fragment="contenido" class="he-niv">
+
+	<!--
+		Horas extra · la quincena: el supuesto sueldo de la quincena es
+		salario base + valor de las horas extra ejecutadas. No es nómina —
+		no paga ni modifica nada — y comparte los componentes del sistema
+		visual (hero, tarjeta, filtros, tabla, etiqueta) con el resto de
+		las pantallas.
+
+		La cifra más ancha es el supuesto sueldo, al final, después de ver el
+		salario y las horas que lo forman. En móvil la tabla se convierte en
+		una tarjeta por colaborador.
+
+		Estilo: mismo sistema de colaboradores.html y transporte.html.
+		Todas las reglas van prefijadas con .he-niv.
+	-->
+	<style>
+		/* =================================================================
+		   Horas extra · quincena (nivelación)
+		   ================================================================= */
+		.he-niv {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+		.he-niv > .hero-inicio,
+		.he-niv > .tarjeta { margin-bottom: 1.25rem; }
+
+		/* ---- Portada ---- */
+		.he-niv .hero-inicio,
+		.he-niv .hero-inicio * { animation: none; }
+		.he-niv .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.he-niv .hero-inicio::before,
+		.he-niv .hero-inicio::after { content: none; }
+		.he-niv .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.he-niv .hero-inicio__contenido { max-width: 44rem; }
+		.he-niv .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+			text-transform: uppercase;
+		}
+		.he-niv .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.he-niv .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+
+		/* ---- Tarjeta y cabecera ---- */
+		.he-niv .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+			overflow: hidden;
+		}
+		.he-niv .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.he-niv .tarjeta__cabecera {
+			justify-content: flex-start;
+			padding: 1.375rem 1.5rem;
+			gap: 1rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.he-niv .tarjeta__titulo-grupo { flex: 1 1 16rem; }
+		.he-niv .tarjeta__titulo-grupo h2 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+		}
+		.he-niv .tarjeta__cabecera h2::before,
+		.he-niv .tarjeta__titulo-grupo h2::before { display: none; }
+		.he-niv .tarjeta__titulo-grupo p {
+			margin-top: .25rem;
+			max-width: 62ch;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+
+		/* Acento verde suave: cierre, no listado de control */
+		.he-niv .tarjeta--nivelacion { border-color: #dcebe2; }
+		.he-niv .tarjeta--nivelacion .tarjeta__cabecera {
+			background: #f7fbf8;
+			border-bottom-color: #dcebe2;
+		}
+
+		/* ---- Íconos de sección ---- */
+		.he-niv .sec-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.25rem;
+		}
+		.he-niv .sec-icono--azul { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+
+		/* ---- Filtros ---- */
+		.he-niv .filtros {
+			align-items: flex-end;
+			gap: 1rem;
+			padding: 1.25rem 1.5rem;
+			background: #fff;
+			border: 0;
+			border-bottom: 1px solid var(--a-borde);
+			border-radius: 0;
+			box-shadow: none;
+		}
+		.he-niv .filtros .campo { flex: 1 1 12rem; margin-bottom: 0; }
+		.he-niv .filtros .campo--buscar { flex: 2 1 15rem; }
+		.he-niv .filtros__fin { margin-left: auto; display: flex; gap: .5rem; align-items: flex-end; }
+		.he-niv .campo__etiqueta,
+		.he-niv .campo:focus-within .campo__etiqueta {
+			margin-bottom: .375rem;
+			color: var(--a-navy);
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+		.he-niv input[type="month"],
+		.he-niv input[type="search"],
+		.he-niv select {
+			padding: .625rem .875rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background-color: #fff;
+			font-size: .9375rem;
+			font-weight: 500;
+			color: var(--a-texto);
+		}
+		.he-niv select { padding-right: 2.5rem; }
+		.he-niv input[type="month"]:focus,
+		.he-niv input[type="search"]:focus,
+		.he-niv select:focus {
+			border-color: var(--a-azul);
+			box-shadow: 0 0 0 3px rgba(23, 68, 117, .14);
+		}
+
+		/* ---- Botones ---- */
+		.he-niv .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.he-niv .boton::after { display: none; }
+		.he-niv .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.he-niv .boton--chico { padding: .5rem .875rem; font-size: .75rem; }
+		.he-niv .boton--contorno {
+			border: 1px solid #cfe0f2;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.he-niv .boton--contorno:hover:not(:disabled) {
+			border: 1px solid #b6cfe9;
+			background: #e9f1fa;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+
+		/* ---- Etiquetas ---- */
+		.he-niv .etiqueta {
+			padding: .375rem .875rem;
+			border: 0;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+			white-space: nowrap;
+		}
+		.he-niv .etiqueta::before { content: none; display: none; animation: none; }
+		.he-niv .etiqueta--ok { background: #dff3e6; color: #1f6b43; }
+		.he-niv .etiqueta--alerta { background: #fdf0d9; color: #9a5a0a; }
+		.he-niv .etiqueta--error { background: #fdecec; color: #b42318; }
+		.he-niv .etiqueta--gris { background: #eceff3; color: var(--a-tenue); }
+
+		/* ---- Persona: inicial + nombre ---- */
+		.he-niv .persona { display: flex; align-items: center; gap: .625rem; min-width: 0; }
+		.he-niv .inicial {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 2.5rem;
+			height: 2.5rem;
+			border-radius: 50%;
+			background: #2c5f94;
+			color: #fff;
+			font-size: .8125rem;
+			font-weight: 600;
+			box-shadow: none;
+			text-transform: uppercase;
+		}
+		.he-niv .persona__detalle {
+			display: block;
+			font-size: .75rem;
+			color: var(--a-tenue);
+			font-weight: 500;
+			margin-top: .125rem;
+		}
+
+		/* ---- Cifras ---- */
+		.he-niv .tabla thead th.tabla__num { text-align: right; }
+		.he-niv .cifra { color: var(--a-navy); font-weight: 700; }
+		.he-niv .cifra--sueldo { color: #1f6b43; }
+		.he-niv .sin-registro { color: var(--a-tenue); font-style: italic; font-weight: 500; }
+
+		/* ---- Tabla dentro de recuadro ---- */
+		.he-niv .tabla-envoltura {
+			margin: 1.25rem 1.5rem 1.5rem;
+			border: 1px solid #dfe8f3;
+			border-radius: 12px;
+			background: #fff;
+			overflow-x: auto;
+			-webkit-overflow-scrolling: touch;
+		}
+		.he-niv .tabla thead th {
+			padding: .875rem 1.125rem;
+			background: var(--a-suave);
+			color: #2f4a70;
+			border-bottom: 1px solid #e3ebf4;
+			font-size: .75rem;
+			font-weight: 600;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+		}
+		.he-niv .tabla thead tr th:first-child { border-left: 0; }
+		.he-niv .tabla tbody td {
+			padding: 1rem 1.125rem;
+			border-bottom: 1px solid #edf2f8;
+			vertical-align: middle;
+			color: var(--a-texto);
+		}
+		.he-niv .tabla tbody tr { animation: none; }
+		.he-niv .tabla tbody tr:nth-child(even) { background: transparent; }
+		.he-niv .tabla tbody tr:hover { background: #f7fafd; }
+		.he-niv .tabla tbody tr:hover td:first-child { box-shadow: none; }
+		.he-niv .tabla tbody tr:last-child td { border-bottom: 0; }
+		.he-niv .tabla__principal { color: var(--a-navy); font-weight: 700; }
+
+		/* ---- Estado vacío ---- */
+		.he-niv .tabla--vacia td {
+			white-space: normal;
+			line-height: 1.6;
+			text-align: center;
+			padding: 2rem 1rem 2.25rem;
+			color: var(--a-tenue);
+			font-size: .75rem;
+		}
+		.he-niv .tabla tr.tabla--vacia:hover { background: transparent; }
+		.he-niv .vacio-icono { display: block; margin-bottom: .625rem; color: #1f4b7a; font-size: 2rem; }
+		.he-niv .tabla--vacia strong { display: block; margin-bottom: .375rem; color: var(--a-navy); font-size: .875rem; font-weight: 700; }
+
+		/* =================================================================
+		   Móvil
+		   ================================================================= */
+		@media (max-width: 768px) {
+			.he-niv .hero-inicio { padding: 1.25rem; min-height: 0; }
+			.he-niv .hero-inicio h1 { font-size: 1.5rem; }
+			.he-niv .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.he-niv .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.he-niv .filtros { padding: 1rem; flex-direction: column; align-items: stretch; }
+			.he-niv .filtros .campo,
+			.he-niv .filtros__fin { width: 100%; min-width: 0; flex-basis: 100%; margin-left: 0; }
+			.he-niv .filtros__fin { flex-direction: column; align-items: stretch; }
+			.he-niv .filtros__fin .boton { width: 100%; justify-content: center; }
+			.he-niv .tabla-envoltura { margin: 1rem 1rem 1.25rem; }
+
+			.he-niv .campo input,
+			.he-niv .campo select { font-size: 16px; }
+
+			.he-niv .tabla tbody tr { display: flex; flex-direction: column; }
+			.he-niv .tabla tbody td {
+				display: block;
+				text-align: left;
+				padding: .5rem .875rem;
+			}
+			.he-niv .tabla tbody td::before {
+				content: attr(data-label);
+				display: block;
+				margin-bottom: .25rem;
+				font-size: .625rem;
+				font-weight: 800;
+				letter-spacing: .06em;
+				text-transform: uppercase;
+				color: var(--a-tenue);
+			}
+			.he-niv .tabla tbody td.tabla__num { text-align: left; }
+
+			.he-niv .tabla tbody td.celda-nombre {
+				order: -1;
+				padding: .875rem;
+				background: var(--a-suave);
+				border-bottom: 1px solid var(--a-borde);
+			}
+			.he-niv .tabla tbody td.celda-nombre::before { content: none; }
+			.he-niv .celda-nombre .persona { font-size: 1rem; }
+			.he-niv .celda-nombre .inicial { width: 2.5rem; height: 2.5rem; font-size: .9375rem; }
+
+			.he-niv .tabla tbody tr.tabla--vacia td { display: block; text-align: center; }
+			.he-niv .tabla tbody tr.tabla--vacia td::before { content: none; }
+		}
+		@media (max-width: 480px) {
+			.he-niv .hero-icono { display: none; }
+		}
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-balance-scale"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">SUPUESTO SUELDO CON HORAS EXTRA</span>
+			<h1>Horas extra</h1>
+			<p>Salario base, horas de la quincena y su valor. Solo informa para nivelar en teoría: no modifica nada.</p>
+		</div>
+	</section>
+
+	<!-- ======== FILTROS + TABLA ======== -->
+	<div class="tarjeta tarjeta--nivelacion">
+
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--azul" aria-hidden="true"><i class="fas fa-scale-balanced"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2 th:text="${etiqueta}">1a quincena de octubre de 2026</h2>
+				<p>Quien trabajó extra en la quincena, con su sueldo supuesto y la marca de nivelación.</p>
+			</div>
+		</div>
+
+		<form class="filtros" th:action="@{/horas-extra/nivelacion}" method="get">
+			<div class="campo">
+				<label class="campo__etiqueta" for="filtro-mes">Mes</label>
+				<input id="filtro-mes" type="month" name="mes" th:value="${periodo}" required>
+			</div>
+			<div class="campo">
+				<label class="campo__etiqueta" for="filtro-quincena">Quincena</label>
+				<select id="filtro-quincena" name="quincena">
+					<option value="1" th:selected="${quincena == 1}">1a (día 1 al 15)</option>
+					<option value="2" th:selected="${quincena == 2}">2a (día 16 al fin de mes)</option>
+				</select>
+			</div>
+
+			<!--
+				Filtro por área (las visibles para el usuario) y buscador por
+				nombre o cédula: viajan al servidor con el Consultar y también
+				en el enlace del Excel, para que la descarga coincida con lo
+				que se ve.
+			-->
+			<div class="campo">
+				<label class="campo__etiqueta" for="filtro-area">Área</label>
+				<select id="filtro-area" name="area">
+					<option value="">Todas las áreas</option>
+					<option th:each="area : ${areas}" th:value="${area.id}" th:text="${area.nombre}"
+							th:selected="${area.id == areaSeleccionada}">Área</option>
+				</select>
+			</div>
+			<div class="campo campo--buscar">
+				<label class="campo__etiqueta" for="filtro-q">Nombre o cédula</label>
+				<input id="filtro-q" type="search" name="q" th:value="${busqueda}"
+					   placeholder="Nombre o cédula…" autocomplete="off">
+			</div>
+
+			<div class="filtros__fin">
+				<button type="submit" class="boton">
+					<i class="fas fa-filter"></i> Consultar
+				</button>
+				<a class="boton boton--excel"
+				   th:href="@{/horas-extra/nivelacion/exportar(mes=${periodo}, quincena=${quincena}, q=${busqueda}, area=${areaSeleccionada})}">
+					<i class="fas fa-file-excel"></i> Exportar Excel
+				</a>
+			</div>
+		</form>
+
+		<div class="tabla-envoltura">
+			<table class="tabla">
+				<thead>
+				<tr>
+					<th>Colaborador</th>
+					<th class="tabla__num">Salario base</th>
+					<th class="tabla__num">Horas extra</th>
+					<th class="tabla__num">Valor h. extra</th>
+					<th class="tabla__num">Supuesto sueldo</th>
+					<th>Nivelación</th>
+					<th>Detalle</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr th:each="fila : ${filas}">
+					<td class="celda-nombre" data-label="Colaborador">
+						<div class="persona">
+								<span class="inicial" aria-hidden="true"
+									  th:text="${#strings.toUpperCase(#strings.substring(fila.nombreCompleto, 0, 1))}">N</span>
+						<span>
+							<span class="tabla__principal" th:text="${fila.nombreCompleto}">Nombre</span>
+							<span class="tabla__secundario" th:text="${fila.cargo}">Cargo</span>
+							<small class="persona__detalle"
+								   th:unless="${#strings.isEmpty(fila.desgloseHoras())}"
+								   th:text="${fila.desgloseHoras()}">6.00 diurnas · 2.00 nocturnas</small>
+						</span>
+						</div>
+					</td>
+					<td class="tabla__num" data-label="Salario base">
+						<strong th:if="${fila.salarioBase != null}"
+								th:text="'$' + ${#numbers.formatDecimal(fila.salarioBase, 1, 'COMMA', 0, 'POINT')}">$0</strong>
+						<span class="sin-registro" th:unless="${fila.salarioBase != null}">Sin registro</span>
+					</td>
+					<td class="tabla__num cifra" data-label="Horas extra"
+						th:text="${#numbers.formatDecimal(fila.horasEjecutadas, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+					<td class="tabla__num" data-label="Valor h. extra">
+						<span th:if="${fila.valorHorasExtra != null}"
+							  th:text="'$' + ${#numbers.formatDecimal(fila.valorHorasExtra, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
+						<span class="sin-registro" th:unless="${fila.valorHorasExtra != null}">Sin parámetros</span>
+					</td>
+					<td class="tabla__num" data-label="Supuesto sueldo">
+						<strong class="cifra cifra--sueldo" th:if="${fila.supuestoSueldo != null}"
+								th:text="'$' + ${#numbers.formatDecimal(fila.supuestoSueldo, 1, 'COMMA', 2, 'POINT')}">$0.00</strong>
+						<span class="sin-registro" th:unless="${fila.supuestoSueldo != null}">—</span>
+					</td>
+					<td data-label="Nivelación">
+							<span class="etiqueta"
+								  th:classappend="${fila.requiereNivelacion} ? 'etiqueta--alerta' : 'etiqueta--ok'"
+								  th:text="${fila.requiereNivelacion} ? 'Requiere nivelación' : 'En rango'">En rango</span>
+					</td>
+					<td data-label="Detalle">
+						<a class="boton boton--chico boton--contorno"
+						   th:href="@{/horas-extra/perfil/{id}(id=${fila.colaboradorId}, desde=${desde}, hasta=${hasta})}">
+							<i class="fas fa-id-badge"></i> Más detalle
+						</a>
+					</td>
+				</tr>
+
+				<tr th:if="${#lists.isEmpty(filas)}" class="tabla--vacia">
+					<td colspan="7" data-label="Aviso">
+						<i class="fas fa-scale-balanced vacio-icono" aria-hidden="true"></i>
+						<strong th:text="${tituloVacio}">Sin horas en la quincena</strong>
+						<span th:text="${aviso}">
+							No hay horas ejecutadas en la quincena seleccionada.
+						</span>
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+</div>
+</body>
+</html>

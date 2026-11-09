@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="es" th:replace="~{fragments/layout :: pagina('Asignar masivamente', 'programaciones', ~{::contenido})}">
+<body>
+<div th:fragment="contenido" class="masiva">
+
+	<!--
+		Asignación masiva: varias personas, un solo tramo.
+
+		Dos formularios y ninguna anidación. Uno de filtros (GET a esta misma
+		pantalla, F5 inocuo) y el de envío (GET a /programaciones/nueva con
+		masivo=1 e ids), donde los checkbox viajan colgados por el atributo
+		form. El resultado no guarda nada: deja las fichas rellenas en el
+		formulario de propuesta.
+
+		Ronda 6: el área también se congela cuando el usuario solo tiene una.
+
+		Estilo: mismo sistema de colaboradores.html y transporte.html.
+		Todas las reglas van prefijadas con .masiva.
+	-->
+	<style>
+		/* =================================================================
+		   Asignación masiva · estilos locales
+		   ================================================================= */
+		.masiva {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+		.masiva > .hero-inicio,
+		.masiva > .filtros,
+		.masiva > .tarjeta,
+		.masiva > form > .tarjeta { margin-bottom: 1.25rem; }
+
+		/* ---- Portada ---- */
+		.masiva .hero-inicio,
+		.masiva .hero-inicio * { animation: none; }
+		.masiva .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.masiva .hero-inicio::before,
+		.masiva .hero-inicio::after { content: none; }
+		.masiva .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.masiva .hero-inicio__contenido { max-width: 46rem; flex: 1 1 auto; min-width: 0; }
+		.masiva .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+			text-transform: uppercase;
+		}
+		.masiva .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.masiva .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+		.masiva .hero-inicio__acciones {
+			display: flex;
+			align-items: center;
+			gap: .625rem;
+			flex-wrap: wrap;
+			margin-top: 1rem;
+		}
+		.masiva .hero-inicio__acciones .boton {
+			padding: .625rem 1.125rem;
+			border: 1px solid rgba(255, 255, 255, .22);
+			border-radius: 10px;
+			background: rgba(255, 255, 255, .08);
+			color: #fff;
+			font-weight: 700;
+			font-size: .8125rem;
+			box-shadow: none;
+		}
+		.masiva .hero-inicio__acciones .boton::after { display: none; }
+		.masiva .hero-inicio__acciones .boton:hover {
+			background: rgba(255, 255, 255, .16);
+			border-color: rgba(255, 255, 255, .4);
+			transform: none;
+			filter: none;
+		}
+
+		/* ---- Filtros (bloque propio) ---- */
+		.masiva .filtros {
+			align-items: flex-end;
+			gap: 1rem;
+			padding: 1.25rem 1.5rem;
+			background: #fff;
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+		}
+		.masiva .filtros .campo { flex: 1 1 14rem; margin-bottom: 0; }
+		.masiva .filtros .campo--buscar { flex: 2 1 15rem; }
+		.masiva .filtros__fin { margin-left: auto; display: flex; gap: .5rem; align-items: flex-end; }
+
+		/* ---- Campos ---- */
+		.masiva .campo__etiqueta,
+		.masiva .campo:focus-within .campo__etiqueta {
+			margin-bottom: .375rem;
+			color: var(--a-navy);
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+		.masiva .campo__ayuda { color: var(--a-tenue); line-height: 1.45; }
+		.masiva input[type="text"],
+		.masiva input[type="date"],
+		.masiva input[type="time"],
+		.masiva input[type="search"],
+		.masiva select {
+			width: 100%;
+			padding: .625rem .875rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background-color: #fff;
+			font-size: .9375rem;
+			font-weight: 500;
+			color: var(--a-texto);
+		}
+		.masiva select { padding-right: 2.5rem; }
+		.masiva input:hover, .masiva select:hover { border-color: #b9c9dc; }
+		.masiva input[type="text"]:focus,
+		.masiva input[type="date"]:focus,
+		.masiva input[type="time"]:focus,
+		.masiva input[type="search"]:focus,
+		.masiva select:focus {
+			border-color: var(--a-azul);
+			box-shadow: 0 0 0 3px rgba(23, 68, 117, .14);
+			outline: none;
+		}
+		.masiva input[type="checkbox"] {
+			accent-color: var(--a-azul);
+			cursor: pointer;
+		}
+
+		/* Área congelada por rol */
+		.masiva .campo--congelado {
+			display: block;
+			padding: .6875rem .9375rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background: #f3f7fb;
+			color: var(--a-navy);
+			font-size: .9375rem;
+			font-weight: 600;
+			cursor: not-allowed;
+		}
+
+		/* ---- Tarjeta y cabecera ---- */
+		.masiva .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+			overflow: hidden;
+		}
+		.masiva .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.masiva .tarjeta__cabecera {
+			justify-content: flex-start;
+			padding: 1.375rem 1.5rem;
+			gap: 1rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.masiva .tarjeta__titulo-grupo { flex: 1 1 16rem; }
+		.masiva .tarjeta__titulo-grupo h2 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+		}
+		.masiva .tarjeta__cabecera h2::before,
+		.masiva .tarjeta__titulo-grupo h2::before { display: none; }
+		.masiva .tarjeta__titulo-grupo p {
+			margin-top: .25rem;
+			max-width: 62ch;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+		.masiva .tarjeta__cuerpo { padding: 1.5rem; }
+		.masiva .tarjeta--listado { border-color: var(--a-borde); }
+
+		/* ---- Íconos de sección ---- */
+		.masiva .sec-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.25rem;
+		}
+		.masiva .sec-icono--azul { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+
+		/* ---- Etiquetas ---- */
+		.masiva .etiqueta {
+			padding: .375rem .875rem;
+			border: 0;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+			white-space: nowrap;
+		}
+		.masiva .etiqueta::before { content: none; display: none; animation: none; }
+		.masiva .etiqueta--info { background: #e6effa; color: #24406a; }
+		.masiva .tarjeta__cabecera > .etiqueta { align-self: center; }
+
+		/* ---- Botones ---- */
+		.masiva .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.masiva .boton::after { display: none; }
+		.masiva .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.masiva .boton--primario,
+		.masiva .boton--primario:hover {
+			border-color: var(--a-accion);
+			background: var(--a-accion);
+			box-shadow: 0 3px 10px rgba(221, 145, 44, .28);
+		}
+		.masiva .boton--primario:hover {
+			border-color: var(--a-accion-hover);
+			background: var(--a-accion-hover);
+			box-shadow: 0 4px 12px rgba(221, 145, 44, .36);
+		}
+		.masiva .boton--fantasma {
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.masiva .boton--fantasma:hover {
+			border: 1px solid #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+
+		/* ---- Rejilla de parámetros ---- */
+		.masiva .parametros {
+			display: grid;
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+			gap: 1rem 1.125rem;
+		}
+		.masiva .parametros .campo--ancho { grid-column: 1 / -1; }
+		.masiva .parametros .campo { margin-bottom: 0; }
+
+		/* ---- Tipo de programación (pills) ---- */
+		.masiva .selector-pills {
+			display: flex;
+			flex-wrap: wrap;
+			gap: .5rem;
+			padding: 0;
+			border: 0;
+			background: none;
+			box-shadow: none;
+		}
+		.masiva .selector-pills__pill { position: relative; display: block; margin: 0; cursor: pointer; flex: 1 1 7rem; }
+		.masiva .selector-pills__pill input {
+			position: absolute;
+			inset: 0;
+			opacity: 0;
+			width: 100%;
+			height: 100%;
+			margin: 0;
+			cursor: pointer;
+		}
+		.masiva .selector-pills__pill > span {
+			display: block;
+			padding: .625rem .5rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background: #fff;
+			color: var(--a-tenue);
+			font-size: .6875rem;
+			font-weight: 800;
+			letter-spacing: .06em;
+			text-align: center;
+			text-transform: uppercase;
+			transition: background .15s ease, border-color .15s ease, color .15s ease;
+		}
+		.masiva .selector-pills__pill:hover > span { border-color: #b9c9dc; color: var(--a-navy); }
+		.masiva .selector-pills__pill input:checked + span {
+			border-color: var(--a-azul);
+			background: var(--a-azul);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+		}
+		.masiva .selector-pills__pill input:focus-visible + span { outline: 2px solid var(--a-azul); outline-offset: 2px; }
+
+		.masiva .nota-lote {
+			margin: 1rem 0 0;
+			font-size: .8125rem;
+			color: var(--a-tenue);
+		}
+
+		/* ---- Tabla dentro de recuadro ---- */
+		.masiva .tabla-envoltura {
+			margin: 1.25rem 1.5rem;
+			border: 1px solid #dfe8f3;
+			border-radius: 12px;
+			background: #fff;
+			overflow-x: auto;
+			-webkit-overflow-scrolling: touch;
+		}
+		.masiva .tabla thead th {
+			padding: .875rem 1.125rem;
+			background: var(--a-suave);
+			color: #2f4a70;
+			border-bottom: 1px solid #e3ebf4;
+			font-size: .75rem;
+			font-weight: 600;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+			white-space: nowrap;
+		}
+		.masiva .tabla thead tr th:first-child { border-left: 0; }
+		.masiva .tabla tbody td {
+			padding: 1rem 1.125rem;
+			border-bottom: 1px solid #edf2f8;
+			vertical-align: middle;
+			color: var(--a-texto);
+		}
+		.masiva .tabla tbody tr { animation: none; }
+		.masiva .tabla tbody tr:nth-child(even) { background: transparent; }
+		.masiva .tabla tbody tr:hover { background: #f7fafd; }
+		.masiva .tabla tbody tr:hover td:first-child { box-shadow: none; }
+		.masiva .tabla tbody tr:last-child td { border-bottom: 0; }
+		.masiva .tabla__principal { color: var(--a-navy); font-weight: 700; }
+		.masiva .tabla__secundario { display: block; font-size: .75rem; color: var(--a-tenue); font-weight: 500; }
+
+		.masiva .tabla .celda-sel { width: 2.5rem; text-align: center; }
+		.masiva .tabla .celda-sel input { width: 1.125rem; height: 1.125rem; cursor: pointer; }
+
+		.masiva .codigo-area {
+			display: block;
+			margin-top: .125rem;
+			font-size: .6875rem;
+			font-weight: 700;
+			letter-spacing: .06em;
+			color: var(--a-tenue);
+			text-transform: uppercase;
+		}
+
+		/* ---- Estado vacío ---- */
+		.masiva .tabla--vacia td {
+			white-space: normal;
+			line-height: 1.6;
+			text-align: center;
+			padding: 2rem 1rem 2.25rem;
+			color: var(--a-tenue);
+			font-size: .75rem;
+		}
+		.masiva .tabla tr.tabla--vacia:hover { background: transparent; }
+		.masiva .vacio-icono { display: block; margin-bottom: .625rem; color: #1f4b7a; font-size: 2rem; }
+		.masiva .tabla--vacia strong { display: block; margin-bottom: .375rem; color: var(--a-navy); font-size: .875rem; font-weight: 700; }
+
+		/* ---- Pie de selección ---- */
+		.masiva .pie-seleccion {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			justify-content: space-between;
+			gap: .75rem;
+		}
+		.masiva .pie-seleccion .cuenta {
+			font-size: .875rem;
+			color: var(--a-tenue);
+			font-weight: 600;
+		}
+
+		/* =================================================================
+		   Móvil
+		   ================================================================= */
+		@media (max-width: 860px) {
+			.masiva .parametros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+		}
+		@media (max-width: 768px) {
+			.masiva .hero-inicio { padding: 1.25rem; min-height: 0; flex-wrap: wrap; }
+			.masiva .hero-inicio h1 { font-size: 1.5rem; }
+			.masiva .hero-inicio__acciones { width: 100%; }
+			.masiva .hero-inicio__acciones .boton { flex: 1 1 auto; justify-content: center; }
+
+			.masiva .filtros { padding: 1rem; flex-direction: column; align-items: stretch; }
+			.masiva .filtros .campo,
+			.masiva .filtros__fin { width: 100%; min-width: 0; flex-basis: 100%; margin-left: 0; }
+			.masiva .filtros__fin .boton { flex: 1; justify-content: center; }
+
+			.masiva .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.masiva .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.masiva .tarjeta__cuerpo { padding: 1rem; }
+			.masiva .tabla-envoltura { margin: 1rem; }
+
+			.masiva .parametros { grid-template-columns: 1fr; }
+
+			.masiva .campo input,
+			.masiva .campo select { font-size: 16px; }
+
+			/* tabla → tarjetas */
+			.masiva .tabla tbody tr { display: flex; flex-direction: column; }
+			.masiva .tabla tbody td {
+				display: block;
+				text-align: left;
+				padding: .5rem .875rem;
+				border-bottom: 1px dashed #edf2f8;
+			}
+			.masiva .tabla tbody td:last-child { border-bottom: 0; }
+			.masiva .tabla tbody td::before {
+				content: attr(data-label);
+				display: block;
+				margin-bottom: .25rem;
+				font-size: .625rem;
+				font-weight: 800;
+				letter-spacing: .06em;
+				text-transform: uppercase;
+				color: var(--a-tenue);
+			}
+			.masiva .tabla tbody td.celda-sel {
+				width: auto;
+				text-align: left;
+				padding: .875rem;
+				background: var(--a-suave);
+				border-bottom: 1px solid var(--a-borde);
+			}
+			.masiva .tabla tbody td.celda-sel::before { content: none; }
+			.masiva .tabla tbody td.celda-sel input { width: 1.25rem; height: 1.25rem; }
+
+			.masiva .tabla tbody td.celda-nombre {
+				order: -1;
+				padding: .875rem;
+				background: var(--a-suave);
+				border-bottom: 1px solid var(--a-borde);
+			}
+			.masiva .tabla tbody td.celda-nombre::before { content: none; }
+			.masiva .tabla tbody td.celda-nombre .tabla__principal { font-size: 1rem; }
+
+			.masiva .tabla tbody tr.tabla--vacia td { display: block; text-align: center; }
+			.masiva .tabla tbody tr.tabla--vacia td::before { content: none; }
+
+			.masiva .pie-seleccion { flex-direction: column-reverse; align-items: stretch; }
+			.masiva .pie-seleccion .boton { width: 100%; justify-content: center; }
+			.masiva .pie-seleccion .cuenta { text-align: center; }
+		}
+		@media (max-width: 560px) {
+			.masiva .parametros { grid-template-columns: 1fr; }
+		}
+		@media (max-width: 480px) {
+			.masiva .hero-icono { display: none; }
+		}
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-user-group"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">EXTENDIDOS Y FESTIVOS</span>
+			<h1>Asignación masiva</h1>
+			<p>
+				Marque a quiénes le va a programar, ponga la fecha y el tramo una sola vez, y el
+				formulario llega con una ficha por persona. Puede corregir cada ficha antes de
+				enviar el lote: aquí solo se prepara, no se guarda.
+			</p>
+			<div class="hero-inicio__acciones">
+				<a th:href="@{/programaciones/nueva}" class="boton boton--fantasma">
+					<i class="fas fa-arrow-left"></i> Volver a proponer
+				</a>
+			</div>
+		</div>
+	</section>
+
+	<!-- ======== FILTROS (form A) ======== -->
+	<form class="filtros" th:action="@{/programaciones/masivo}" method="get">
+
+		<!-- Una sola área: congelada -->
+		<th:block th:if="${#lists.size(areas) == 1}">
+			<input type="hidden" name="areaId" th:value="${areas[0].id}">
+			<div class="campo">
+				<span class="campo__etiqueta">Área</span>
+				<div class="campo--congelado" th:text="${areas[0].nombre} + ' (' + ${areas[0].codigo} + ')'">Operaciones (OPE)</div>
+			</div>
+		</th:block>
+
+		<!-- Varias áreas: selector normal -->
+		<div class="campo" th:unless="${#lists.size(areas) == 1}">
+			<label class="campo__etiqueta" for="filtro-area">Área</label>
+			<select id="filtro-area" name="areaId">
+				<option th:each="area : ${areas}" th:value="${area.id}"
+						th:text="${area.nombre} + ' (' + ${area.codigo} + ')'"
+						th:selected="${area.id == areaElegida}">Área</option>
+			</select>
+		</div>
+
+		<div class="campo campo--buscar">
+			<label class="campo__etiqueta" for="filtro-q">Buscar</label>
+			<input id="filtro-q" type="search" name="q" th:value="${q}" placeholder="Nombre o documento">
+		</div>
+
+		<div class="filtros__fin">
+			<a th:href="@{/programaciones}" class="boton boton--fantasma">
+				<i class="fas fa-arrow-left"></i> Volver
+			</a>
+			<button type="submit" class="boton">
+				<i class="fas fa-filter"></i> Filtrar
+			</button>
+		</div>
+	</form>
+
+	<!-- ======== SELECCIÓN Y PARÁMETROS (form B) ======== -->
+	<form id="seleccion-form" th:action="@{/programaciones/nueva}" method="get">
+		<input type="hidden" name="masivo" value="1">
+
+		<div class="tarjeta tarjeta--listado">
+			<div class="tarjeta__cabecera">
+				<span class="sec-icono sec-icono--azul" aria-hidden="true"><i class="fas fa-sliders"></i></span>
+				<div class="tarjeta__titulo-grupo">
+					<h2>Parámetros del bloque</h2>
+					<p>Lo mismo para todas las personas marcadas: fecha, tramo y motivo.</p>
+				</div>
+			</div>
+			<div class="tarjeta__cuerpo">
+				<div class="parametros">
+					<label class="campo">
+						<span class="campo__etiqueta">Fecha</span>
+						<input type="date" name="fecha" th:value="${fechaDeHoy}" th:attr="min=${hoy}" required>
+					</label>
+					<label class="campo">
+						<span class="campo__etiqueta">Hasta (opcional)</span>
+						<input type="date" name="hasta" th:attr="min=${hoy}"
+							   title="Deje vacío para un solo día">
+						<span class="campo__ayuda">Con "Hasta" prepara cada día del tramo, con las mismas horas.</span>
+					</label>
+					<label class="campo">
+						<span class="campo__etiqueta">Inicio</span>
+						<input type="time" name="horaInicio" value="07:00" required>
+					</label>
+					<label class="campo">
+						<span class="campo__etiqueta">Fin</span>
+						<input type="time" name="horaFin" value="19:00" required>
+						<span class="campo__ayuda">Si la fin es menor que la inicio, cruza la medianoche.</span>
+					</label>
+					<div class="campo campo--ancho">
+						<span class="campo__etiqueta">Tipo de programación</span>
+						<div class="selector-pills">
+							<label class="selector-pills__pill" th:each="uno : ${tiposProgramacion}">
+								<input type="radio" name="tipo" th:value="${uno}"
+									   th:checked="${uno.name() == 'EXTENDIDO'}">
+								<span th:text="${uno}">TIPO</span>
+							</label>
+						</div>
+						<span class="campo__ayuda">Queda en todas las fichas del lote; se corrige ficha por ficha si hace falta.</span>
+					</div>
+					<label class="campo">
+						<span class="campo__etiqueta">Operación (opcional)</span>
+						<select name="tipoOperacionId">
+							<option value="">Sin operación</option>
+							<option th:each="tipo : ${tiposOperacion}" th:value="${tipo.id}"
+									th:text="${tipo.nombre}">Op</option>
+						</select>
+						<input type="search" placeholder="Escriba para filtrar…" autocomplete="off"
+							   data-buscar-select aria-label="Filtrar la lista de operaciones">
+						<span class="campo__ayuda">Queda en todas las fichas; se puede cambiar después.</span>
+					</label>
+					<label class="campo">
+						<span class="campo__etiqueta">Motivo</span>
+						<input type="text" name="motivo" maxlength="500" required
+							   placeholder="Carga especial del día...">
+					</label>
+				</div>
+				<p class="nota-lote" th:text="'Hasta ' + ${maxLote} + ' fichas por envío (personas × días).'">
+					Hasta 100 fichas por envío (personas × días).
+				</p>
+			</div>
+		</div>
+
+		<div class="tarjeta tarjeta--listado">
+			<div class="tarjeta__cabecera">
+				<span class="sec-icono sec-icono--azul" aria-hidden="true"><i class="fas fa-users"></i></span>
+				<div class="tarjeta__titulo-grupo">
+					<h2>Personas</h2>
+					<p>Marque a quienes entran en el tramo; el orden en el formulario sigue el de aquí.</p>
+				</div>
+				<span class="etiqueta etiqueta--info" th:text="${#lists.size(gente)} + ' en pantalla'">0</span>
+			</div>
+
+			<div class="tabla-envoltura">
+				<table class="tabla">
+					<thead>
+					<tr>
+						<th class="celda-sel">
+							<input type="checkbox" id="marcar-todos" title="Seleccionar todas las de la pantalla">
+						</th>
+						<th>Colaborador</th>
+						<th>Cargo</th>
+						<th>Turno</th>
+						<th>Área</th>
+					</tr>
+					</thead>
+					<tbody>
+					<tr th:each="fila : ${gente}">
+						<td class="celda-sel" data-label="Elegir">
+							<input type="checkbox" name="ids" th:value="${fila.id}"
+								   th:attr="aria-label='Programar a ' + ${fila.nombreCompleto}">
+						</td>
+						<td class="celda-nombre" data-label="Colaborador">
+							<span class="tabla__principal" th:text="${fila.nombreCompleto}">Nombre</span>
+							<span class="tabla__secundario" th:text="${fila.documento}">CC</span>
+						</td>
+						<td data-label="Cargo" th:text="${fila.cargoNombre} ?: '—'">Cargo</td>
+						<td data-label="Turno" th:text="${fila.turnoNombre} ?: 'Sin turno'">Turno</td>
+						<td data-label="Área">
+							<span th:text="${fila.areaNombre}">Área</span>
+							<span class="codigo-area" th:text="${fila.areaCodigo}">OPE</span>
+						</td>
+					</tr>
+					<tr th:if="${#lists.isEmpty(gente)}" class="tabla--vacia">
+						<td colspan="5" data-label="Aviso">
+							<i class="fas fa-users vacio-icono" aria-hidden="true"></i>
+							<strong>Sin personal en pantalla</strong>
+							Cambie el área o quite la búsqueda.
+						</td>
+					</tr>
+					</tbody>
+				</table>
+			</div>
+
+			<div class="tarjeta__cuerpo">
+				<div class="pie-seleccion">
+					<span class="cuenta" id="cuenta-seleccion">0 persona(s) marcada(s)</span>
+					<button type="submit" class="boton boton--primario" id="boton-preparar">
+						<i class="fas fa-file-circle-plus"></i> Preparar fichas
+					</button>
+				</div>
+			</div>
+		</div>
+	</form>
+
+	<script>
+		(function () {
+			var todos = document.getElementById('marcar-todos');
+			var cajas = document.querySelectorAll('#seleccion-form input[name="ids"]');
+			var cuenta = document.getElementById('cuenta-seleccion');
+
+			function actualizar() {
+				var marcadas = 0;
+				for (var i = 0; i < cajas.length; i++) {
+					if (cajas[i].checked) marcadas++;
+				}
+				cuenta.textContent = marcadas + ' persona(s) marcada(s)';
+			}
+
+			if (todos) {
+				todos.addEventListener('change', function () {
+					for (var i = 0; i < cajas.length; i++) cajas[i].checked = todos.checked;
+					actualizar();
+				});
+			}
+			for (var i = 0; i < cajas.length; i++) cajas[i].addEventListener('change', actualizar);
+		})();
+	</script>
+
+</div>
+</body>
+</html>

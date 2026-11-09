@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="es" th:replace="~{fragments/layout :: pagina('Nuevo colaborador', 'colaboradores', ~{::contenido})}">
+
+<body>
+<div th:fragment="contenido" class="colab-edit">
+
+	<!--
+		Alta de personal desde cero. Antes la única forma de tener colaboradores era
+		que ya existieran en la base; ahora Talento Humano puede crear la persona,
+		asignarle área, cargo y turno, y dejarla lista para programar.
+
+		El cargo se puede crear en el mismo momento: si el que necesita no existe,
+		se escribe abajo y se guarda junto con la persona.
+
+		Estilo: mismo sistema de colaboradores.html y transporte.html.
+
+		Colores por función:
+		- Datos del colaborador → oro (nuevo registro).
+		- Crear cargo → azul (configuración).
+	-->
+	<style>
+		/* =================================================================
+		   Nuevo colaborador · estilos locales
+		   ================================================================= */
+		.colab-edit {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+		.colab-edit > .hero-inicio,
+		.colab-edit > .tarjeta { margin-bottom: 1.25rem; }
+
+		/* ---- Portada ---- */
+		.colab-edit .hero-inicio,
+		.colab-edit .hero-inicio * { animation: none; }
+		.colab-edit .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.colab-edit .hero-inicio::before,
+		.colab-edit .hero-inicio::after { content: none; }
+		.colab-edit .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.colab-edit .hero-inicio__contenido { max-width: 44rem; }
+		.colab-edit .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+			text-transform: uppercase;
+		}
+		.colab-edit .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.colab-edit .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+
+		/* ---- Tarjeta y cabecera ---- */
+		.colab-edit .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+		}
+		.colab-edit .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.colab-edit .tarjeta__cabecera {
+			justify-content: flex-start;
+			padding: 1.375rem 1.5rem;
+			gap: 1rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.colab-edit .tarjeta__titulo-grupo { flex: 1 1 16rem; }
+		.colab-edit .tarjeta__titulo-grupo h2 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+		}
+		.colab-edit .tarjeta__cabecera h2::before,
+		.colab-edit .tarjeta__titulo-grupo h2::before { display: none; }
+		.colab-edit .tarjeta__titulo-grupo p {
+			margin-top: .25rem;
+			max-width: 62ch;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+		.colab-edit .tarjeta__cuerpo { padding: 1.5rem; }
+
+		/* Acentos por función */
+		.colab-edit .tarjeta--alta { border-color: #f1d8b2; }
+		.colab-edit .tarjeta--alta .tarjeta__cabecera {
+			background: #fdf8f0;
+			border-bottom-color: #f1d8b2;
+		}
+		.colab-edit .tarjeta--config { border-color: var(--a-borde); }
+
+		/* ---- Íconos de sección ---- */
+		.colab-edit .sec-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.25rem;
+		}
+		.colab-edit .sec-icono--oro { background: #e09837; box-shadow: 0 3px 10px rgba(224, 152, 55, .3); }
+		.colab-edit .sec-icono--cian { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+
+		/* ---- Botones ---- */
+		.colab-edit .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.colab-edit .boton::after { display: none; }
+		.colab-edit .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.colab-edit .boton--primario,
+		.colab-edit .boton--primario:hover {
+			border-color: var(--a-accion);
+			background: var(--a-accion);
+			box-shadow: 0 3px 10px rgba(221, 145, 44, .28);
+		}
+		.colab-edit .boton--primario:hover {
+			border-color: var(--a-accion-hover);
+			background: var(--a-accion-hover);
+			box-shadow: 0 4px 12px rgba(221, 145, 44, .36);
+		}
+		.colab-edit .boton--bloque { width: 100%; }
+		.colab-edit .boton--fantasma {
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.colab-edit .boton--fantasma:hover {
+			border: 1px solid #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+
+		/* ---- Campos ---- */
+		.colab-edit .campo__etiqueta,
+		.colab-edit .campo:focus-within .campo__etiqueta {
+			margin-bottom: .375rem;
+			color: var(--a-navy);
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+		.colab-edit .campo__ayuda { color: var(--a-tenue); line-height: 1.45; }
+		.colab-edit input[type="text"],
+		.colab-edit input[type="tel"],
+		.colab-edit input[type="date"],
+		.colab-edit input[type="datetime-local"],
+		.colab-edit input[type="number"],
+		.colab-edit select,
+		.colab-edit textarea {
+			padding: .625rem .875rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background-color: #fff;
+			font-size: .9375rem;
+			font-weight: 500;
+			color: var(--a-texto);
+		}
+		.colab-edit select { padding-right: 2.5rem; }
+		.colab-edit input:hover, .colab-edit select:hover { border-color: #b9c9dc; }
+		.colab-edit input[type="text"]:focus,
+		.colab-edit input[type="tel"]:focus,
+		.colab-edit input[type="date"]:focus,
+		.colab-edit input[type="datetime-local"]:focus,
+		.colab-edit input[type="number"]:focus,
+		.colab-edit select:focus,
+		.colab-edit textarea:focus {
+			border-color: var(--a-azul);
+			box-shadow: 0 0 0 3px rgba(23, 68, 117, .14);
+		}
+		.colab-edit input[type="checkbox"] { accent-color: var(--a-azul); }
+
+		/* ---- Bloque-form ---- */
+		.colab-edit .bloque-form {
+			margin-bottom: 1.25rem;
+			border: 1px solid var(--a-borde);
+			border-radius: 12px;
+			background: #f9fbfd;
+			box-shadow: none;
+		}
+		.colab-edit .bloque-form + .bloque-form { margin-top: 0; }
+		.colab-edit .bloque-form__cabecera {
+			display: flex;
+			align-items: center;
+			gap: .875rem;
+			padding: 1rem 1.125rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.colab-edit .bloque-form__icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 2rem;
+			height: 2rem;
+			border-radius: 50%;
+			background: var(--a-circulo);
+			color: #fff;
+			font-size: .875rem;
+			box-shadow: none;
+		}
+		.colab-edit .bloque-form__cabecera > div:not(.bloque-form__icono) { min-width: 0; flex: 1; }
+		.colab-edit .bloque-form__cabecera h3 {
+			margin: 0;
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: .01em;
+			color: var(--a-navy);
+			line-height: 1.3;
+		}
+		.colab-edit .bloque-form__cabecera p {
+			margin: .1875rem 0 0;
+			font-size: .75rem;
+			color: var(--a-tenue);
+			font-weight: 500;
+			line-height: 1.5;
+			max-width: 52ch;
+		}
+		.colab-edit .bloque-form__cuerpo { padding: 1.25rem 1.125rem; }
+		.colab-edit .bloque-form__cuerpo .campo { margin-bottom: 0; }
+
+		/* ---- Form actions ---- */
+		.colab-edit .form-actions-bar {
+			display: flex;
+			align-items: center;
+			justify-content: flex-end;
+			gap: .75rem;
+			flex-wrap: wrap;
+			padding-top: 1.25rem;
+			margin-top: 1.25rem;
+			border-top: 1px solid var(--a-borde);
+			background: none;
+		}
+		.colab-edit .form-actions-bar__inicio {
+			margin-right: auto;
+			display: flex;
+			align-items: center;
+			gap: .5rem;
+			flex-wrap: wrap;
+		}
+
+		/* ---- Rejillas internas ---- */
+		.colab-edit .rejilla-2 {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 1rem 1.125rem;
+		}
+		.colab-edit .rejilla-2 .campo--ancho { grid-column: 1 / -1; }
+		.colab-edit form.rejilla-2 { align-items: end; }
+
+		/* ---- Casilla de activo ---- */
+		.colab-edit .check {
+			display: flex;
+			align-items: center;
+			gap: .625rem;
+			margin-top: .25rem;
+			padding: .8125rem 1rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background: #fff;
+			cursor: pointer;
+			font-size: .875rem;
+			font-weight: 600;
+			color: var(--a-texto);
+		}
+		.colab-edit .check:hover { border-color: var(--a-azul); background: #f8fafd; }
+		.colab-edit .check input {
+			width: 1.25rem;
+			height: 1.25rem;
+			accent-color: var(--a-azul);
+			flex: none;
+			cursor: pointer;
+		}
+
+		/* =================================================================
+		   Móvil
+		   ================================================================= */
+		@media (max-width: 768px) {
+			.colab-edit .rejilla-2 { grid-template-columns: 1fr; }
+
+			.colab-edit .campo input,
+			.colab-edit .campo select,
+			.colab-edit .campo textarea { font-size: 16px; }
+
+			.colab-edit .hero-inicio { padding: 1.25rem; min-height: 0; }
+			.colab-edit .hero-inicio h1 { font-size: 1.5rem; }
+			.colab-edit .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.colab-edit .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.colab-edit .tarjeta__cuerpo { padding: 1rem; }
+			.colab-edit .bloque-form__cuerpo { padding: 1rem; }
+
+			.colab-edit .form-actions-bar {
+				flex-direction: column-reverse;
+				align-items: stretch;
+			}
+			.colab-edit .form-actions-bar .boton { width: 100%; justify-content: center; }
+			.colab-edit .form-actions-bar__inicio { margin-right: 0; }
+		}
+
+		@media (max-width: 480px) {
+			.colab-edit .hero-icono { display: none; }
+		}
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-user-plus"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">ALTA DE PERSONAL</span>
+			<h1>Crear colaborador</h1>
+			<p>
+				Registre a la persona con sus datos, su asignación y su lugar de residencia.
+				Queda lista para programar desde el primer momento.
+			</p>
+		</div>
+	</section>
+
+	<!-- ======== ALTA ======== -->
+	<div class="tarjeta tarjeta--alta">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--oro" aria-hidden="true"><i class="fas fa-user-plus"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Datos del colaborador</h2>
+				<p>Los mismos datos que se editan después, para no tener que volver a esta pantalla.</p>
+			</div>
+		</div>
+
+		<div class="tarjeta__cuerpo">
+			<form th:action="@{/colaboradores}" th:object="${formulario}" method="post">
+
+				<div class="bloque-form">
+					<div class="bloque-form__cabecera">
+						<div class="bloque-form__icono"><i class="fas fa-user"></i></div>
+						<div>
+							<h3>Datos personales</h3>
+							<p>Identificación y nombres legales que aparecen en el acta.</p>
+						</div>
+					</div>
+					<div class="bloque-form__cuerpo">
+						<div class="rejilla-2">
+							<label class="campo">
+								<span class="campo__etiqueta">Documento</span>
+								<input type="text" th:field="*{documento}" th:errorclass="campo--error" required>
+								<span class="campo__error" th:errors="*{documento}"></span>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Nombres</span>
+								<input type="text" th:field="*{nombres}" th:errorclass="campo--error" required>
+								<span class="campo__error" th:errors="*{nombres}"></span>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Apellidos</span>
+								<input type="text" th:field="*{apellidos}" th:errorclass="campo--error" required>
+								<span class="campo__error" th:errors="*{apellidos}"></span>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Fecha de ingreso</span>
+								<input type="date" th:field="*{fechaIngreso}">
+							</label>
+						</div>
+					</div>
+				</div>
+
+				<div class="bloque-form">
+					<div class="bloque-form__cabecera">
+						<div class="bloque-form__icono"><i class="fas fa-phone"></i></div>
+						<div>
+							<h3>Contacto y ubicación</h3>
+							<p>Cómo ubicar al colaborador para coordinar turnos y transporte.</p>
+						</div>
+					</div>
+					<div class="bloque-form__cuerpo">
+						<div class="rejilla-2">
+							<label class="campo">
+								<span class="campo__etiqueta">Celular</span>
+								<input type="tel" th:field="*{celular}" placeholder="Para confirmaciones SMS">
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Lugar de residencia</span>
+								<input type="text" th:field="*{lugarResidencia}" placeholder="Barrio, municipio o zona">
+							</label>
+							<label class="campo campo--ancho">
+								<span class="campo__etiqueta">Ubicación / dirección</span>
+								<input type="text" th:field="*{ubicacionResidencia}" placeholder="Dirección o referencia de recogida">
+							</label>
+						</div>
+					</div>
+				</div>
+
+				<div class="bloque-form">
+					<div class="bloque-form__cabecera">
+						<div class="bloque-form__icono"><i class="fas fa-briefcase"></i></div>
+						<div>
+							<h3>Asignación</h3>
+							<p>Área, cargo y turno para el que queda habilitado.</p>
+						</div>
+					</div>
+					<div class="bloque-form__cuerpo">
+						<div class="rejilla-2">
+							<label class="campo">
+								<span class="campo__etiqueta">Área</span>
+								<select th:field="*{areaId}" required>
+									<option th:each="area : ${gestion.areas}" th:value="${area.id}" th:text="${area.nombre}">Área</option>
+								</select>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Cargo</span>
+								<select th:field="*{cargoId}" required>
+									<option th:each="cargo : ${gestion.cargos}" th:value="${cargo.id}" th:text="${cargo.nombre}">Cargo</option>
+								</select>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Turno</span>
+								<select th:field="*{turnoId}">
+									<option value="">Sin turno</option>
+									<option th:each="turno : ${gestion.turnos}" th:value="${turno.id}" th:text="${turno.nombre}">Turno</option>
+								</select>
+							</label>
+						</div>
+
+						<label class="check">
+							<input type="checkbox" th:field="*{activo}">
+							<span>Colaborador activo para programación</span>
+						</label>
+					</div>
+				</div>
+
+				<div class="form-actions-bar">
+					<div class="form-actions-bar__inicio">
+						<a th:href="@{/colaboradores}" class="boton boton--fantasma">
+							<i class="fas fa-arrow-left"></i> Volver
+						</a>
+					</div>
+					<button type="submit" class="boton boton--primario">
+						<i class="fas fa-floppy-disk"></i> Guardar colaborador
+					</button>
+				</div>
+
+			</form>
+		</div>
+	</div>
+
+	<!-- ======== CARGO NUEVO ======== -->
+	<!--
+		El cargo se puede crear en el mismo momento: si el que necesita no existe,
+		se escribe aquí y se guarda. No es obligatorio, pero evita tener que salir
+		a otra pantalla y volver.
+	-->
+	<div class="tarjeta tarjeta--config">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--cian" aria-hidden="true"><i class="fas fa-briefcase"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Crear un cargo nuevo</h2>
+				<p>Si el cargo que necesita no está en la lista, créelo aquí.</p>
+			</div>
+		</div>
+
+		<div class="tarjeta__cuerpo">
+			<form th:action="@{/colaboradores/cargos}" method="post" class="rejilla-2">
+				<label class="campo">
+					<span class="campo__etiqueta">Nombre del cargo</span>
+					<input type="text" name="nombre" placeholder="Operador de cargador frontal" required>
+				</label>
+				<div class="campo">
+					<button type="submit" class="boton boton--fantasma boton--bloque">
+						<i class="fas fa-plus"></i> Crear cargo
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="es" th:replace="~{fragments/layout :: pagina('Editar vehículo', 'transporte', ~{::contenido})}">
+
+<body>
+<div th:fragment="contenido" class="transp-edit">
+
+	<!--
+		Edición de un vehículo ya registrado. Existe porque la placa, una vez
+		dada de alta, no se podía corregir: había que borrarla y volver a
+		crearla, y eso se llevaba puestas las salidas que ya tenía.
+
+		Estilo: mismo sistema de transporte.html y colaboradores.html. Todas las
+		reglas van prefijadas con .transp-edit y anulan las de app.css.
+	-->
+	<style>
+		/* =================================================================
+		   Editar vehículo · estilos locales
+		   ================================================================= */
+		/* ---- Variables ---- */
+		.transp-edit {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+		.transp-edit > .hero-inicio,
+		.transp-edit > .tarjeta,
+		.transp-edit > .rejilla-2,
+		.transp-edit > .panel-identidad { margin-bottom: 1.25rem; }
+
+		/* ---- Portada ---- */
+		.transp-edit .hero-inicio,
+		.transp-edit .hero-inicio * { animation: none; }
+		.transp-edit .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.transp-edit .hero-inicio::before,
+		.transp-edit .hero-inicio::after { content: none; }
+		.transp-edit .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.transp-edit .hero-inicio__contenido { max-width: 44rem; }
+		.transp-edit .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+		}
+		.transp-edit .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.transp-edit .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+
+		/* ---- Tarjeta y cabecera ---- */
+		.transp-edit .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-top: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+		}
+		.transp-edit .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.transp-edit .tarjeta__cabecera {
+			justify-content: flex-start;
+			padding: 1.375rem 1.5rem;
+			gap: 1rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.transp-edit .sec-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.25rem;
+		}
+		.transp-edit .sec-icono--azul,
+		.transp-edit .sec-icono--cian { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+		.transp-edit .sec-icono--oro { background: #e09837; box-shadow: 0 3px 10px rgba(224, 152, 55, .3); }
+		.transp-edit .sec-icono--verde { background: #2d7a55; box-shadow: 0 3px 10px rgba(45, 122, 85, .25); }
+		.transp-edit .tarjeta__titulo-grupo { flex: 1 1 16rem; }
+		.transp-edit .tarjeta__titulo-grupo h2 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+		}
+		.transp-edit .tarjeta__cabecera h2::before,
+		.transp-edit .tarjeta__titulo-grupo h2::before { display: none; }
+		.transp-edit .tarjeta__titulo-grupo p {
+			margin-top: .25rem;
+			max-width: 62ch;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+		.transp-edit .tarjeta__cabecera > .etiqueta { align-self: center; }
+		.transp-edit .tarjeta__cuerpo { padding: 1.5rem; }
+		.transp-edit .tarjeta--nueva { border-color: #f1d8b2; }
+		.transp-edit .tarjeta--nueva .tarjeta__cabecera { background: #fdf8f0; border-bottom-color: #f1d8b2; }
+
+		/* ---- Tarjeta plegable ---- */
+		.transp-edit .detalle__flecha { margin-left: auto; background: var(--a-suave); color: var(--a-navy); }
+		.transp-edit .detalle__cabecera:hover .detalle__flecha { background: var(--a-accion); color: #fff; }
+		.transp-edit details:not([open]) > .tarjeta__cabecera { border-bottom: 0; }
+
+		/* ---- Botones ---- */
+		.transp-edit .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.transp-edit .boton::after { display: none; }
+		.transp-edit .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.transp-edit .boton--primario,
+		.transp-edit .boton--primario:hover {
+			border-color: var(--a-accion);
+			background: var(--a-accion);
+			box-shadow: 0 3px 10px rgba(221, 145, 44, .28);
+		}
+		.transp-edit .boton--primario:hover {
+			border-color: var(--a-accion-hover);
+			background: var(--a-accion-hover);
+			box-shadow: 0 4px 12px rgba(221, 145, 44, .36);
+		}
+		.transp-edit .boton--chico { padding: .5rem .875rem; font-size: .75rem; }
+		.transp-edit .boton--contorno {
+			border: 1px solid #cfe0f2;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.transp-edit .boton--contorno:hover:not(:disabled) {
+			border: 1px solid #b6cfe9;
+			background: #e9f1fa;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.transp-edit .boton--fantasma {
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.transp-edit .boton--fantasma:hover {
+			border: 1px solid #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.transp-edit .boton--peligro {
+			border: 1px solid #f0c4c4;
+			background: #fff;
+			color: #b42318;
+			box-shadow: none;
+		}
+		.transp-edit .boton--peligro:hover {
+			border: 1px solid #e6a8a8;
+			background: #fdf3f3;
+			color: #b42318;
+			box-shadow: none;
+		}
+		.transp-edit .boton:disabled { opacity: .5; box-shadow: none; }
+
+		/* ---- Campos ---- */
+		.transp-edit .campo__etiqueta,
+		.transp-edit .campo:focus-within .campo__etiqueta {
+			margin-bottom: .375rem;
+			color: var(--a-navy);
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+		.transp-edit .campo__ayuda { color: var(--a-tenue); line-height: 1.45; }
+		.transp-edit input[type="text"],
+		.transp-edit input[type="tel"],
+		.transp-edit input[type="number"],
+		.transp-edit input[type="search"],
+		.transp-edit input[type="date"],
+		.transp-edit select {
+			padding: .625rem .875rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background-color: #fff;
+			font-size: .9375rem;
+			font-weight: 500;
+			color: var(--a-texto);
+		}
+		.transp-edit select { padding-right: 2.5rem; }
+		.transp-edit input:hover, .transp-edit select:hover { border-color: #b9c9dc; }
+		.transp-edit input[type="text"]:focus,
+		.transp-edit input[type="tel"]:focus,
+		.transp-edit input[type="number"]:focus,
+		.transp-edit input[type="search"]:focus,
+		.transp-edit input[type="date"]:focus,
+		.transp-edit select:focus {
+			border-color: var(--a-azul);
+			box-shadow: 0 0 0 3px rgba(23, 68, 117, .14);
+		}
+
+		/* ---- Formulario ---- */
+		.transp-edit .bloque-form {
+			margin-bottom: 1.25rem;
+			border: 1px solid var(--a-borde);
+			border-radius: 12px;
+			background: #f9fbfd;
+			box-shadow: none;
+		}
+		.transp-edit .bloque-form__cabecera { display: none; }
+		.transp-edit .bloque-form__cuerpo { padding: 1.25rem; }
+		.transp-edit .bloque-form__cuerpo .campo { margin-bottom: 0; }
+		.transp-edit .rejilla-2-campos {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 1rem 1.25rem;
+		}
+		.transp-edit .campo--ancho { grid-column: 1 / -1; }
+		.transp-edit .form-actions-bar {
+			display: flex;
+			justify-content: flex-end;
+			padding: 0;
+			margin: 0;
+			background: none;
+			border: 0;
+		}
+		.transp-edit .rejilla-2 {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 1.25rem;
+			align-items: start;
+		}
+
+		/* ---- Etiquetas ---- */
+		.transp-edit .etiqueta {
+			padding: .375rem .875rem;
+			border: 0;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+		}
+		.transp-edit .etiqueta::before { content: none; display: none; animation: none; }
+		.transp-edit .etiqueta--gris { background: #eceff3; color: var(--a-tenue); }
+		.transp-edit .etiqueta--alerta { background: #fdf0d9; color: #9a5a0a; }
+		.transp-edit .pasajeros {
+			display: inline-flex;
+			align-items: center;
+			padding: .375rem .875rem;
+			border-radius: 999px;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			font-variant-numeric: tabular-nums;
+		}
+
+		/* ---- Tabla ---- */
+		.transp-edit .tabla-envoltura {
+			margin: 1.25rem 1.5rem 1.5rem;
+			border: 1px solid #dfe8f3;
+			border-radius: 12px;
+			background: #fff;
+		}
+		.transp-edit .tabla thead th {
+			padding: .875rem 1.125rem;
+			background: var(--a-suave);
+			color: #2f4a70;
+			border-bottom: 1px solid #e3ebf4;
+			font-size: .75rem;
+			font-weight: 600;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+		}
+		.transp-edit .tabla thead tr th:first-child { border-left: 0; }
+		.transp-edit .tabla thead th.tabla__num { text-align: right; }
+		.transp-edit .tabla thead th.tabla__acciones { text-align: center; }
+		.transp-edit .tabla tbody td {
+			padding: 1rem 1.125rem;
+			border-bottom: 1px solid #edf2f8;
+			vertical-align: middle;
+			color: var(--a-texto);
+		}
+		.transp-edit .tabla tbody tr { animation: none; }
+		.transp-edit .tabla tbody tr:nth-child(even) { background: transparent; }
+		.transp-edit .tabla tbody tr:hover { background: #f7fafd; }
+		.transp-edit .tabla tbody tr:hover td:first-child { box-shadow: none; }
+		.transp-edit .tabla tbody tr:last-child td { border-bottom: 0; }
+		.transp-edit .tabla__principal { color: var(--a-navy); font-weight: 700; }
+		.transp-edit .tabla__secundario { color: var(--a-tenue); font-weight: 500; }
+		.transp-edit .placa {
+			display: block;
+			font-weight: 700;
+			font-size: .875rem;
+			color: var(--a-navy);
+			letter-spacing: .01em;
+		}
+		.transp-edit .hora {
+			display: inline-block;
+			color: var(--a-navy);
+			font-weight: 700;
+			font-size: .9375rem;
+			font-variant-numeric: tabular-nums;
+		}
+		.transp-edit .acciones-fila {
+			display: flex;
+			flex-wrap: wrap;
+			gap: .5rem;
+			align-items: center;
+			justify-content: center;
+		}
+
+		/* ---- Lista vacía ---- */
+		.transp-edit .tabla--vacia td {
+			white-space: normal;
+			line-height: 1.6;
+			text-align: center;
+			padding: 2rem 1rem 2.25rem;
+			color: var(--a-tenue);
+			font-size: .75rem;
+		}
+		.transp-edit .tabla tr.tabla--vacia:hover { background: transparent; }
+		.transp-edit .vacio-icono { display: block; margin-bottom: .625rem; color: #1f4b7a; font-size: 2rem; }
+		.transp-edit .tabla--vacia strong { color: var(--a-navy); font-size: .875rem; font-weight: 700; }
+
+		/* ---- Móvil ---- */
+		@media (max-width: 900px) {
+			.transp-edit .rejilla-2 { grid-template-columns: 1fr; }
+		}
+		@media (max-width: 768px) {
+			.transp-edit .campo input,
+			.transp-edit .campo select { font-size: 16px; }
+			.transp-edit .hero-inicio { padding: 1.25rem; min-height: 0; }
+			.transp-edit .hero-inicio h1 { font-size: 1.5rem; }
+			.transp-edit .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.transp-edit .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.transp-edit .tarjeta__cuerpo { padding: 1rem; }
+			.transp-edit .bloque-form__cuerpo { padding: 1rem; }
+			.transp-edit .rejilla-2-campos { grid-template-columns: 1fr; }
+			.transp-edit .form-actions-bar { flex-direction: column-reverse; align-items: stretch; }
+			.transp-edit .form-actions-bar .boton { width: 100%; justify-content: center; }
+			.transp-edit .form-actions-bar__inicio { margin-right: 0; }
+			.transp-edit .tabla-envoltura { margin: 1rem 1rem 1.25rem; }
+
+			.transp-edit .tabla tbody tr { display: flex; flex-direction: column; }
+			.transp-edit .tabla tbody td.celda-cab {
+				order: -1;
+				display: block;
+				padding: .875rem;
+				text-align: left;
+				background: var(--a-suave);
+				border-bottom: 1px solid var(--a-borde);
+			}
+			.transp-edit .tabla tbody td.celda-cab::before { content: none; }
+			.transp-edit .acciones-fila { justify-content: flex-end; }
+
+			.transp-edit .tabla tbody tr.tabla--vacia td { display: block; text-align: center; }
+			.transp-edit .tabla tbody tr.tabla--vacia td::before { content: none; }
+		}
+		@media (max-width: 480px) {
+			.transp-edit .hero-icono { display: none; }
+		}
+
+
+		/* ---- Específico de Editar vehículo ---- */
+		.transp-edit .panel-identidad {
+			padding: 1.25rem 1.5rem;
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+		}
+		.transp-edit .panel-identidad::before { content: none; }
+		.transp-edit .panel-identidad__avatar {
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			background: var(--a-circulo);
+			box-shadow: 0 3px 10px rgba(25, 71, 121, .25);
+			font-size: 1.25rem;
+			font-weight: 700;
+		}
+		.transp-edit .panel-identidad__info h3 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			color: var(--a-navy);
+		}
+		.transp-edit .panel-identidad__info p {
+			margin-top: .25rem;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+		.transp-edit .tarjeta--config .tarjeta__cabecera { background: #f8fafd; }
+		.transp-edit .form-actions-bar { align-items: center; gap: .75rem; flex-wrap: wrap; }
+		.transp-edit .form-actions-bar__inicio { margin-right: auto; }
+		@media (max-width: 768px) {
+			.transp-edit .panel-identidad { padding: 1rem; }
+			.transp-edit .panel-identidad__avatar { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.transp-edit .panel-identidad__info h3 { font-size: 1.0625rem; }
+		}
+
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-truck-pickup"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">VEHÍCULO</span>
+			<h1>Editar vehículo</h1>
+			<p>
+				Corrija la placa, la capacidad, el nombre y teléfono del conductor o
+				el proveedor. Las salidas y los pasajeros que ya tiene siguen donde
+				están.
+			</p>
+		</div>
+	</section>
+
+	<!-- ======== IDENTIFICACIÓN ======== -->
+	<section class="panel-identidad">
+		<div class="panel-identidad__marca">
+			<div class="panel-identidad__avatar" aria-hidden="true"
+				 th:text="${#strings.substring(vehiculo.placa, 0, 1)}">P</div>
+			<div class="panel-identidad__info">
+				<h3 th:text="${vehiculo.placa}">Placa</h3>
+				<p th:text="${vehiculo.capacidad + ' lugar(es)' + (vehiculo.conductor != null ? ' · ' + vehiculo.conductor : '')}">Capacidad</p>
+			</div>
+		</div>
+	</section>
+
+	<!-- ======== DATOS ======== -->
+	<div class="tarjeta tarjeta--config">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--azul" aria-hidden="true"><i class="fas fa-id-card"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Datos del vehículo</h2>
+				<p>El proveedor solo aplica a vehículos contratados.</p>
+			</div>
+		</div>
+
+		<div class="tarjeta__cuerpo">
+			<form th:action="@{/transporte/vehiculos/{id}(id=${vehiculo.id})}" method="post">
+
+				<div class="bloque-form">
+					<div class="bloque-form__cabecera">
+						<div class="bloque-form__icono"><i class="fas fa-truck-pickup"></i></div>
+						<div>
+							<h3>Identificación</h3>
+							<p>La placa no puede repetirse con otro vehículo del catálogo.</p>
+						</div>
+					</div>
+					<div class="bloque-form__cuerpo">
+						<div class="rejilla-2-campos">
+							<label class="campo">
+								<span class="campo__etiqueta">Placa</span>
+								<input type="text" name="placa" maxlength="10"
+									   th:value="${vehiculo.placa}" required>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Capacidad</span>
+								<input type="number" name="capacidad" min="1"
+									   th:value="${vehiculo.capacidad}" required>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Conductor</span>
+								<input type="text" name="conductor" maxlength="120"
+									   th:value="${vehiculo.conductor}"
+									   placeholder="Persona que maneja el vehículo">
+							</label>
+							<!--
+								El teléfono acompaña al conductor y termina en el reporte del
+								viaje. Si el conductor se borra, el servidor lo borra también.
+							-->
+							<label class="campo">
+								<span class="campo__etiqueta">Teléfono del conductor</span>
+								<input type="tel" name="telefonoConductor" maxlength="20"
+									   th:value="${vehiculo.telefonoConductor}"
+									   placeholder="300 123 4567">
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Propietario</span>
+								<select name="propietario" id="propietario" required>
+									<option value="PROPIO"
+											th:selected="${vehiculo.propietario == null or vehiculo.propietario.name() == 'PROPIO'}">Propio</option>
+									<option value="CONTRATADO"
+											th:selected="${vehiculo.propietario != null and vehiculo.propietario.name() == 'CONTRATADO'}">Contratado</option>
+								</select>
+							</label>
+							<!--
+								Misma regla que en el alta: con "Propio" el campo no aparece y
+								con "Contratado" nace obligatorio. El servidor lo exige igual.
+							-->
+							<label class="campo campo--ancho" id="campo-proveedor" hidden>
+								<span class="campo__etiqueta">Proveedor</span>
+								<input type="text" name="proveedor" maxlength="120"
+									   th:value="${vehiculo.proveedor}"
+									   placeholder="Empresa que alquila el vehículo">
+							</label>
+						</div>
+					</div>
+				</div>
+
+				<div class="form-actions-bar">
+					<div class="form-actions-bar__inicio">
+						<a th:href="@{/transporte/vehiculos(dia=${dia})}" class="boton boton--fantasma">
+							<i class="fas fa-arrow-left"></i> Volver
+						</a>
+					</div>
+					<input type="hidden" name="dia" th:value="${dia}">
+					<button type="submit" class="boton boton--primario">
+						<i class="fas fa-floppy-disk"></i> Guardar cambios
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<script>
+		// El proveedor solo existe para vehículos de terceros: se muestra al elegir
+		// "Contratado" y nace obligatorio; al volver a "Propio" se oculta y se
+		// vacía para que un residuo de otra sesión no viaje al servidor.
+		(function () {
+			const selector = document.getElementById("propietario");
+			const bloque = document.getElementById("campo-proveedor");
+			if (!selector || !bloque) return;
+			const campo = bloque.querySelector("input[name=proveedor]");
+			function sincronizar() {
+				const contratado = selector.value === "CONTRATADO";
+				bloque.hidden = !contratado;
+				campo.required = contratado;
+				if (!contratado) campo.value = "";
+			}
+			selector.addEventListener("change", sincronizar);
+			sincronizar();
+		})();
+	</script>
+
+</div>
+</body>
+</html>

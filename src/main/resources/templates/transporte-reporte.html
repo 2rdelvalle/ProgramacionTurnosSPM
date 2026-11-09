@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Reporte de transporte</title>
+	<link rel="stylesheet" th:href="@{/vendor/fontawesome/css/all.min.css}">
+	<!--
+		Reporte imprimible de las salidas del día. Página independiente (no usa
+		el layout), por eso lleva sus propias variables con la misma paleta de
+		transporte.html: azul marino, azul de acción y naranja solo en la acción
+		principal. Sin degradados ni animaciones.
+
+		Una hoja por salida; al imprimir se oculta la barra de herramientas y
+		cada salida termina en su propia página (A4 horizontal).
+	-->
+	<style>
+		@font-face {
+			font-family: "Plus Jakarta Sans";
+			font-style: normal;
+			font-weight: 300 800;
+			font-display: swap;
+			src: url("/vendor/fonts/plus-jakarta-sans-latin.woff2") format("woff2");
+		}
+
+		:root {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			--fondo: #f4f7f9;
+		}
+
+		@page { size: A4 landscape; margin: 10mm; }
+		* { box-sizing: border-box; }
+		body {
+			margin: 0;
+			font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+			font-weight: 500;
+			line-height: 1.5;
+			color: var(--a-texto);
+			background: var(--fondo);
+			-webkit-font-smoothing: antialiased;
+		}
+
+		/* ---- Barra de herramientas ---- */
+		.toolbar {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 1rem;
+			flex-wrap: wrap;
+			padding: 1.125rem 2rem;
+			margin-bottom: 1.5rem;
+			background-color: #12304f;
+			background-image: linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 100%);
+			color: #fff;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.toolbar strong {
+			display: flex;
+			align-items: center;
+			gap: .875rem;
+			font-size: 1.125rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+		}
+		.toolbar strong i {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 2.5rem;
+			height: 2.5rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.toolbar .acciones { display: flex; gap: .625rem; flex-wrap: wrap; }
+
+		.btn-corp {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			gap: .5rem;
+			padding: .75rem 1.375rem;
+			border: 1px solid transparent;
+			border-radius: 10px;
+			font-size: .8125rem;
+			font-weight: 700;
+			font-family: inherit;
+			line-height: 1.4;
+			cursor: pointer;
+			text-decoration: none;
+			white-space: nowrap;
+			transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+		}
+		.btn-corp:focus-visible { outline: 2px solid var(--a-oro-claro); outline-offset: 2px; }
+		.btn-oro {
+			border-color: var(--a-accion);
+			background: var(--a-accion);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(221, 145, 44, .28);
+		}
+		.btn-oro:hover {
+			border-color: var(--a-accion-hover);
+			background: var(--a-accion-hover);
+			box-shadow: 0 4px 12px rgba(221, 145, 44, .36);
+		}
+		.btn-vidrio {
+			border-color: rgba(255, 255, 255, .28);
+			background: rgba(255, 255, 255, .08);
+			color: #fff;
+		}
+		.btn-vidrio:hover { background: rgba(255, 255, 255, .16); border-color: rgba(255, 255, 255, .4); }
+
+		/* ---- Hoja del reporte ---- */
+		.reporte {
+			max-width: 1100px;
+			margin: 0 auto 1.5rem;
+			background: #fff;
+			border: 1px solid var(--a-borde);
+			border-radius: 14px;
+			overflow: hidden;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+		}
+		.encabezado {
+			padding: 1rem 1.5rem;
+			text-align: center;
+			font-size: 1.0625rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+			color: #fff;
+			background-color: #12304f;
+			background-image: linear-gradient(100deg, #0c223b 0%, #123049 45%, #1e3e5e 100%);
+		}
+		table { width: 100%; border-collapse: collapse; }
+		th, td { padding: .875rem 1.125rem; text-align: left; }
+		th {
+			background: var(--a-suave);
+			color: #2f4a70;
+			border-bottom: 1px solid var(--a-borde);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+		}
+		td {
+			border-bottom: 1px solid #edf2f8;
+			font-size: .9375rem;
+			color: var(--a-texto);
+		}
+		tbody tr:last-child td { border-bottom: 0; }
+		tbody tr:nth-child(even) { background: #fafcfe; }
+		.numero { width: 8%; text-align: center; }
+		td.numero { font-weight: 700; color: var(--a-navy); font-variant-numeric: tabular-nums; }
+		.vivienda { width: 24%; }
+		.contacto { width: 23%; font-variant-numeric: tabular-nums; }
+		.pie {
+			padding: 1rem 1.5rem;
+			text-align: center;
+			font-size: .9375rem;
+			font-weight: 700;
+			color: var(--a-navy);
+			background: #f8fafd;
+			border-top: 1px solid var(--a-borde);
+		}
+		.vacia { padding: 2rem 1rem; text-align: center; color: var(--a-tenue); font-size: .875rem; }
+		.sin-salidas {
+			max-width: 1100px;
+			margin: 2.5rem auto;
+			padding: 0 1rem;
+			text-align: center;
+			font-size: .9375rem;
+			color: var(--a-tenue);
+		}
+
+		/* ---- Móvil (por si se abre en el celular sin imprimir) ---- */
+		@media (max-width: 640px) {
+			.toolbar { padding: 1rem; }
+			.toolbar strong { font-size: 1rem; }
+			.toolbar strong i { width: 2.25rem; height: 2.25rem; }
+			.toolbar .acciones { width: 100%; }
+			.toolbar .acciones .btn-corp { flex: 1; }
+
+			.reporte { margin: 0 .75rem 1rem; border-radius: 12px; overflow-x: auto; }
+			.encabezado { font-size: .875rem; padding: .875rem 1rem; }
+			table { min-width: 34rem; }
+			th, td { padding: .625rem .75rem; }
+			td { font-size: .8125rem; }
+			th { font-size: .6875rem; }
+			.numero, .vivienda, .contacto { width: auto; }
+		}
+
+		@media print {
+			body { background: #fff; }
+			.toolbar { display: none; }
+			.reporte { margin: 0 0 12mm; border: 0; border-radius: 0; box-shadow: none; overflow: visible; }
+			.reporte + .reporte { page-break-after: always; }
+			.encabezado, th, tbody tr:nth-child(even), .pie {
+				-webkit-print-color-adjust: exact;
+				print-color-adjust: exact;
+			}
+			tr { break-inside: avoid; }
+		}
+	</style>
+</head>
+<body>
+
+<div class="toolbar">
+	<strong>
+		<i class="fas fa-truck"></i>
+		<span>Reporte de transporte · <span th:text="${#temporals.format(dia, 'dd/MM/yyyy')}">01/10/2026</span></span>
+	</strong>
+	<div class="acciones">
+		<a th:href="@{/transporte(dia=${dia})}" class="btn-corp btn-vidrio">
+			<i class="fas fa-arrow-left"></i> Volver
+		</a>
+		<button type="button" onclick="window.print()" class="btn-corp btn-oro">
+			<i class="fas fa-file-pdf"></i> PDF / Imprimir
+		</button>
+	</div>
+</div>
+
+<section class="reporte" th:each="viaje : ${salidas}">
+	<div class="encabezado"
+		 th:text="${(viaje.tipo.name() == 'INGRESO' ? 'INGRESO ' : 'SALIDA ') + #temporals.format(viaje.salida, 'hh:mm a') + ' DEL ' + #temporals.format(dia, 'dd') + ' DE ' + #temporals.format(dia, 'MMMM') + ' DE ' + #temporals.format(dia, 'yyyy')}">
+		SALIDA 07:00 PM DEL 01 DE OCTUBRE DE 2026
+	</div>
+	<table>
+		<thead>
+		<tr>
+			<th class="numero">#</th>
+			<th>Nombres</th>
+			<th class="vivienda">Lugar de vivienda</th>
+			<th>Recogida - destino</th>
+			<th class="contacto">Contacto</th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr th:each="pasajero, indice : ${pasajeros[viaje.id]}">
+			<td class="numero" th:text="${indice.count}">1</td>
+			<td th:text="${pasajero.colaborador.nombreCompleto}">Jorge Barbosa</td>
+			<!--
+				Dónde vive la persona es lo que permite al conductor saber si le
+				coge de camino. Antes el reporte no lo traía y había que ir a
+				consultar el perfil por separado.
+			-->
+			<td class="vivienda" th:text="${pasajero.colaborador.lugarResidencia != null and !#strings.isEmpty(pasajero.colaborador.lugarResidencia) ? pasajero.colaborador.lugarResidencia + (pasajero.colaborador.ubicacionResidencia != null and !#strings.isEmpty(pasajero.colaborador.ubicacionResidencia) ? ' · ' + pasajero.colaborador.ubicacionResidencia : '') : 'Sin registro'}">
+				Barrio Los Calamares
+			</td>
+			<td th:text="${viaje.destino.nombre + (viaje.destino.zona != null ? ' · ' + viaje.destino.zona : '')}">LOS CALAMARES</td>
+			<td class="contacto" th:text="${pasajero.colaborador.celular ?: 'Sin contacto'}">300 5496196</td>
+		</tr>
+		<tr th:if="${#lists.isEmpty(pasajeros[viaje.id])}">
+			<td colspan="5" class="vacia">No hay pasajeros asignados.</td>
+		</tr>
+		</tbody>
+	</table>
+	<div class="pie"
+		 th:text="${viaje.vehiculo.placa + ' · ' + (viaje.vehiculo.conductor ?: 'Conductor pendiente') + (viaje.vehiculo.telefonoConductor != null ? ' · ' + viaje.vehiculo.telefonoConductor : '')}">
+		NZU 776 · Conductor pendiente
+	</div>
+</section>
+
+<p th:if="${#lists.isEmpty(salidas)}" class="sin-salidas">
+	No hay salidas asignadas para este día.
+</p>
+
+</body>
+</html>

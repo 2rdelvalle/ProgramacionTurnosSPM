@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="es" th:replace="~{fragments/layout :: pagina('Horas ejecutadas', 'horas-ejecucion', ~{::contenido})}">
+<body>
+<div th:fragment="contenido" class="he-ejec">
+
+	<!--
+		Esta pantalla usa los componentes del sistema visual (hero-inicio,
+		tarjeta, filtros, tabla, etiqueta, boton) con la paleta sobria de
+		colaboradores.html y transporte.html.
+
+		Cada fila trae su propio formulario: las horas reales se confirman en la
+		fila, sin abrir otra pantalla, y el valor que viene prellenado es el que
+		Talento Humano aprobó (las horas efectivas). Si la persona trabajó otra
+		cantidad, se corrige ahí mismo antes de guardar.
+
+		El botón de cerrar es de Talento Humano: la coordinación confirma las
+		horas, pero el cierre es la última palabra del flujo.
+
+		En móvil:
+		- El hero se apila en una columna.
+		- Los filtros se apilan a todo el ancho.
+		- La tabla se convierte en tarjeta por programación.
+		- Los inputs miden 16px para que iOS no haga zoom al enfocar.
+	-->
+	<style>
+		/* =================================================================
+		   Horas extra · ejecución
+		   ================================================================= */
+		.he-ejec {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+		.he-ejec > .hero-inicio,
+		.he-ejec > .tarjeta { margin-bottom: 1.25rem; }
+
+		/* ---- Portada ---- */
+		.he-ejec .hero-inicio,
+		.he-ejec .hero-inicio * { animation: none; }
+		.he-ejec .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.he-ejec .hero-inicio::before,
+		.he-ejec .hero-inicio::after { content: none; }
+		.he-ejec .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.he-ejec .hero-inicio__contenido { max-width: 44rem; }
+		.he-ejec .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+			text-transform: uppercase;
+		}
+		.he-ejec .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.he-ejec .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+
+		/* ---- Tarjeta y cabecera ---- */
+		.he-ejec .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+			overflow: hidden;
+		}
+		.he-ejec .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.he-ejec .tarjeta__cabecera {
+			justify-content: flex-start;
+			padding: 1.375rem 1.5rem;
+			gap: 1rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.he-ejec .tarjeta__titulo-grupo { flex: 1 1 16rem; }
+		.he-ejec .tarjeta__titulo-grupo h2 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+		}
+		.he-ejec .tarjeta__cabecera h2::before,
+		.he-ejec .tarjeta__titulo-grupo h2::before { display: none; }
+		.he-ejec .tarjeta__titulo-grupo p {
+			margin-top: .25rem;
+			max-width: 62ch;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+
+		/* Acento azul: la tarjeta es un listado */
+		.he-ejec .tarjeta--ejecucion { border-color: var(--a-borde); }
+
+		/* ---- Íconos de sección ---- */
+		.he-ejec .sec-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.25rem;
+		}
+		.he-ejec .sec-icono--azul { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+
+		/* ---- Filtros ---- */
+		.he-ejec .filtros {
+			align-items: flex-end;
+			gap: 1rem;
+			padding: 1.25rem 1.5rem;
+			background: #fff;
+			border: 0;
+			border-bottom: 1px solid var(--a-borde);
+			border-radius: 0;
+			box-shadow: none;
+		}
+		.he-ejec .filtros .campo { flex: 1 1 12rem; margin-bottom: 0; }
+		.he-ejec .filtros .campo--buscar { flex: 2 1 14rem; }
+		.he-ejec .filtros__fin { margin-left: auto; display: flex; gap: .5rem; align-items: center; }
+		.he-ejec .campo__etiqueta,
+		.he-ejec .campo:focus-within .campo__etiqueta {
+			margin-bottom: .375rem;
+			color: var(--a-navy);
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+		.he-ejec input[type="date"],
+		.he-ejec input[type="search"],
+		.he-ejec input[type="number"],
+		.he-ejec input[type="text"],
+		.he-ejec select {
+			padding: .625rem .875rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background-color: #fff;
+			font-size: .9375rem;
+			font-weight: 500;
+			color: var(--a-texto);
+		}
+		.he-ejec select { padding-right: 2.5rem; }
+		.he-ejec input[type="date"]:focus,
+		.he-ejec input[type="search"]:focus,
+		.he-ejec input[type="number"]:focus,
+		.he-ejec input[type="text"]:focus,
+		.he-ejec select:focus {
+			border-color: var(--a-azul);
+			box-shadow: 0 0 0 3px rgba(23, 68, 117, .14);
+		}
+
+		/* ---- Botones ---- */
+		.he-ejec .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.he-ejec .boton::after { display: none; }
+		.he-ejec .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.he-ejec .boton--chico { padding: .5rem .875rem; font-size: .75rem; }
+		.he-ejec .boton--fantasma {
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.he-ejec .boton--fantasma:hover {
+			border: 1px solid #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.he-ejec .boton--peligro {
+			border: 1px solid #f0c4c4;
+			background: #fff;
+			color: #b42318;
+			box-shadow: none;
+		}
+		.he-ejec .boton--peligro:hover {
+			border: 1px solid #e6a8a8;
+			background: #fdf3f3;
+			color: #b42318;
+			box-shadow: none;
+		}
+
+		/* ---- Etiquetas ---- */
+		.he-ejec .etiqueta {
+			padding: .375rem .875rem;
+			border: 0;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+			white-space: nowrap;
+		}
+		.he-ejec .etiqueta::before { content: none; display: none; animation: none; }
+		.he-ejec .etiqueta--ok { background: #dff3e6; color: #1f6b43; }
+		.he-ejec .etiqueta--alerta { background: #fdf0d9; color: #9a5a0a; }
+		.he-ejec .etiqueta--error { background: #fdecec; color: #b42318; }
+		.he-ejec .etiqueta--gris { background: #eceff3; color: var(--a-tenue); }
+		.he-ejec .filtros__fin .etiqueta { align-self: center; }
+
+		/* ---- Persona: inicial + nombre ---- */
+		.he-ejec .persona {
+			display: flex;
+			align-items: center;
+			gap: .625rem;
+			min-width: 0;
+		}
+		.he-ejec .inicial {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 2.5rem;
+			height: 2.5rem;
+			border-radius: 50%;
+			background: #2c5f94;
+			color: #fff;
+			font-size: .8125rem;
+			font-weight: 600;
+			box-shadow: none;
+			text-transform: uppercase;
+		}
+
+		.he-ejec .tabla thead th.tabla__num { text-align: right; }
+
+		/* ---- Formulario dentro de la fila ---- */
+		.he-ejec .confirmar {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: flex-end;
+			gap: .5rem;
+		}
+		.he-ejec .confirmar .campo { flex: 1 1 7.5rem; min-width: 0; margin: 0; }
+		.he-ejec .confirmar .campo__etiqueta {
+			margin-bottom: .25rem;
+			color: var(--a-navy);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+		.he-ejec .confirmar input[type="number"] { max-width: 7rem; }
+		.he-ejec .confirmar .boton { flex: none; }
+
+		/* ---- Área: nombre y código ---- */
+		.he-ejec .codigo-area {
+			display: block;
+			margin-top: .125rem;
+			font-size: .6875rem;
+			font-weight: 700;
+			letter-spacing: .06em;
+			color: var(--a-tenue);
+		}
+
+		/* ---- Tabla dentro de recuadro ---- */
+		.he-ejec .tabla-envoltura {
+			margin: 1.25rem 1.5rem 1.25rem;
+			border: 1px solid #dfe8f3;
+			border-radius: 12px;
+			background: #fff;
+			overflow-x: auto;
+			-webkit-overflow-scrolling: touch;
+		}
+		.he-ejec .tabla thead th {
+			padding: .875rem 1.125rem;
+			background: var(--a-suave);
+			color: #2f4a70;
+			border-bottom: 1px solid #e3ebf4;
+			font-size: .75rem;
+			font-weight: 600;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+		}
+		.he-ejec .tabla thead tr th:first-child { border-left: 0; }
+		.he-ejec .tabla tbody td {
+			padding: 1rem 1.125rem;
+			border-bottom: 1px solid #edf2f8;
+			vertical-align: middle;
+			color: var(--a-texto);
+		}
+		.he-ejec .tabla tbody tr { animation: none; }
+		.he-ejec .tabla tbody tr:nth-child(even) { background: transparent; }
+		.he-ejec .tabla tbody tr:hover { background: #f7fafd; }
+		.he-ejec .tabla tbody tr:hover td:first-child { box-shadow: none; }
+		.he-ejec .tabla tbody tr:last-child td { border-bottom: 0; }
+		.he-ejec .tabla__principal { color: var(--a-navy); font-weight: 700; }
+		.he-ejec .tabla__secundario { display: block; font-size: .75rem; color: var(--a-tenue); font-weight: 500; }
+
+		/* ---- Paginación ---- */
+		.he-ejec .paginacion {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			flex-wrap: wrap;
+			gap: .625rem;
+			padding: 1rem 1.5rem;
+			background: #f8fafd;
+			border-top: 1px solid var(--a-borde);
+			color: var(--a-tenue);
+			font-size: .875rem;
+			font-weight: 600;
+		}
+		.he-ejec .paginacion__navegacion {
+			display: flex;
+			align-items: center;
+			gap: .5rem;
+			flex-wrap: wrap;
+		}
+		.he-ejec .paginacion__actual {
+			color: var(--a-texto);
+			font-weight: 600;
+		}
+		.he-ejec .paginacion__actual strong { color: var(--a-navy); font-weight: 700; }
+
+		/* ---- Estado vacío ---- */
+		.he-ejec .tabla--vacia td {
+			white-space: normal;
+			line-height: 1.6;
+			text-align: center;
+			padding: 2rem 1rem 2.25rem;
+			color: var(--a-tenue);
+			font-size: .75rem;
+		}
+		.he-ejec .tabla tr.tabla--vacia:hover { background: transparent; }
+		.he-ejec .vacio-icono { display: block; margin-bottom: .625rem; color: #1f4b7a; font-size: 2rem; }
+		.he-ejec .tabla--vacia strong { display: block; margin-bottom: .375rem; color: var(--a-navy); font-size: .875rem; font-weight: 700; }
+
+		/* =================================================================
+		   Móvil: una tarjeta por programación
+		   ================================================================= */
+		@media (max-width: 768px) {
+			.he-ejec .hero-inicio { padding: 1.25rem; min-height: 0; }
+			.he-ejec .hero-inicio h1 { font-size: 1.5rem; }
+			.he-ejec .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.he-ejec .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.he-ejec .filtros { padding: 1rem; flex-direction: column; align-items: stretch; }
+			.he-ejec .filtros .campo,
+			.he-ejec .filtros__fin { width: 100%; min-width: 0; flex-basis: 100%; margin-left: 0; }
+			.he-ejec .filtros__fin { justify-content: space-between; }
+			.he-ejec .filtros__fin .boton { flex: 1; justify-content: center; }
+			.he-ejec .tabla-envoltura { margin: 1rem 1rem 1rem; }
+
+			/* inputs a 16px: iOS no hace zoom al enfocar */
+			.he-ejec .campo input,
+			.he-ejec .campo select { font-size: 16px; }
+
+			.he-ejec .tabla tbody tr { display: flex; flex-direction: column; }
+			.he-ejec .tabla tbody td {
+				display: block;
+				text-align: left;
+				padding: .5rem .875rem;
+			}
+			.he-ejec .tabla tbody td::before {
+				content: attr(data-label);
+				display: block;
+				margin-bottom: .25rem;
+				font-size: .625rem;
+				font-weight: 800;
+				letter-spacing: .06em;
+				text-transform: uppercase;
+				color: var(--a-tenue);
+			}
+			.he-ejec .tabla tbody td.tabla__num { text-align: left; }
+
+			.he-ejec .tabla tbody td.celda-nombre {
+				order: -1;
+				padding: .875rem;
+				background: var(--a-suave);
+				border-bottom: 1px solid var(--a-borde);
+			}
+			.he-ejec .tabla tbody td.celda-nombre::before { content: none; }
+			.he-ejec .celda-nombre .persona { font-size: 1rem; }
+			.he-ejec .celda-nombre .inicial { width: 2.5rem; height: 2.5rem; font-size: .9375rem; }
+
+			.he-ejec .confirmar { flex-direction: column; align-items: stretch; }
+			.he-ejec .confirmar input[type="number"] { max-width: none; }
+			.he-ejec .confirmar .boton { width: 100%; justify-content: center; }
+
+			.he-ejec .tabla tbody tr.tabla--vacia td { display: block; text-align: center; }
+			.he-ejec .tabla tbody tr.tabla--vacia td::before { content: none; }
+
+			.he-ejec .paginacion { flex-direction: column; align-items: stretch; padding: 1rem; }
+			.he-ejec .paginacion__navegacion { justify-content: space-between; }
+		}
+		@media (max-width: 480px) {
+			.he-ejec .hero-icono { display: none; }
+		}
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-user-clock"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">HORAS REALES, NO PROGRAMADAS</span>
+			<h1>Horas ejecutadas</h1>
+			<p>
+				Confirme cuánto trabajó de verdad cada persona: el valor que trae cada fila es el
+				aprobado, y se corrige en el acto si la realidad fue otra. Al confirmar, la programación
+				pasa a ejecutada; Talento Humano la cierra cuando no falte nada.
+			</p>
+		</div>
+	</section>
+
+	<!-- ======== FILTROS + TABLA ======== -->
+	<div class="tarjeta tarjeta--ejecucion">
+
+		<!-- Cabecera con icono azul: listado -->
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--azul" aria-hidden="true"><i class="fas fa-clipboard-check"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Confirmación de ejecución</h2>
+				<p>Turnos notificados por confirmar y confirmados pendientes de cierre.</p>
+			</div>
+		</div>
+
+		<form class="filtros" th:action="@{/horas-extra/ejecucion}" method="get">
+			<div class="campo">
+				<label class="campo__etiqueta" for="filtro-estado">Estado</label>
+				<select id="filtro-estado" name="estado">
+					<option th:each="e : ${estadosConfirmacion}" th:value="${e.name()}" th:text="${e}"
+							th:selected="${e == estadoSeleccionado}">ESTADO</option>
+				</select>
+			</div>
+
+			<div class="campo campo--buscar">
+				<label class="campo__etiqueta" for="filtro-q">Buscar</label>
+				<input id="filtro-q" type="search" name="q" th:value="${busqueda}"
+					   placeholder="Nombre o documento">
+			</div>
+
+			<div class="campo">
+				<label class="campo__etiqueta" for="filtro-dia">Día</label>
+				<input id="filtro-dia" type="date" name="dia" th:value="${dia}">
+			</div>
+
+			<div class="filtros__fin">
+				<span class="etiqueta" th:text="${totalElementos} + ' en esta vista'">0 en esta vista</span>
+				<a th:href="@{/horas-extra/ejecucion}" class="boton boton--fantasma">
+					<i class="fas fa-eraser"></i> Limpiar
+				</a>
+				<button type="submit" class="boton">
+					<i class="fas fa-filter"></i> Filtrar
+				</button>
+			</div>
+		</form>
+
+		<div class="tabla-envoltura">
+			<table class="tabla">
+				<thead>
+				<tr>
+					<th>Colaborador</th>
+					<th class="tabla__num">Horario</th>
+					<th>Estado</th>
+					<th>Horas reales</th>
+					<th>Cierre</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr th:each="p : ${programaciones}" th:with="hora=${horas[p.id]}">
+					<td class="celda-nombre" data-label="Colaborador">
+						<div class="persona">
+								<span class="inicial" aria-hidden="true"
+									  th:text="${#strings.toUpperCase(#strings.substring(p.colaboradorNombre, 0, 1))}">N</span>
+							<span>
+									<span class="tabla__principal" th:text="${p.colaboradorNombre}">Nombre</span>
+									<span class="tabla__secundario" th:text="${p.colaboradorDocumento}">CC</span>
+								</span>
+						</div>
+						<span th:text="${p.areaNombre}">Área</span>
+						<span class="codigo-area" th:text="${p.areaCodigo}">OPE</span>
+					</td>
+					<td class="tabla__num" data-label="Horario">
+						<span th:text="${#temporals.format(p.inicioEfectivo, 'dd/MM/yyyy HH:mm')}">inicio</span>
+						<span th:text="${#temporals.format(p.finEfectivo, 'dd/MM/yyyy HH:mm')}">fin</span>
+						<span class="tabla__secundario"
+							  th:text="${#numbers.formatDecimal(p.horasEfectivas, 1, 'COMMA', 2, 'POINT')} + ' h aprobadas'">
+							8,00 h aprobadas
+						</span>
+					</td>
+					<td data-label="Estado">
+						<span class="etiqueta"
+							  th:classappend="${p.estado == 'EJECUTADA'} ? 'etiqueta--ok' : 'etiqueta--alerta'"
+							  th:text="${p.estado == 'EJECUTADA' ? 'Confirmada' : 'Por confirmar'}">Por confirmar</span>
+					</td>
+					<td data-label="Horas reales">
+						<form class="confirmar" th:action="@{/horas-extra/ejecucion}" method="post">
+							<input type="hidden" name="programacionId" th:value="${p.id}">
+							<input type="hidden" name="estado" th:value="${estadoSeleccionado.name()}">
+							<input type="hidden" name="dia" th:value="${dia}">
+
+							<div class="campo">
+								<label class="campo__etiqueta" th:for="'horas-' + ${p.id}">Horas</label>
+								<input th:id="'horas-' + ${p.id}" type="number" name="horasEjecutadas"
+									   min="0.25" max="24" step="0.25" required
+									   th:value="${hora != null ? hora.horas : p.horasEfectivas}">
+							</div>
+
+							<div class="campo">
+								<label class="campo__etiqueta" th:for="'tipo-' + ${p.id}">Tipo</label>
+								<!-- Los seis tipos: las cuatro horas extra y los dos turnos
+									 propios. En un ingreso sin confirmar, el turno (diurno o
+									 nocturno) ya viene propuesto según la hora de inicio. -->
+								<select th:id="'tipo-' + ${p.id}" name="tipo" required>
+									<option th:each="t : ${tiposHora}" th:value="${t}"
+											th:selected="${(hora != null and hora.tipoHora == t)
+													or (hora == null and tipoPorDefecto[p.id] == t)}"
+											th:text="${#strings.replace(t.name(), '_', ' ')}">EXTRA DIURNA</option>
+								</select>
+							</div>
+
+							<div class="campo">
+								<label class="campo__etiqueta" th:for="'obs-' + ${p.id}">Observación</label>
+								<input th:id="'obs-' + ${p.id}" type="text" name="observacion" maxlength="255"
+									   th:value="${hora != null ? hora.observacion : ''}">
+							</div>
+
+							<button type="submit" class="boton boton--chico">
+								<i class="fas fa-check"></i>
+								<span th:text="${hora != null ? 'Actualizar' : 'Confirmar'}">Confirmar</span>
+							</button>
+						</form>
+					</td>
+					<td data-label="Cierre">
+						<span th:if="${p.estado == 'NOTIFICADA'}" class="etiqueta etiqueta--gris">Al confirmar</span>
+						<form th:if="${p.estado == 'EJECUTADA'}" sec:authorize="hasAnyRole('TALENTO_HUMANO','ADMIN')"
+							  th:action="@{/programaciones/{id}/cerrar(id=${p.id})}" method="post"
+							  th:attr="data-confirm=|¿Cerrar la programación de ${p.colaboradorNombre}? Pasa a ser registro histórico y no se reabre.|,data-confirm-peligro='true',data-confirm-ok='Sí, cerrar'">
+							<button type="submit" class="boton boton--chico boton--peligro">Cerrar</button>
+						</form>
+						<span th:if="${p.estado == 'EJECUTADA'}"
+							  sec:authorize="!hasAnyRole('TALENTO_HUMANO','ADMIN')"
+							  class="etiqueta etiqueta--gris">Cierra Talento Humano</span>
+					</td>
+				</tr>
+
+				<tr th:if="${#lists.isEmpty(programaciones)}" class="tabla--vacia">
+					<td colspan="5" data-label="Aviso">
+						<i class="fas fa-clipboard-check vacio-icono" aria-hidden="true"></i>
+						<strong th:text="${estadoSeleccionado == 'EJECUTADA' ? 'No hay horas confirmadas' : 'No hay turnos por confirmar'}">
+							No hay turnos
+						</strong>
+						<span th:text="${avisoVacio}">
+							No hay programaciones notificadas en las áreas de su alcance con ese filtro.
+						</span>
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="tarjeta__pie paginacion">
+			<span th:text="${#lists.size(programaciones)} + ' programacion(es) en pantalla'">0</span>
+
+			<!--
+				Diez por página, como el listado general. Los enlaces conservan los
+				filtros activos, así que pasar de página no pierde la vista elegida.
+			-->
+			<nav class="paginacion__navegacion" aria-label="Páginas del listado">
+				<a class="boton boton--chico boton--fantasma" th:if="${hayAnterior}"
+				   th:href="@{/horas-extra/ejecucion(pagina=${pagina - 1}, estado=${estadoSeleccionado.name()}, q=${busqueda}, dia=${dia})}">
+					<i class="fas fa-angle-left"></i> Anterior
+				</a>
+				<span class="paginacion__actual">
+					Página <strong th:text="${pagina + 1}">1</strong> de
+					<strong th:text="${totalPaginas}">1</strong>
+				</span>
+				<a class="boton boton--chico boton--fantasma" th:if="${haySiguiente}"
+				   th:href="@{/horas-extra/ejecucion(pagina=${pagina + 1}, estado=${estadoSeleccionado.name()}, q=${busqueda}, dia=${dia})}">
+					Siguiente <i class="fas fa-angle-right"></i>
+				</a>
+			</nav>
+		</div>
+	</div>
+
+</div>
+</body>
+</html>

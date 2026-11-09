@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="es" th:replace="~{fragments/layout :: pagina('Gestionar colaborador', 'colaboradores', ~{::contenido})}">
+
+<body>
+<div th:fragment="contenido" class="colab-edit">
+
+	<!--
+		Esta pantalla usa los componentes del sistema visual: hero-inicio,
+		tarjeta, tabla, boton, campo, detalle, panel-identidad, bloque-form,
+		form-actions-bar y sec-icono, con la paleta sobria de
+		colaboradores.html y transporte.html.
+
+		Colores por función:
+		- Información del colaborador → verde (persona).
+		- Salario → oro (registro sensible, se guarda por vigencia).
+		- Aptitudes y habilitaciones → azul (configuración / listado).
+
+		Estructura:
+		- Hero sobrio con el propósito de la pantalla.
+		- panel-identidad con avatar grande + nombre + documento.
+		- Tarjeta "Información" con 3 bloques temáticos.
+		- Tarjeta "Salario" plegada.
+		- Tarjeta "Aptitudes" plegada con bloque-form + tabla.
+		- Tarjeta "Novedades" plegada con bloque-form + tabla.
+
+		En móvil:
+		- El hero se apila en una columna.
+		- El panel de identidad pasa a una columna.
+		- Las rejillas internas pasan a una sola columna.
+		- Las tablas se convierten en tarjetas.
+		- Los botones al pie se apilan al 100%.
+		- Los inputs miden 16px para que iOS no haga zoom al enfocar.
+	-->
+	<style>
+		/* =================================================================
+		   Edición de colaborador · estilos locales
+		   ================================================================= */
+		.colab-edit {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+		.colab-edit > .hero-inicio,
+		.colab-edit > .tarjeta,
+		.colab-edit > .detalle { margin-bottom: 1.25rem; }
+
+		/* ---- Portada ---- */
+		.colab-edit .hero-inicio,
+		.colab-edit .hero-inicio * { animation: none; }
+		.colab-edit .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.colab-edit .hero-inicio::before,
+		.colab-edit .hero-inicio::after { content: none; }
+		.colab-edit .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.colab-edit .hero-inicio__contenido { max-width: 44rem; }
+		.colab-edit .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+			text-transform: uppercase;
+		}
+		.colab-edit .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.colab-edit .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+
+		/* ---- Tarjeta y cabecera ---- */
+		.colab-edit .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+			overflow: hidden;
+		}
+		.colab-edit .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.colab-edit .tarjeta__cabecera {
+			justify-content: flex-start;
+			padding: 1.375rem 1.5rem;
+			gap: 1rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.colab-edit .tarjeta__titulo-grupo { flex: 1 1 16rem; }
+		.colab-edit .tarjeta__titulo-grupo h2 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+		}
+		.colab-edit .tarjeta__cabecera h2::before,
+		.colab-edit .tarjeta__titulo-grupo h2::before { display: none; }
+		.colab-edit .tarjeta__titulo-grupo p {
+			margin-top: .25rem;
+			max-width: 62ch;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+		.colab-edit .tarjeta__cuerpo { padding: 1.5rem; }
+
+		/* Acentos por función (cabecera con tinte temático) */
+		.colab-edit .tarjeta--persona { border-color: #dcebe2; }
+		.colab-edit .tarjeta--persona .tarjeta__cabecera {
+			background: #f7fbf8;
+			border-bottom-color: #dcebe2;
+		}
+		.colab-edit .tarjeta--salario { border-color: #f1d8b2; }
+		.colab-edit .tarjeta--salario .tarjeta__cabecera {
+			background: #fdf8f0;
+			border-bottom-color: #f1d8b2;
+		}
+		.colab-edit .tarjeta--config { border-color: var(--a-borde); }
+
+		/* ---- Íconos de sección ---- */
+		.colab-edit .sec-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.25rem;
+		}
+		.colab-edit .sec-icono--azul { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+		.colab-edit .sec-icono--oro { background: #e09837; box-shadow: 0 3px 10px rgba(224, 152, 55, .3); }
+		.colab-edit .sec-icono--verde { background: #2d7a55; box-shadow: 0 3px 10px rgba(45, 122, 85, .25); }
+		.colab-edit .sec-icono--cian { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+
+		/* ---- Detalle plegable ---- */
+		.colab-edit .detalle__cabecera { cursor: pointer; }
+		.colab-edit .detalle__flecha {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 2rem;
+			height: 2rem;
+			border-radius: 50%;
+			background: var(--a-suave);
+			color: var(--a-navy);
+			font-size: .875rem;
+			transition: transform .2s ease;
+		}
+		.colab-edit .detalle[open] .detalle__flecha { transform: rotate(180deg); }
+		.colab-edit .detalle__cabecera:hover .detalle__flecha { background: #e6effa; }
+
+		/* ---- Panel de identidad ---- */
+		.colab-edit .panel-identidad {
+			position: relative;
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) auto;
+			gap: 1.25rem;
+			align-items: center;
+			padding: 1.25rem 1.375rem;
+			margin-bottom: 1.25rem;
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #f8fafd;
+			overflow: hidden;
+		}
+		.colab-edit .panel-identidad::before { content: none; }
+		.colab-edit .panel-identidad__marca {
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+			min-width: 0;
+		}
+		.colab-edit .panel-identidad__avatar {
+			flex: none;
+			width: 3.5rem;
+			height: 3.5rem;
+			display: grid;
+			place-items: center;
+			border-radius: 50%;
+			background: #2c5f94;
+			color: #fff;
+			font-size: 1.375rem;
+			font-weight: 600;
+			box-shadow: none;
+			text-transform: uppercase;
+			letter-spacing: .02em;
+		}
+		.colab-edit .panel-identidad__info h3 {
+			margin: 0;
+			font-size: 1.0625rem;
+			font-weight: 700;
+			color: var(--a-navy);
+			line-height: 1.3;
+			letter-spacing: -.005em;
+		}
+		.colab-edit .panel-identidad__info p {
+			margin: .1875rem 0 0;
+			font-size: .875rem;
+			font-weight: 500;
+			color: var(--a-tenue);
+			line-height: 1.5;
+		}
+		.colab-edit .panel-identidad__etiquetas {
+			display: flex;
+			flex-wrap: wrap;
+			gap: .375rem;
+			margin-top: .5rem;
+		}
+
+		/* ---- Etiquetas ---- */
+		.colab-edit .etiqueta {
+			display: inline-flex;
+			align-items: center;
+			gap: .375rem;
+			padding: .375rem .875rem;
+			border: 0;
+			border-radius: 999px;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+			white-space: nowrap;
+		}
+		.colab-edit .etiqueta::before { content: none; display: none; animation: none; }
+		.colab-edit .etiqueta--info { background: #e6effa; color: #24406a; }
+		.colab-edit .etiqueta--gris { background: #eceff3; color: var(--a-tenue); }
+		.colab-edit .etiqueta--ok { background: #dff3e6; color: #1f6b43; }
+		.colab-edit .etiqueta--alerta { background: #fdf0d9; color: #9a5a0a; }
+		.colab-edit .etiqueta--error { background: #fdecec; color: #b42318; }
+
+		/* ---- Botones ---- */
+		.colab-edit .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.colab-edit .boton::after { display: none; }
+		.colab-edit .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.colab-edit .boton--primario,
+		.colab-edit .boton--primario:hover {
+			border-color: var(--a-accion);
+			background: var(--a-accion);
+			box-shadow: 0 3px 10px rgba(221, 145, 44, .28);
+		}
+		.colab-edit .boton--primario:hover {
+			border-color: var(--a-accion-hover);
+			background: var(--a-accion-hover);
+			box-shadow: 0 4px 12px rgba(221, 145, 44, .36);
+		}
+		.colab-edit .boton--chico { padding: .5rem .875rem; font-size: .75rem; }
+		.colab-edit .boton--bloque { width: 100%; }
+		.colab-edit .boton--fantasma {
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.colab-edit .boton--fantasma:hover {
+			border: 1px solid #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.colab-edit .boton--peligro {
+			border: 1px solid #f0c4c4;
+			background: #fff;
+			color: #b42318;
+			box-shadow: none;
+		}
+		.colab-edit .boton--peligro:hover {
+			border: 1px solid #e6a8a8;
+			background: #fdf3f3;
+			color: #b42318;
+			box-shadow: none;
+		}
+
+		/* ---- Campos ---- */
+		.colab-edit .campo__etiqueta,
+		.colab-edit .campo:focus-within .campo__etiqueta {
+			margin-bottom: .375rem;
+			color: var(--a-navy);
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+		.colab-edit .campo__ayuda { color: var(--a-tenue); line-height: 1.45; }
+		.colab-edit input[type="text"],
+		.colab-edit input[type="tel"],
+		.colab-edit input[type="date"],
+		.colab-edit input[type="datetime-local"],
+		.colab-edit input[type="number"],
+		.colab-edit select,
+		.colab-edit textarea {
+			padding: .625rem .875rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background-color: #fff;
+			font-size: .9375rem;
+			font-weight: 500;
+			color: var(--a-texto);
+		}
+		.colab-edit select { padding-right: 2.5rem; }
+		.colab-edit input:hover, .colab-edit select:hover { border-color: #b9c9dc; }
+		.colab-edit input[type="text"]:focus,
+		.colab-edit input[type="tel"]:focus,
+		.colab-edit input[type="date"]:focus,
+		.colab-edit input[type="datetime-local"]:focus,
+		.colab-edit input[type="number"]:focus,
+		.colab-edit select:focus,
+		.colab-edit textarea:focus {
+			border-color: var(--a-azul);
+			box-shadow: 0 0 0 3px rgba(23, 68, 117, .14);
+		}
+		.colab-edit input[type="checkbox"] { accent-color: var(--a-azul); }
+
+		/* ---- Bloque-form ---- */
+		.colab-edit .bloque-form {
+			margin-bottom: 1.25rem;
+			border: 1px solid var(--a-borde);
+			border-radius: 12px;
+			background: #f9fbfd;
+			box-shadow: none;
+		}
+		.colab-edit .bloque-form + .bloque-form { margin-top: 0; }
+		.colab-edit .bloque-form__cabecera {
+			display: flex;
+			align-items: center;
+			gap: .875rem;
+			padding: 1rem 1.125rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.colab-edit .bloque-form__icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 2rem;
+			height: 2rem;
+			border-radius: 50%;
+			background: var(--a-circulo);
+			color: #fff;
+			font-size: .875rem;
+			box-shadow: none;
+		}
+		.colab-edit .bloque-form__cabecera > div:not(.bloque-form__icono) { min-width: 0; flex: 1; }
+		.colab-edit .bloque-form__cabecera h3 {
+			margin: 0;
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: .01em;
+			color: var(--a-navy);
+			line-height: 1.3;
+		}
+		.colab-edit .bloque-form__cabecera p {
+			margin: .1875rem 0 0;
+			font-size: .75rem;
+			color: var(--a-tenue);
+			font-weight: 500;
+			line-height: 1.5;
+			max-width: 52ch;
+		}
+		.colab-edit .bloque-form__cuerpo { padding: 1.25rem 1.125rem; }
+		.colab-edit .bloque-form__cuerpo .campo { margin-bottom: 0; }
+
+		/* ---- Form actions ---- */
+		.colab-edit .form-actions-bar {
+			display: flex;
+			align-items: center;
+			justify-content: flex-end;
+			gap: .75rem;
+			flex-wrap: wrap;
+			padding-top: 1.25rem;
+			margin-top: 1.25rem;
+			border-top: 1px solid var(--a-borde);
+			background: none;
+		}
+		.colab-edit .form-actions-bar__inicio {
+			margin-right: auto;
+			display: flex;
+			align-items: center;
+			gap: .5rem;
+			flex-wrap: wrap;
+		}
+
+		/* ---- Rejillas internas ---- */
+		.colab-edit .rejilla-2 {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 1rem 1.125rem;
+		}
+		.colab-edit .rejilla-4 {
+			display: grid;
+			grid-template-columns: repeat(4, 1fr);
+			gap: 1rem;
+			align-items: end;
+		}
+
+		/* ---- Casilla de activo ---- */
+		.colab-edit .check {
+			display: flex;
+			align-items: center;
+			gap: .625rem;
+			margin-top: .25rem;
+			padding: .8125rem 1rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background: #fff;
+			cursor: pointer;
+			font-size: .875rem;
+			font-weight: 600;
+			color: var(--a-texto);
+		}
+		.colab-edit .check:hover { border-color: var(--a-azul); background: #f8fafd; }
+		.colab-edit .check input {
+			width: 1.25rem;
+			height: 1.25rem;
+			accent-color: var(--a-azul);
+			flex: none;
+			cursor: pointer;
+		}
+
+		/* ---- Tabla ---- */
+		.colab-edit .tabla-envoltura {
+			margin-top: 1rem;
+			border: 1px solid #dfe8f3;
+			border-radius: 12px;
+			background: #fff;
+			overflow-x: auto;
+			-webkit-overflow-scrolling: touch;
+		}
+		.colab-edit .tabla thead th {
+			padding: .875rem 1.125rem;
+			background: var(--a-suave);
+			color: #2f4a70;
+			border-bottom: 1px solid #e3ebf4;
+			font-size: .75rem;
+			font-weight: 600;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+		}
+		.colab-edit .tabla thead tr th:first-child { border-left: 0; }
+		.colab-edit .tabla tbody td {
+			padding: 1rem 1.125rem;
+			border-bottom: 1px solid #edf2f8;
+			vertical-align: middle;
+			color: var(--a-texto);
+		}
+		.colab-edit .tabla tbody tr { animation: none; }
+		.colab-edit .tabla tbody tr:nth-child(even) { background: transparent; }
+		.colab-edit .tabla tbody tr:hover { background: #f7fafd; }
+		.colab-edit .tabla tbody tr:hover td:first-child { box-shadow: none; }
+		.colab-edit .tabla tbody tr:last-child td { border-bottom: 0; }
+		.colab-edit .tabla__principal { color: var(--a-navy); font-weight: 700; }
+		.colab-edit .form-linea { display: inline-flex; align-items: center; gap: .375rem; margin: 0; }
+
+		/* ---- Estado vacío ---- */
+		.colab-edit .tabla--vacia td {
+			white-space: normal;
+			line-height: 1.6;
+			text-align: center;
+			padding: 2rem 1rem 2.25rem;
+			color: var(--a-tenue);
+			font-size: .75rem;
+		}
+		.colab-edit .tabla tr.tabla--vacia:hover { background: transparent; }
+		.colab-edit .vacio-icono { display: block; margin-bottom: .625rem; color: #1f4b7a; font-size: 2rem; }
+		.colab-edit .tabla--vacia strong { display: block; margin-bottom: .375rem; color: var(--a-navy); font-size: .875rem; font-weight: 700; }
+
+		/* =================================================================
+		   Móvil
+		   ================================================================= */
+		@media (max-width: 900px) {
+			.colab-edit .rejilla-4 { grid-template-columns: 1fr 1fr; }
+		}
+
+		@media (max-width: 768px) {
+			.colab-edit .rejilla-2,
+			.colab-edit .rejilla-4 { grid-template-columns: 1fr; }
+
+			.colab-edit .campo input,
+			.colab-edit .campo select,
+			.colab-edit .campo textarea { font-size: 16px; }
+
+			.colab-edit .hero-inicio { padding: 1.25rem; min-height: 0; }
+			.colab-edit .hero-inicio h1 { font-size: 1.5rem; }
+			.colab-edit .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.colab-edit .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.colab-edit .tarjeta__cuerpo { padding: 1rem; }
+			.colab-edit .bloque-form__cuerpo { padding: 1rem; }
+
+			.colab-edit .panel-identidad {
+				grid-template-columns: minmax(0, 1fr);
+				gap: 1rem;
+				padding: 1rem;
+			}
+			.colab-edit .panel-identidad__avatar {
+				width: 2.75rem;
+				height: 2.75rem;
+				font-size: 1rem;
+			}
+			.colab-edit .panel-identidad__info h3 { font-size: 1rem; }
+
+			.colab-edit .tabla tbody tr { display: flex; flex-direction: column; }
+			.colab-edit .tabla tbody td {
+				display: block;
+				text-align: left;
+				padding: .5rem .875rem;
+			}
+			.colab-edit .tabla tbody td::before {
+				content: attr(data-label);
+				display: block;
+				margin-bottom: .25rem;
+				font-size: .625rem;
+				font-weight: 800;
+				letter-spacing: .06em;
+				text-transform: uppercase;
+				color: var(--a-tenue);
+			}
+
+			.colab-edit .tabla tbody td.celda-nombre {
+				order: -1;
+				padding: .875rem;
+				background: var(--a-suave);
+				border-bottom: 1px solid var(--a-borde);
+			}
+			.colab-edit .tabla tbody td.celda-nombre::before { content: none; }
+			.colab-edit .tabla tbody td.celda-nombre .tabla__principal { font-size: 1rem; }
+
+			.colab-edit .tabla tbody td.celda-accion {
+				order: 1;
+				padding: .875rem;
+				background: var(--a-suave);
+			}
+			.colab-edit .tabla tbody td.celda-accion::before {
+				display: block;
+				margin-bottom: .625rem;
+			}
+			.colab-edit .form-linea,
+			.colab-edit .form-linea .boton { width: 100%; }
+			.colab-edit .form-linea .boton { justify-content: center; }
+
+			.colab-edit .tabla tbody tr.tabla--vacia td { display: block; text-align: center; }
+			.colab-edit .tabla tbody tr.tabla--vacia td::before { content: none; }
+
+			.colab-edit .form-actions-bar {
+				flex-direction: column-reverse;
+				align-items: stretch;
+			}
+			.colab-edit .form-actions-bar .boton { width: 100%; justify-content: center; }
+			.colab-edit .form-actions-bar__inicio { margin-right: 0; }
+		}
+
+		@media (max-width: 480px) {
+			.colab-edit .hero-icono { display: none; }
+			.colab-edit .tarjeta__cabecera h2 { font-size: 1.0625rem; }
+		}
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-user-gear"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">GESTIÓN DE COLABORADOR</span>
+			<h1>Editar perfil</h1>
+			<p>
+				Actualice los datos personales, registre el salario vigente y administre
+				las aptitudes y habilitaciones del colaborador.
+			</p>
+		</div>
+	</section>
+
+	<!-- ======== PANEL DE IDENTIDAD ======== -->
+	<section class="panel-identidad">
+		<div class="panel-identidad__marca">
+			<div class="panel-identidad__avatar" aria-hidden="true"
+				 th:text="${#strings.toUpperCase(#strings.substring(gestion.nombreCompleto(), 0, 1))}">N</div>
+			<div class="panel-identidad__info">
+				<h3 th:text="${gestion.nombreCompleto()}">Nombre del colaborador</h3>
+				<p th:text="'Documento ' + ${gestion.documento}">Documento</p>
+				<div class="panel-identidad__etiquetas">
+					<span class="etiqueta etiqueta--info">
+						<i class="fas fa-hashtag"></i>
+						<span th:text="'Colaborador ' + ${gestion.id}">ID</span>
+					</span>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- ======== INFORMACIÓN ======== -->
+	<div class="tarjeta tarjeta--persona">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--verde" aria-hidden="true"><i class="fas fa-address-card"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Información del colaborador</h2>
+				<p>Estos datos se usan para seleccionar personal, coordinar transporte y enviar confirmaciones.</p>
+			</div>
+		</div>
+
+		<div class="tarjeta__cuerpo">
+			<form th:action="@{/colaboradores/{id}(id=${gestion.id})}" th:object="${formulario}" method="post">
+
+				<!-- Bloque 1: datos personales -->
+				<div class="bloque-form">
+					<div class="bloque-form__cabecera">
+						<div class="bloque-form__icono"><i class="fas fa-user"></i></div>
+						<div>
+							<h3>Datos personales</h3>
+							<p>Identificación y nombres legales que aparecen en el acta.</p>
+						</div>
+					</div>
+					<div class="bloque-form__cuerpo">
+						<div class="rejilla-2">
+							<label class="campo">
+								<span class="campo__etiqueta">Documento</span>
+								<input type="text" th:field="*{documento}" th:errorclass="campo--error" required>
+								<span class="campo__error" th:errors="*{documento}"></span>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Nombres</span>
+								<input type="text" th:field="*{nombres}" th:errorclass="campo--error" required>
+								<span class="campo__error" th:errors="*{nombres}"></span>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Apellidos</span>
+								<input type="text" th:field="*{apellidos}" th:errorclass="campo--error" required>
+								<span class="campo__error" th:errors="*{apellidos}"></span>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Fecha de ingreso</span>
+								<input type="date" th:field="*{fechaIngreso}">
+							</label>
+						</div>
+					</div>
+				</div>
+
+				<!-- Bloque 2: contacto y ubicación -->
+				<div class="bloque-form">
+					<div class="bloque-form__cabecera">
+						<div class="bloque-form__icono"><i class="fas fa-phone"></i></div>
+						<div>
+							<h3>Contacto y ubicación</h3>
+							<p>Cómo ubicar al colaborador para coordinar turnos y transporte.</p>
+						</div>
+					</div>
+					<div class="bloque-form__cuerpo">
+						<div class="rejilla-2">
+							<label class="campo">
+								<span class="campo__etiqueta">Celular</span>
+								<input type="tel" th:field="*{celular}" placeholder="Para confirmaciones SMS">
+								<span class="campo__ayuda">Dato personal protegido; no se muestra a coordinadores.</span>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Lugar de residencia</span>
+								<input type="text" th:field="*{lugarResidencia}" placeholder="Barrio, municipio o zona">
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Ubicación / dirección</span>
+								<input type="text" th:field="*{ubicacionResidencia}" placeholder="Dirección o referencia de recogida">
+							</label>
+						</div>
+					</div>
+				</div>
+
+				<!-- Bloque 3: asignación -->
+				<div class="bloque-form">
+					<div class="bloque-form__cabecera">
+						<div class="bloque-form__icono"><i class="fas fa-briefcase"></i></div>
+						<div>
+							<h3>Asignación</h3>
+							<p>Área, cargo y turno para el que está habilitado el colaborador.</p>
+						</div>
+					</div>
+					<div class="bloque-form__cuerpo">
+						<div class="rejilla-2">
+							<label class="campo">
+								<span class="campo__etiqueta">Área</span>
+								<select th:field="*{areaId}" required>
+									<option th:each="area : ${gestion.areas}" th:value="${area.id}" th:text="${area.nombre}">Área</option>
+								</select>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Cargo</span>
+								<select th:field="*{cargoId}" required>
+									<option th:each="cargo : ${gestion.cargos}" th:value="${cargo.id}" th:text="${cargo.nombre}">Cargo</option>
+								</select>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Turno</span>
+								<select th:field="*{turnoId}">
+									<option value="">Sin turno</option>
+									<option th:each="turno : ${gestion.turnos}" th:value="${turno.id}" th:text="${turno.nombre}">Turno</option>
+								</select>
+							</label>
+						</div>
+
+						<label class="check">
+							<input type="checkbox" th:field="*{activo}">
+							<span>Colaborador activo para programación</span>
+						</label>
+					</div>
+				</div>
+
+				<!-- Pie del formulario -->
+				<div class="form-actions-bar">
+					<div class="form-actions-bar__inicio">
+						<a th:href="@{/colaboradores}" class="boton boton--fantasma">
+							<i class="fas fa-arrow-left"></i> Volver
+						</a>
+					</div>
+					<button type="submit" class="boton boton--primario">
+						<i class="fas fa-floppy-disk"></i> Guardar perfil
+					</button>
+				</div>
+
+			</form>
+		</div>
+	</div>
+
+	<!-- ======== SALARIO ======== -->
+	<!--
+		Tarjeta aparte con su propio formulario: guardarla no debe enviar los
+		datos personales junto con el sueldo. El valor actual se muestra arriba
+		para que no haya que adivinar si se está reemplazando un registro o
+		creando el primero.
+
+		Llegó a ser un menú desplegable porque casi nunca se toca: al abrir la
+		ficha solo interesaba el perfil, y dos tarjetas más empujaban la tabla
+		de aptitudes fuera de pantalla.
+	-->
+	<details class="tarjeta detalle tarjeta--salario">
+		<summary class="tarjeta__cabecera detalle__cabecera">
+			<span class="sec-icono sec-icono--oro" aria-hidden="true"><i class="fas fa-money-bill-wave"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Salario</h2>
+				<p>Se guarda por vigencia: el valor nuevo sustituye al anterior desde la fecha que indique.</p>
+			</div>
+			<span class="detalle__flecha" aria-hidden="true"><i class="fas fa-chevron-down"></i></span>
+		</summary>
+
+		<div class="tarjeta__cuerpo">
+			<form th:action="@{/colaboradores/{id}/salario(id=${gestion.id})}" method="post">
+				<div class="bloque-form">
+					<div class="bloque-form__cabecera">
+						<div class="bloque-form__icono"><i class="fas fa-money-bill-wave"></i></div>
+						<div>
+							<h3>Salario vigente</h3>
+							<p th:if="${salarioActual != null}">
+								Actual:
+								<strong th:text="'$' + ${#numbers.formatDecimal(salarioActual.salarioBase, 1, 'COMMA', 0, 'POINT')}">$0</strong>
+								desde <span th:text="${#temporals.format(salarioActual.vigenciaDesde, 'dd/MM/yyyy')}">fecha</span>.
+							</p>
+							<p th:unless="${salarioActual != null}">
+								Todavía no hay salario registrado para este colaborador.
+							</p>
+						</div>
+					</div>
+					<div class="bloque-form__cuerpo">
+						<div class="rejilla-2">
+							<label class="campo">
+								<span class="campo__etiqueta">Salario base</span>
+								<input type="number" name="salarioBase" min="0" step="0.01" required
+									   th:value="${salarioActual != null ? salarioActual.salarioBase : ''}"
+									   placeholder="Valor mensual">
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Vigente desde</span>
+								<input type="date" name="vigenciaDesde" required
+									   th:value="${salarioActual != null ? salarioActual.vigenciaDesde : ''}">
+							</label>
+						</div>
+					</div>
+				</div>
+
+				<div class="form-actions-bar">
+					<div class="form-actions-bar__inicio">
+						<a th:href="@{/colaboradores}" class="boton boton--fantasma">
+							<i class="fas fa-arrow-left"></i> Volver
+						</a>
+					</div>
+					<button type="submit" class="boton boton--primario">
+						<i class="fas fa-floppy-disk"></i> Guardar salario
+					</button>
+				</div>
+			</form>
+		</div>
+	</details>
+
+	<!-- ======== APTITUDES ======== -->
+	<!--
+		Igual que el salario: un desplegable. La tabla de aptitudes es lo que
+		más crece y no tiene sentido tenerla abierta cada vez que se entra a
+		corregir un teléfono.
+	-->
+	<details class="tarjeta detalle tarjeta--config">
+		<summary class="tarjeta__cabecera detalle__cabecera">
+			<span class="sec-icono sec-icono--cian" aria-hidden="true"><i class="fas fa-certificate"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Aptitudes y habilitaciones</h2>
+				<p>Defina qué operaciones puede realizar y durante qué periodo.</p>
+			</div>
+			<span class="detalle__flecha" aria-hidden="true"><i class="fas fa-chevron-down"></i></span>
+		</summary>
+
+		<div class="tarjeta__cuerpo">
+
+			<form th:action="@{/colaboradores/{id}/aptitudes(id=${gestion.id})}" method="post">
+				<div class="bloque-form">
+					<div class="bloque-form__cabecera">
+						<div class="bloque-form__icono"><i class="fas fa-plus"></i></div>
+						<div>
+							<h3>Agregar nueva aptitud</h3>
+							<p>La vigencia «Hasta» es opcional: sin fecha, la aptitud no vence.</p>
+						</div>
+					</div>
+					<div class="bloque-form__cuerpo">
+						<div class="rejilla-4">
+							<label class="campo">
+								<span class="campo__etiqueta">Aptitud</span>
+								<select name="habilitacionId" required>
+									<option value="">Seleccione</option>
+									<option th:each="aptitud : ${gestion.disponibles}" th:value="${aptitud.id}"
+											th:text="${aptitud.nombre}">Aptitud</option>
+								</select>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Desde</span>
+								<input type="date" name="vigenteDesde" required>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Hasta</span>
+								<input type="date" name="vigenteHasta">
+							</label>
+							<div class="campo">
+								<button type="submit" class="boton boton--primario boton--bloque">
+									<i class="fas fa-plus"></i> Agregar
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</form>
+
+			<div class="tabla-envoltura" style="margin-top: 1rem;">
+				<table class="tabla">
+					<thead>
+					<tr>
+						<th>Aptitud</th>
+						<th>Desde</th>
+						<th>Hasta</th>
+						<th>Acción</th>
+					</tr>
+					</thead>
+					<tbody>
+					<tr th:each="aptitud : ${gestion.aptitudes}">
+						<td class="celda-nombre" data-label="Aptitud">
+							<span class="tabla__principal" th:text="${aptitud.nombre}">Aptitud</span>
+						</td>
+						<td data-label="Desde" th:text="${aptitud.vigenteDesde}">2026-01-01</td>
+						<td data-label="Hasta" th:text="${aptitud.vigenteHasta ?: 'Sin vencimiento'}">Sin vencimiento</td>
+						<td class="celda-accion" data-label="Acción">
+							<form th:action="@{/colaboradores/{id}/aptitudes/{asignacionId}/retirar(id=${gestion.id}, asignacionId=${aptitud.id})}"
+								  method="post" class="form-linea">
+								<button type="submit" class="boton boton--peligro boton--chico">
+									<i class="fas fa-trash-can"></i> Retirar
+								</button>
+							</form>
+						</td>
+					</tr>
+					<tr th:if="${#lists.isEmpty(gestion.aptitudes)}" class="tabla--vacia">
+						<td colspan="4" data-label="Aviso">
+							<i class="fas fa-certificate vacio-icono" aria-hidden="true"></i>
+							<strong>Sin aptitudes registradas</strong>
+							Agregue la primera con el formulario de arriba.
+						</td>
+					</tr>
+					</tbody>
+				</table>
+			</div>
+
+		</div>
+	</details>
+
+	<!-- ======== NOVEDADES ======== -->
+	<!--
+		Permisos, vacaciones, incapacidades y las demás etiquetas del Excel de
+		horarios. Mientras el registro cubra la fecha, la persona queda fuera
+		los candidatos: es el mismo bloqueo que ya usa la programación, con
+		pantalla para cargarlo.
+	-->
+	<details class="tarjeta detalle tarjeta--salario">
+		<summary class="tarjeta__cabecera detalle__cabecera">
+			<span class="sec-icono sec-icono--oro" aria-hidden="true"><i class="fas fa-calendar-minus"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Novedades y ausencias</h2>
+				<p>Permiso, vacación, incapacidad u otra novedad: mientras dure, la persona no se programa.</p>
+			</div>
+			<span class="detalle__flecha" aria-hidden="true"><i class="fas fa-chevron-down"></i></span>
+		</summary>
+
+		<div class="tarjeta__cuerpo">
+
+			<form th:action="@{/colaboradores/{id}/novedades(id=${gestion.id})}" method="post">
+				<div class="bloque-form">
+					<div class="bloque-form__cabecera">
+						<div class="bloque-form__icono"><i class="fas fa-calendar-minus"></i></div>
+						<div>
+							<h3>Registrar novedad</h3>
+							<p>La etiqueta es la del catálogo de la operación; el tipo define cómo se trata en la programación.</p>
+						</div>
+					</div>
+					<div class="bloque-form__cuerpo">
+						<div class="rejilla-4">
+							<label class="campo">
+								<span class="campo__etiqueta">Tipo</span>
+								<select name="tipo" required>
+									<option value="">Seleccione</option>
+									<option th:each="tipo : ${tiposNoDisponibilidad}" th:value="${tipo}"
+											th:text="${tipo}">PERMISO</option>
+								</select>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Novedad</span>
+								<select name="novedadId" required>
+									<option value="">Seleccione</option>
+									<option th:each="novedad : ${novedadesCatalogo}" th:value="${novedad.id}"
+											th:text="${novedad.nombre}">PERMISO</option>
+								</select>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Desde</span>
+								<input type="datetime-local" name="desde" required>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Hasta</span>
+								<input type="datetime-local" name="hasta" required>
+							</label>
+							<label class="campo">
+								<span class="campo__etiqueta">Observación</span>
+								<input type="text" name="observacion" maxlength="255" placeholder="Detalle opcional">
+							</label>
+							<div class="campo">
+								<button type="submit" class="boton boton--primario boton--bloque">
+									<i class="fas fa-plus"></i> Registrar
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</form>
+
+			<div class="tabla-envoltura" style="margin-top: 1rem;">
+				<table class="tabla">
+					<thead>
+					<tr>
+						<th>Novedad</th>
+						<th>Tipo</th>
+						<th>Desde</th>
+						<th>Hasta</th>
+						<th>Acción</th>
+					</tr>
+					</thead>
+					<tbody>
+					<tr th:each="registro : ${novedades}">
+						<td class="celda-nombre" data-label="Novedad">
+							<span class="tabla__principal"
+								  th:text="${registro.etiqueta != null ? registro.etiqueta : registro.observacion}">PERMISO</span>
+						</td>
+						<td data-label="Tipo" th:text="${registro.tipo}">PERMISO</td>
+						<td data-label="Desde" th:text="${#temporals.format(registro.desde, 'dd/MM/yyyy HH:mm')}">fecha</td>
+						<td data-label="Hasta" th:text="${#temporals.format(registro.hasta, 'dd/MM/yyyy HH:mm')}">fecha</td>
+						<td class="celda-accion" data-label="Acción">
+							<form th:action="@{/colaboradores/{id}/novedades/{registroId}/eliminar(id=${gestion.id}, registroId=${registro.id})}"
+								  method="post" class="form-linea">
+								<button type="submit" class="boton boton--peligro boton--chico">
+									<i class="fas fa-trash-can"></i> Eliminar
+								</button>
+							</form>
+						</td>
+					</tr>
+					<tr th:if="${#lists.isEmpty(novedades)}" class="tabla--vacia">
+						<td colspan="5" data-label="Aviso">
+							<i class="fas fa-calendar-minus vacio-icono" aria-hidden="true"></i>
+							<strong>Sin novedades registradas</strong>
+							Cargue la primera con el formulario de arriba.
+						</td>
+					</tr>
+					</tbody>
+				</table>
+			</div>
+
+		</div>
+	</details>
+
+</div>
+</body>
+
+</html>

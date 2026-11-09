@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+	  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+	  th:replace="~{fragments/layout :: pagina('Programaciones', 'programaciones', ~{::contenido})}">
+
+<body>
+<div th:fragment="contenido" class="progs">
+
+	<!--
+		Ronda 6: el botón "Asignar masivamente" se mudó a Proponer extendido
+		(programacion-form.html), donde vive el flujo del coordinador. Aquí
+		solo queda el filtro, que es lo que se viene a hacer en esta pantalla.
+
+		Estilo: mismo sistema de colaboradores.html (azul marino + naranja de
+		marca en acciones). Todas las reglas van prefijadas con .progs y anulan
+		las de app.css (degradados, animaciones, brillo, franja de la tabla).
+	-->
+	<style>
+		/* =================================================================
+		   Programaciones · estilos locales
+		   ================================================================= */
+		/* ---- Variables ---- */
+		.progs {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+		.progs > .hero-inicio,
+		.progs > .tarjeta,
+		.progs > .filtros { margin-bottom: 1.25rem; }
+
+		/* ---- Portada (para poner foto: style="--foto: url('/img/x.jpg')") ---- */
+		.progs .hero-inicio,
+		.progs .hero-inicio * { animation: none; }
+		.progs .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.progs .hero-inicio::before,
+		.progs .hero-inicio::after { content: none; }
+		.progs .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.progs .hero-inicio__contenido { max-width: 44rem; }
+		.progs .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+		}
+		.progs .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.progs .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+
+		/* ---- Tarjeta y cabecera ---- */
+		.progs .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+		}
+		.progs .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.progs .tarjeta__cabecera {
+			padding: 1.375rem 1.5rem;
+			gap: 1rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.progs .sec-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.25rem;
+		}
+		.progs .sec-icono--azul { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+		.progs .sec-icono--oro { background: #e09837; box-shadow: 0 3px 10px rgba(224, 152, 55, .3); }
+		.progs .sec-icono--verde { background: #2d7a55; box-shadow: 0 3px 10px rgba(45, 122, 85, .25); }
+		.progs .tarjeta__titulo-grupo h2 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+		}
+		.progs .tarjeta__cabecera h2::before,
+		.progs .tarjeta__titulo-grupo h2::before { display: none; }
+		.progs .tarjeta__titulo-grupo p {
+			margin-top: .25rem;
+			max-width: 62ch;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+		.progs .tarjeta__pie {
+			padding: 1rem 1.5rem;
+			background: #f8fafd;
+			border-top: 1px solid var(--a-borde);
+			color: var(--a-tenue);
+			font-size: .875rem;
+			font-weight: 600;
+		}
+
+		/* ---- Botones ---- */
+		.progs .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.progs .boton::after { display: none; }
+		.progs .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.progs .boton--primario,
+		.progs .boton--primario:hover {
+			border-color: var(--a-accion);
+			background: var(--a-accion);
+			box-shadow: 0 3px 10px rgba(221, 145, 44, .28);
+		}
+		.progs .boton--primario:hover {
+			border-color: var(--a-accion-hover);
+			background: var(--a-accion-hover);
+			box-shadow: 0 4px 12px rgba(221, 145, 44, .36);
+		}
+		.progs .boton--chico { padding: .5rem .875rem; font-size: .75rem; }
+		.progs .boton--contorno {
+			border: 1px solid #cfe0f2;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.progs .boton--contorno:hover:not(:disabled) {
+			border: 1px solid #b6cfe9;
+			background: #e9f1fa;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.progs .boton--fantasma {
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.progs .boton--fantasma:hover {
+			border: 1px solid #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.progs .boton--peligro {
+			border: 1px solid #f0c4c4;
+			background: #fff;
+			color: #b42318;
+			box-shadow: none;
+		}
+		.progs .boton--peligro:hover {
+			border: 1px solid #e6a8a8;
+			background: #fdf3f3;
+			color: #b42318;
+			box-shadow: none;
+		}
+		.progs .boton:disabled { opacity: .5; box-shadow: none; }
+
+		/* ---- Campos ---- */
+		.progs .campo__etiqueta,
+		.progs .campo:focus-within .campo__etiqueta {
+			margin-bottom: .375rem;
+			color: var(--a-navy);
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+		.progs .campo__ayuda { color: var(--a-tenue); line-height: 1.45; }
+		.progs input[type="search"],
+		.progs input[type="date"],
+		.progs input[type="datetime-local"],
+		.progs input[type="time"],
+		.progs select {
+			padding: .625rem .875rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background-color: #fff;
+			font-size: .9375rem;
+			font-weight: 500;
+			color: var(--a-texto);
+		}
+		.progs select { padding-right: 2.5rem; }
+		.progs input:hover, .progs select:hover { border-color: #b9c9dc; }
+		.progs input[type="search"]:focus,
+		.progs input[type="date"]:focus,
+		.progs input[type="datetime-local"]:focus,
+		.progs input[type="time"]:focus,
+		.progs select:focus {
+			border-color: var(--a-azul);
+			box-shadow: 0 0 0 3px rgba(23, 68, 117, .14);
+		}
+		.progs .filtros {
+			align-items: flex-end;
+			gap: 1rem;
+			padding: 1.25rem 1.5rem;
+			background: #fff;
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .06);
+		}
+		.progs .filtros .campo { flex: 1 1 11rem; }
+		.progs .filtros .campo--buscar { flex: 2 1 15rem; }
+		.progs .masiva-check {
+			flex: none;
+			width: 1.25rem;
+			height: 1.25rem;
+			accent-color: var(--a-azul);
+			cursor: pointer;
+		}
+
+		/* ---- Etiquetas (sin punto parpadeante) ---- */
+		.progs .etiqueta {
+			padding: .375rem .875rem;
+			border: 0;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+		}
+		.progs .etiqueta::before { content: none; display: none; animation: none; }
+		.progs .etiqueta--gris { background: #eceff3; color: var(--a-tenue); }
+		.progs .etiqueta--ok { background: var(--ok-100); color: var(--ok-700); }
+		.progs .etiqueta--alerta { background: #fdf0d9; color: #9a5a0a; }
+		.progs .etiqueta--error { background: #fdecec; color: #b42318; }
+		.progs .etiqueta--chico { padding: .1875rem .5rem; font-size: .625rem; }
+
+		/* ---- Tabla ---- */
+		.progs .tabla-envoltura {
+			margin: 1.25rem 1.5rem 1.5rem;
+			border: 1px solid #dfe8f3;
+			border-radius: 12px;
+			background: #fff;
+		}
+		.progs .tabla thead th {
+			padding: .875rem 1.125rem;
+			background: var(--a-suave);
+			color: #2f4a70;
+			border-bottom: 1px solid #e3ebf4;
+			font-size: .75rem;
+			font-weight: 600;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+		}
+		.progs .tabla thead tr th:first-child { border-left: 0; }
+		.progs .tabla thead th.tabla__num { text-align: right; }
+		.progs .tabla tbody td {
+			padding: 1rem 1.125rem;
+			border-bottom: 1px solid #edf2f8;
+			vertical-align: middle;
+			color: var(--a-texto);
+		}
+		.progs .tabla tbody tr { animation: none; }
+		.progs .tabla tbody tr:nth-child(even) { background: transparent; }
+		.progs .tabla tbody tr:hover { background: #f7fafd; }
+		.progs .tabla tbody tr:hover td:first-child { box-shadow: none; }
+		.progs .tabla tbody tr:last-child td { border-bottom: 0; }
+		.progs .tabla__principal { color: var(--a-navy); font-weight: 700; }
+		.progs .tabla__secundario { color: var(--a-tenue); font-weight: 500; }
+		.progs .tenue { color: var(--a-tenue); }
+
+		.progs .persona { display: flex; align-items: center; gap: .875rem; min-width: 0; }
+		.progs .inicial {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 2.5rem;
+			height: 2.5rem;
+			border-radius: 50%;
+			background: #2c5f94;
+			color: #fff;
+			font-size: .9375rem;
+			font-weight: 600;
+			text-transform: uppercase;
+			box-shadow: none;
+		}
+		.progs .codigo-area {
+			display: block;
+			margin-top: .125rem;
+			font-size: .6875rem;
+			font-weight: 700;
+			letter-spacing: .06em;
+			color: var(--a-tenue);
+		}
+
+		/* ---- Lista vacía ---- */
+		.progs .tabla--vacia td {
+			white-space: normal;
+			line-height: 1.6;
+			text-align: center;
+			padding: 2rem 1rem 2.25rem;
+			color: var(--a-tenue);
+			font-size: .75rem;
+		}
+		.progs .tabla tr.tabla--vacia:hover { background: transparent; }
+		.progs .vacio-icono { display: block; margin-bottom: .625rem; color: #1f4b7a; font-size: 2rem; }
+		.progs .tabla--vacia strong { color: var(--a-navy); font-size: .875rem; font-weight: 700; }
+
+		/* ---- Paginación de tablas largas (la inserta app.js bajo la tabla) ---- */
+		.progs .paginacion {
+			margin: 0;
+			padding: 1rem 1.5rem;
+			background: #f8fafd;
+			border-top: 1px solid var(--a-borde);
+			color: var(--a-tenue);
+			font-size: .875rem;
+		}
+		.progs .paginacion__estado,
+		.progs .paginacion__actual {
+			color: var(--a-navy);
+			font-size: .8125rem;
+			font-weight: 700;
+		}
+		.progs .paginacion .boton {
+			padding: .5rem .875rem;
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			font-size: .8125rem;
+			box-shadow: none;
+		}
+		.progs .paginacion .boton:hover:not([disabled]) {
+			border-color: #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.progs .paginacion .boton[disabled] {
+			border-color: #e3ebf4;
+			background: #f3f6fa;
+			color: var(--a-tenue);
+			opacity: .6;
+			box-shadow: none;
+		}
+
+		/* ---- Específico de Programaciones ---- */
+		.progs .tarjeta__cabecera { justify-content: flex-start; }
+		.progs .filtros { margin: 1.25rem 1.5rem 0; }
+		.progs .etiqueta--contador {
+			display: inline-flex;
+			align-items: center;
+			gap: .4rem;
+			padding: .5rem .875rem;
+			background: #e8edf4;
+			color: #24406a;
+			font-size: .75rem;
+			white-space: nowrap;
+		}
+		.progs .tabla tbody td.tabla__num { white-space: nowrap; }
+		.progs .accion-fallo {
+			display: block;
+			margin-top: .25rem;
+			font-size: .75rem;
+			font-weight: 700;
+			color: #b42318;
+		}
+		.progs .form-cola { display: flex; flex-wrap: wrap; align-items: center; gap: .375rem; }
+		.progs .form-cola .cola-hora {
+			width: auto;
+			padding: .4rem .5rem;
+			font-size: .8125rem;
+			font-variant-numeric: tabular-nums;
+		}
+		.progs .tabla td form + form { margin-top: .375rem; }
+
+		@media (max-width: 768px) {
+			.progs .campo input,
+			.progs .campo select { font-size: 16px; }
+			.progs .filtros { margin: 1rem 1rem 0; padding: 1rem; }
+			.progs .filtros .campo,
+			.progs .filtros__fin { width: 100%; min-width: 0; }
+			.progs .filtros__fin { margin-left: 0; flex-wrap: wrap; }
+			.progs .filtros__fin .boton { flex: 1; justify-content: center; }
+			.progs .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.progs .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.progs .tabla-envoltura { margin: 1rem 1rem 1.25rem; }
+			.progs .tarjeta__pie { padding: 1rem; }
+			.progs .hero-inicio { padding: 1.25rem; min-height: 0; }
+			.progs .hero-inicio h1 { font-size: 1.5rem; }
+
+			.progs .tabla tbody tr { display: flex; flex-direction: column; }
+			.progs .tabla tbody td.celda-nombre {
+				order: -1;
+				display: block;
+				padding: .875rem .875rem .75rem;
+				text-align: left;
+				background: var(--a-suave);
+				border-bottom: 1px solid var(--a-borde);
+			}
+			.progs .tabla tbody td.celda-nombre::before { content: none; }
+			.progs .celda-nombre .persona { font-size: 1rem; }
+			.progs .tabla tbody tr.tabla--vacia td { display: block; text-align: center; }
+			.progs .tabla tbody tr.tabla--vacia td::before { content: none; }
+			.progs .form-cola { width: 100%; justify-content: flex-end; }
+			.progs .paginacion__navegacion { width: 100%; justify-content: space-between; }
+		}
+		@media (max-width: 640px) {
+			.progs .tarjeta__pie { flex-direction: column; align-items: flex-start; }
+		}
+		@media (max-width: 480px) {
+			.progs .hero-icono { display: none; }
+		}
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-calendar-days"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta"><i class="fas fa-list"></i> EXTENDIDOS Y FESTIVOS</span>
+			<h1>Programaciones de extendido</h1>
+			<p>
+				Extendidos, sábados, domingos y festivos de las áreas que tiene en alcance. Las
+				fechas mostradas son las efectivas: si Talento Humano ajustó una propuesta, se ve el
+				ajuste, y el valor original queda en la fila de abajo.
+			</p>
+		</div>
+	</section>
+
+	<!-- ======== FILTROS + TABLA ======== -->
+	<div class="tarjeta tarjeta--listado">
+
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--azul" aria-hidden="true"><i class="fas fa-calendar-check"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Programaciones</h2>
+				<p>Extendidos, festivos y ajustes aplicados. Use los filtros para acotar el listado.</p>
+			</div>
+		</div>
+
+		<form class="filtros" th:action="@{/programaciones}" method="get">
+			<div class="campo">
+				<label class="campo__etiqueta" for="filtro-estado">Estado</label>
+				<select id="filtro-estado" name="estado">
+					<option value="">Todos</option>
+					<option th:each="estado : ${estados}" th:value="${estado.name()}" th:text="${estado}"
+							th:selected="${estado == estadoSeleccionado}">ESTADO</option>
+				</select>
+			</div>
+
+			<div class="campo campo--buscar">
+				<label class="campo__etiqueta" for="filtro-q">Buscar</label>
+				<input id="filtro-q" type="search" name="q" th:value="${busqueda}"
+					   placeholder="Nombre o documento">
+			</div>
+
+			<div class="campo">
+				<label class="campo__etiqueta" for="filtro-dia">Día</label>
+				<input id="filtro-dia" type="date" name="dia" th:value="${dia}">
+			</div>
+
+			<div class="filtros__fin">
+				<span class="etiqueta etiqueta--contador">
+					<i class="fas fa-user" aria-hidden="true"></i>
+					<span th:with="conteo=${estadoSeleccionado != null ? porEstado[estadoSeleccionado] : totalElementos}"
+						  th:text="${conteo} + ' ' + (${estadoSeleccionado != null} ? 'en ese estado' : 'en total')">0 en total</span>
+				</span>
+				<a th:href="@{/programaciones/reporte(dia=${dia})}" class="boton boton--fantasma"
+				   title="Listado del personal extendido del día, para entregar a la transportadora">
+					<i class="fas fa-file-pdf"></i> PDF transportadora
+				</a>
+				<a th:href="@{/programaciones}" class="boton boton--fantasma">
+					<i class="fas fa-eraser"></i> Limpiar
+				</a>
+				<button type="submit" class="boton">
+					<i class="fas fa-filter"></i> Filtrar
+				</button>
+			</div>
+		</form>
+
+		<div class="tabla-envoltura">
+			<table class="tabla">
+				<thead>
+				<tr>
+					<th>Colaborador</th>
+					<th>Tipo</th>
+					<th class="tabla__num">Inicio</th>
+					<th class="tabla__num">Fin</th>
+					<th class="tabla__num">Horas</th>
+					<th>Estado</th>
+					<th>Área</th>
+					<th>Acción</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr th:each="p : ${programaciones}">
+					<td class="celda-nombre" data-label="Colaborador">
+						<div class="persona">
+							<span class="inicial" aria-hidden="true"
+								  th:text="${#strings.toUpperCase(#strings.substring(p.colaboradorNombre, 0, 1))}">N</span>
+							<span>
+								<span class="tabla__principal" th:text="${p.colaboradorNombre}">Nombre</span>
+								<span class="tabla__secundario" th:text="${p.colaboradorDocumento}">CC</span>
+							</span>
+						</div>
+					</td>
+					<td data-label="Tipo">
+						<span th:text="${p.tipo}">EXTENDIDO</span>
+						<span class="etiqueta etiqueta--alerta etiqueta--chico"
+							  th:if="${p.esEmergencia}"
+							  th:title="${p.referenciaEvento != null ? 'Evento: ' + p.referenciaEvento : 'Emergencia sin evento'}">
+							emergencia
+						</span>
+						<span class="etiqueta etiqueta--alerta etiqueta--chico"
+							  th:if="${p.requeriaNivelacion}"
+							  title="Se eligió aun con la etiqueta de nivelación">
+							sin nivelar
+						</span>
+						<span class="etiqueta etiqueta--error etiqueta--chico"
+							  th:if="${p.incumpleAptitud}"
+							  th:title="${p.motivoExcepcionCandidato != null ? p.motivoExcepcionCandidato : 'Se eligió sin la aptitud de la operación'}">
+							sin aptitud
+						</span>
+					</td>
+					<td class="tabla__num" data-label="Inicio">
+						<span th:text="${#temporals.format(p.inicioEfectivo, 'dd/MM/yyyy HH:mm')}">fecha</span>
+						<span class="tabla__secundario" th:if="${p.fueAjustada}"
+							  th:text="'Propuesto: ' + ${#temporals.format(p.inicioProgramado, 'dd/MM/yyyy HH:mm')}">
+							propuesto
+						</span>
+					</td>
+					<td class="tabla__num" data-label="Fin"
+						th:text="${#temporals.format(p.finEfectivo, 'dd/MM/yyyy HH:mm')}">
+						fecha
+					</td>
+					<td class="tabla__num" data-label="Horas">
+						<span th:text="${#numbers.formatDecimal(p.horasEfectivas, 1, 'COMMA', 2, 'POINT')}">
+							0
+						</span>
+						<span class="tabla__secundario" th:if="${p.fueAjustada}"
+							  th:text="'Propuesto: ' + ${#numbers.formatDecimal(p.horasProgramadas, 1, 'COMMA', 2, 'POINT')}">
+							propuesto
+						</span>
+					</td>
+					<td data-label="Estado">
+						<span class="etiqueta"
+							  th:classappend="${p.estado == 'APROBADA' or p.estado == 'EJECUTADA' or p.estado == 'CERRADA'} ? 'etiqueta--ok'
+										: (${p.estado == 'RECHAZADA' or p.estado == 'CANCELADA'} ? 'etiqueta--error'
+											: (${p.estado == 'ENVIADA' or p.estado == 'EN_REVISION_TH'} ? 'etiqueta--alerta' : 'etiqueta--gris'))"
+							  th:text="${p.estado}">BORRADOR</span>
+					</td>
+					<td data-label="Área">
+						<span th:text="${p.areaNombre}">Área</span>
+						<span class="codigo-area" th:text="${p.areaCodigo}">OPE</span>
+					</td>
+					<td data-label="Acción">
+						<span class="accion-fallo"
+							  th:if="${errorNotificacionId != null and errorNotificacionId == p.id}"
+							  th:text="${error}">No se pudo notificar</span>
+
+						<span class="etiqueta etiqueta--ok"
+							  th:if="${p.estado == 'NOTIFICADA' or p.estado == 'EJECUTADA' or p.estado == 'CERRADA'}">
+							<i class="fas fa-check"></i> Notificado
+						</span>
+
+						<form th:if="${p.estado == 'APROBADA' or p.estado == 'AJUSTADA'}"
+							  sec:authorize="hasAnyRole('TALENTO_HUMANO','ADMIN')"
+							  th:action="@{/programaciones/{id}/notificar(id=${p.id})}" method="post"
+							  th:attr="data-confirm=|¿Notificar a ${p.colaboradorNombre}? El SMS queda en cola con el horario del turno.|"
+							  th:attrappend="data-confirm-ok='Sí, notificar'">
+							<input type="hidden" name="origen" value="listado">
+							<input type="hidden" name="q" th:if="${busqueda != null and !#strings.isEmpty(busqueda)}"
+								   th:value="${busqueda}">
+							<input type="hidden" name="dia" th:if="${dia != null}" th:value="${dia}">
+							<input type="hidden" name="pagina" th:if="${pagina > 0}" th:value="${pagina}">
+							<button type="submit" class="boton boton--primario boton--chico">
+								<i class="fas fa-paper-plane"></i> Notificar
+							</button>
+						</form>
+
+						<form th:if="${p.estado == 'APROBADA' or p.estado == 'AJUSTADA' or p.estado == 'NOTIFICADA' or p.estado == 'EJECUTADA'}"
+							  sec:authorize="hasAnyRole('COORD_OPERACIONES','COORD_AREA')"
+							  th:action="@{/programaciones/{id}/extender(id=${p.id})}" method="post"
+							  class="form-cola"
+							  th:attr="data-confirm=|¿Agregar la cola del turno de ${p.colaboradorNombre} hasta la hora del reloj? Por defecto queda hasta las ${#temporals.format(p.finEfectivo.plusHours(2), 'HH:mm')}.|"
+							  th:attrappend="data-confirm-ok='Sí, agregar'">
+							<input type="time" name="hasta" required class="cola-hora"
+								   th:value="${#temporals.format(p.finEfectivo.plusHours(2), 'HH:mm')}"
+								   aria-label="Hora de fin de la cola">
+							<button type="submit" class="boton boton--contorno boton--chico"
+									title="Agregar el tramo que sigue al turno, hasta la hora indicada">
+								<i class="fas fa-forward-step"></i> Cola
+							</button>
+						</form>
+					</td>
+				</tr>
+
+				<tr th:if="${#lists.isEmpty(programaciones)}" class="tabla--vacia">
+					<td colspan="8" data-label="Aviso">
+						<i class="fas fa-calendar-xmark vacio-icono" aria-hidden="true"></i>
+						<strong>No hay programaciones</strong><br>
+						<span th:if="${estadoSeleccionado != null}">Ninguna en estado</span>
+						<span th:unless="${estadoSeleccionado != null}">
+							No hay programaciones en las áreas de su alcance.
+						</span>
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="tarjeta__pie paginacion">
+			<span th:text="${#lists.size(programaciones)} + ' programacion(es) en pantalla'">0</span>
+
+			<nav class="paginacion__navegacion" aria-label="Páginas del listado">
+				<a class="boton boton--chico boton--fantasma" th:if="${hayAnterior}"
+				   th:href="@{/programaciones(pagina=${pagina - 1}, estado=${estadoSeleccionado}, q=${busqueda}, dia=${dia})}">
+					<i class="fas fa-angle-left"></i> Anterior
+				</a>
+				<span class="paginacion__actual">
+					Página <strong th:text="${pagina + 1}">1</strong> de
+					<strong th:text="${totalPaginas}">1</strong>
+				</span>
+				<a class="boton boton--chico boton--fantasma" th:if="${haySiguiente}"
+				   th:href="@{/programaciones(pagina=${pagina + 1}, estado=${estadoSeleccionado}, q=${busqueda}, dia=${dia})}">
+					Siguiente <i class="fas fa-angle-right"></i>
+				</a>
+			</nav>
+		</div>
+	</div>
+
+</div>
+</body>
+
+</html>

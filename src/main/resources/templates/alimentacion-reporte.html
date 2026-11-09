@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Lista de alimentación</title>
+	<link rel="stylesheet" th:href="@{/vendor/fontawesome/css/all.min.css}">
+	<style>
+		/* =================================================================
+		   Lista de alimentación · documento imprimible
+		   Mismo sistema visual de colaboradores.html y transporte.html.
+		   Todas las reglas van prefijadas con .alirep.
+		   ================================================================= */
+		.alirep {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+		}
+		@page { size: A4 portrait; margin: 14mm; }
+		.alirep,
+		.alirep * { box-sizing: border-box; }
+		.alirep {
+			margin: 0;
+			font-family: "Plus Jakarta Sans", Arial, sans-serif;
+			font-size: .9375rem;
+			font-weight: 500;
+			line-height: 1.55;
+			color: var(--a-texto);
+			background: #f4f7f9;
+		}
+
+		/* ---- Barra de herramientas ---- */
+		.alirep .toolbar {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 16px;
+			flex-wrap: wrap;
+			padding: 16px 22px;
+			background: var(--a-navy);
+			color: #fff;
+			margin-bottom: 22px;
+			box-shadow: 0 4px 14px rgba(11, 25, 41, .14);
+		}
+		.alirep .toolbar strong {
+			font-size: 1rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+			display: flex;
+			align-items: center;
+			gap: 9px;
+		}
+		.alirep .toolbar strong i { color: var(--a-oro-claro); }
+		.alirep .toolbar .acciones { display: flex; gap: 10px; flex-wrap: wrap; }
+
+		.alirep .btn-corp {
+			display: inline-flex;
+			align-items: center;
+			gap: 7px;
+			padding: .625rem 1.125rem;
+			border: 1px solid transparent;
+			border-radius: 10px;
+			font-size: .8125rem;
+			font-weight: 700;
+			font-family: inherit;
+			cursor: pointer;
+			text-decoration: none;
+			white-space: nowrap;
+		}
+		.alirep .btn-oro {
+			background: var(--a-accion);
+			border-color: var(--a-accion);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(221, 145, 44, .28);
+		}
+		.alirep .btn-oro:hover {
+			background: var(--a-accion-hover);
+			border-color: var(--a-accion-hover);
+			color: #fff;
+			box-shadow: 0 4px 12px rgba(221, 145, 44, .36);
+		}
+		.alirep .btn-vidrio {
+			background: rgba(255, 255, 255, .08);
+			border-color: rgba(255, 255, 255, .22);
+			color: #fff;
+		}
+		.alirep .btn-vidrio:hover { background: rgba(255, 255, 255, .16); }
+
+		/* ---- Hoja del reporte ---- */
+		.alirep .reporte {
+			max-width: 820px;
+			margin: 0 auto 24px;
+			background: #fff;
+			border: 1px solid var(--a-borde);
+			border-radius: 14px;
+			overflow: hidden;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+		}
+		.alirep .encabezado {
+			text-align: center;
+			padding: 14px 10px;
+			font-weight: 700;
+			font-size: 1.0625rem;
+			color: #fff;
+			background: var(--a-navy);
+			text-transform: uppercase;
+			letter-spacing: .06em;
+		}
+		.alirep .subtitulo {
+			text-align: center;
+			padding: 8px 10px;
+			font-size: .8125rem;
+			color: var(--a-tenue);
+			border-bottom: 1px solid var(--a-borde);
+			background: #f8fafd;
+		}
+		.alirep table { width: 100%; border-collapse: collapse; }
+		.alirep th,
+		.alirep td {
+			border: 1px solid var(--a-borde);
+			padding: 8px 12px;
+		}
+		.alirep th {
+			background: var(--a-suave);
+			color: #2f4a70;
+			text-transform: uppercase;
+			font-size: .75rem;
+			font-weight: 600;
+			letter-spacing: .06em;
+			text-align: left;
+		}
+		.alirep td { font-size: .9375rem; color: var(--a-texto); }
+		.alirep .numero { width: 9%; text-align: center; }
+		.alirep .area { width: 34%; }
+		.alirep .pie {
+			text-align: center;
+			font-weight: 700;
+			padding: 10px;
+			border-top: 1px solid var(--a-borde);
+			background: #f8fafd;
+			color: var(--a-navy);
+			font-size: .875rem;
+		}
+		.alirep .vacia {
+			text-align: center;
+			font-style: italic;
+			color: var(--a-tenue);
+		}
+
+		/* ---- Móvil (por si se abre en el celular sin imprimir) ---- */
+		@media (max-width: 640px) {
+			.alirep .toolbar { padding: 14px 16px; }
+			.alirep .toolbar strong { font-size: .875rem; }
+			.alirep .toolbar .acciones { width: 100%; }
+			.alirep .toolbar .acciones .btn-corp { flex: 1; justify-content: center; }
+
+			.alirep .reporte { border-radius: 12px; margin-bottom: 16px; }
+			.alirep .encabezado { font-size: .9375rem; padding: 11px 8px; letter-spacing: .04em; }
+			.alirep th, .alirep td { padding: 6px 8px; }
+			.alirep td { font-size: .8125rem; }
+			.alirep th { font-size: .6875rem; letter-spacing: .03em; }
+			.alirep .numero, .alirep .area { width: auto; }
+		}
+
+		@media print {
+			.alirep { background: #fff; }
+			.alirep .toolbar { display: none; }
+			.alirep .reporte { margin: 0; border: 0; border-radius: 0; box-shadow: none; }
+			.alirep .encabezado { background: #fff; color: #000; border-bottom: 2px solid #000; }
+			.alirep th { background: #f4f6f8; }
+		}
+	</style>
+</head>
+<body class="alirep">
+
+<div class="toolbar">
+	<strong>
+		<i class="fas fa-utensils"></i>
+		<span th:text="${'Lista de ' + (lista.tipo.name() == 'MERIENDA' ? 'meriendas' : 'cenas') + ' · ' + #temporals.format(lista.fecha, 'dd/MM/yyyy')}">
+			Lista de cenas · 12/10/2026
+		</span>
+	</strong>
+	<div class="acciones">
+		<a th:href="@{/alimentacion(dia=${lista.fecha})}" class="btn-corp btn-vidrio">
+			<i class="fas fa-arrow-left"></i> Volver
+		</a>
+		<button type="button" onclick="window.print()" class="btn-corp btn-oro">
+			<i class="fas fa-file-pdf"></i> PDF / Imprimir
+		</button>
+	</div>
+</div>
+
+<section class="reporte">
+	<div class="encabezado"
+		 th:text="${(lista.tipo.name() == 'MERIENDA' ? 'Meriendas' : 'Cenas') + ' ' + #temporals.format(lista.fecha, 'dd') + ' de ' + #temporals.format(lista.fecha, 'MMMM') + ' de ' + #temporals.format(lista.fecha, 'yyyy')}">
+		Cenas 12 de octubre de 2026
+	</div>
+	<div class="subtitulo">Alimentación del personal extendido · Programación Mardique</div>
+	<table>
+		<thead>
+		<tr>
+			<th class="numero">#</th>
+			<th>Nombre</th>
+			<th class="area">Área</th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr th:each="persona, indice : ${personas}">
+			<td class="numero" th:text="${indice.count}">1</td>
+			<td th:text="${persona.colaborador.nombreCompleto}">Jorge Barbosa</td>
+			<td class="area" th:text="${persona.area.nombre}">Operaciones</td>
+		</tr>
+		<tr th:if="${#lists.isEmpty(personas)}">
+			<td colspan="3" class="vacia">No hay personas en esta lista.</td>
+		</tr>
+		</tbody>
+	</table>
+	<div class="pie"
+		 th:text="${'Total: ' + #lists.size(personas) + (personas.size() == 1 ? ' persona' : ' personas')}">
+		Total: 1 persona
+	</div>
+</section>
+
+</body>
+</html>

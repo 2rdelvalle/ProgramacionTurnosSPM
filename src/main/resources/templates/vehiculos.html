@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="es" th:replace="~{fragments/layout :: pagina('Vehículos', 'vehiculos', ~{::contenido})}">
+<body>
+<div th:fragment="contenido" class="transp">
+
+	<!--
+		Catálogo de transporte: registrar vehículo, registrar destino y el
+		listado de placas y destinos registrados. Estos puntos se consultan sin
+		importar qué día se esté mirando en /transporte.
+
+		Estilo: mismo sistema de transporte.html y colaboradores.html. Todas las
+		reglas van prefijadas con .transp y anulan las de app.css.
+
+		En móvil: las tablas pasan a una tarjeta por fila (la placa o el nombre
+		sube como encabezado), y los inputs suben a 16px (iOS no hace zoom).
+	-->
+	<style>
+		/* =================================================================
+		   Vehículos · estilos locales
+		   ================================================================= */
+		/* ---- Variables ---- */
+		.transp {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+		.transp > .hero-inicio,
+		.transp > .tarjeta,
+		.transp > .rejilla-2,
+		.transp > .panel-identidad { margin-bottom: 1.25rem; }
+
+		/* ---- Portada ---- */
+		.transp .hero-inicio,
+		.transp .hero-inicio * { animation: none; }
+		.transp .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.transp .hero-inicio::before,
+		.transp .hero-inicio::after { content: none; }
+		.transp .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.transp .hero-inicio__contenido { max-width: 44rem; }
+		.transp .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+		}
+		.transp .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.transp .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+
+		/* ---- Tarjeta y cabecera ---- */
+		.transp .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-top: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+		}
+		.transp .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.transp .tarjeta__cabecera {
+			justify-content: flex-start;
+			padding: 1.375rem 1.5rem;
+			gap: 1rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.transp .sec-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.25rem;
+		}
+		.transp .sec-icono--azul,
+		.transp .sec-icono--cian { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+		.transp .sec-icono--oro { background: #e09837; box-shadow: 0 3px 10px rgba(224, 152, 55, .3); }
+		.transp .sec-icono--verde { background: #2d7a55; box-shadow: 0 3px 10px rgba(45, 122, 85, .25); }
+		.transp .tarjeta__titulo-grupo { flex: 1 1 16rem; }
+		.transp .tarjeta__titulo-grupo h2 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+		}
+		.transp .tarjeta__cabecera h2::before,
+		.transp .tarjeta__titulo-grupo h2::before { display: none; }
+		.transp .tarjeta__titulo-grupo p {
+			margin-top: .25rem;
+			max-width: 62ch;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+		.transp .tarjeta__cabecera > .etiqueta { align-self: center; }
+		.transp .tarjeta__cuerpo { padding: 1.5rem; }
+		.transp .tarjeta--nueva { border-color: #f1d8b2; }
+		.transp .tarjeta--nueva .tarjeta__cabecera { background: #fdf8f0; border-bottom-color: #f1d8b2; }
+
+		/* ---- Tarjeta plegable ---- */
+		.transp .detalle__flecha { margin-left: auto; background: var(--a-suave); color: var(--a-navy); }
+		.transp .detalle__cabecera:hover .detalle__flecha { background: var(--a-accion); color: #fff; }
+		.transp details:not([open]) > .tarjeta__cabecera { border-bottom: 0; }
+
+		/* ---- Botones ---- */
+		.transp .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.transp .boton::after { display: none; }
+		.transp .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.transp .boton--primario,
+		.transp .boton--primario:hover {
+			border-color: var(--a-accion);
+			background: var(--a-accion);
+			box-shadow: 0 3px 10px rgba(221, 145, 44, .28);
+		}
+		.transp .boton--primario:hover {
+			border-color: var(--a-accion-hover);
+			background: var(--a-accion-hover);
+			box-shadow: 0 4px 12px rgba(221, 145, 44, .36);
+		}
+		.transp .boton--chico { padding: .5rem .875rem; font-size: .75rem; }
+		.transp .boton--contorno {
+			border: 1px solid #cfe0f2;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.transp .boton--contorno:hover:not(:disabled) {
+			border: 1px solid #b6cfe9;
+			background: #e9f1fa;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.transp .boton--fantasma {
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.transp .boton--fantasma:hover {
+			border: 1px solid #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.transp .boton--peligro {
+			border: 1px solid #f0c4c4;
+			background: #fff;
+			color: #b42318;
+			box-shadow: none;
+		}
+		.transp .boton--peligro:hover {
+			border: 1px solid #e6a8a8;
+			background: #fdf3f3;
+			color: #b42318;
+			box-shadow: none;
+		}
+		.transp .boton:disabled { opacity: .5; box-shadow: none; }
+
+		/* ---- Campos ---- */
+		.transp .campo__etiqueta,
+		.transp .campo:focus-within .campo__etiqueta {
+			margin-bottom: .375rem;
+			color: var(--a-navy);
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+		.transp .campo__ayuda { color: var(--a-tenue); line-height: 1.45; }
+		.transp input[type="text"],
+		.transp input[type="tel"],
+		.transp input[type="number"],
+		.transp input[type="search"],
+		.transp input[type="date"],
+		.transp select {
+			padding: .625rem .875rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background-color: #fff;
+			font-size: .9375rem;
+			font-weight: 500;
+			color: var(--a-texto);
+		}
+		.transp select { padding-right: 2.5rem; }
+		.transp input:hover, .transp select:hover { border-color: #b9c9dc; }
+		.transp input[type="text"]:focus,
+		.transp input[type="tel"]:focus,
+		.transp input[type="number"]:focus,
+		.transp input[type="search"]:focus,
+		.transp input[type="date"]:focus,
+		.transp select:focus {
+			border-color: var(--a-azul);
+			box-shadow: 0 0 0 3px rgba(23, 68, 117, .14);
+		}
+
+		/* ---- Formulario ---- */
+		.transp .bloque-form {
+			margin-bottom: 1.25rem;
+			border: 1px solid var(--a-borde);
+			border-radius: 12px;
+			background: #f9fbfd;
+			box-shadow: none;
+		}
+		.transp .bloque-form__cabecera { display: none; }
+		.transp .bloque-form__cuerpo { padding: 1.25rem; }
+		.transp .bloque-form__cuerpo .campo { margin-bottom: 0; }
+		.transp .rejilla-2-campos {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 1rem 1.25rem;
+		}
+		.transp .campo--ancho { grid-column: 1 / -1; }
+		.transp .form-actions-bar {
+			display: flex;
+			justify-content: flex-end;
+			padding: 0;
+			margin: 0;
+			background: none;
+			border: 0;
+		}
+		.transp .rejilla-2 {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 1.25rem;
+			align-items: start;
+		}
+
+		/* ---- Etiquetas ---- */
+		.transp .etiqueta {
+			padding: .375rem .875rem;
+			border: 0;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+		}
+		.transp .etiqueta::before { content: none; display: none; animation: none; }
+		.transp .etiqueta--gris { background: #eceff3; color: var(--a-tenue); }
+		.transp .etiqueta--alerta { background: #fdf0d9; color: #9a5a0a; }
+		.transp .pasajeros {
+			display: inline-flex;
+			align-items: center;
+			padding: .375rem .875rem;
+			border-radius: 999px;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			font-variant-numeric: tabular-nums;
+		}
+
+		/* ---- Tabla ---- */
+		.transp .tabla-envoltura {
+			margin: 1.25rem 1.5rem 1.5rem;
+			border: 1px solid #dfe8f3;
+			border-radius: 12px;
+			background: #fff;
+		}
+		.transp .tabla thead th {
+			padding: .875rem 1.125rem;
+			background: var(--a-suave);
+			color: #2f4a70;
+			border-bottom: 1px solid #e3ebf4;
+			font-size: .75rem;
+			font-weight: 600;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+		}
+		.transp .tabla thead tr th:first-child { border-left: 0; }
+		.transp .tabla thead th.tabla__num { text-align: right; }
+		.transp .tabla thead th.tabla__acciones { text-align: center; }
+		.transp .tabla tbody td {
+			padding: 1rem 1.125rem;
+			border-bottom: 1px solid #edf2f8;
+			vertical-align: middle;
+			color: var(--a-texto);
+		}
+		.transp .tabla tbody tr { animation: none; }
+		.transp .tabla tbody tr:nth-child(even) { background: transparent; }
+		.transp .tabla tbody tr:hover { background: #f7fafd; }
+		.transp .tabla tbody tr:hover td:first-child { box-shadow: none; }
+		.transp .tabla tbody tr:last-child td { border-bottom: 0; }
+		.transp .tabla__principal { color: var(--a-navy); font-weight: 700; }
+		.transp .tabla__secundario { color: var(--a-tenue); font-weight: 500; }
+		.transp .placa {
+			display: block;
+			font-weight: 700;
+			font-size: .875rem;
+			color: var(--a-navy);
+			letter-spacing: .01em;
+		}
+		.transp .hora {
+			display: inline-block;
+			color: var(--a-navy);
+			font-weight: 700;
+			font-size: .9375rem;
+			font-variant-numeric: tabular-nums;
+		}
+		.transp .acciones-fila {
+			display: flex;
+			flex-wrap: wrap;
+			gap: .5rem;
+			align-items: center;
+			justify-content: center;
+		}
+
+		/* ---- Lista vacía ---- */
+		.transp .tabla--vacia td {
+			white-space: normal;
+			line-height: 1.6;
+			text-align: center;
+			padding: 2rem 1rem 2.25rem;
+			color: var(--a-tenue);
+			font-size: .75rem;
+		}
+		.transp .tabla tr.tabla--vacia:hover { background: transparent; }
+		.transp .vacio-icono { display: block; margin-bottom: .625rem; color: #1f4b7a; font-size: 2rem; }
+		.transp .tabla--vacia strong { color: var(--a-navy); font-size: .875rem; font-weight: 700; }
+
+		/* ---- Móvil ---- */
+		@media (max-width: 900px) {
+			.transp .rejilla-2 { grid-template-columns: 1fr; }
+		}
+		@media (max-width: 768px) {
+			.transp .campo input,
+			.transp .campo select { font-size: 16px; }
+			.transp .hero-inicio { padding: 1.25rem; min-height: 0; }
+			.transp .hero-inicio h1 { font-size: 1.5rem; }
+			.transp .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.transp .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.transp .tarjeta__cuerpo { padding: 1rem; }
+			.transp .bloque-form__cuerpo { padding: 1rem; }
+			.transp .rejilla-2-campos { grid-template-columns: 1fr; }
+			.transp .form-actions-bar { flex-direction: column-reverse; align-items: stretch; }
+			.transp .form-actions-bar .boton { width: 100%; justify-content: center; }
+			.transp .form-actions-bar__inicio { margin-right: 0; }
+			.transp .tabla-envoltura { margin: 1rem 1rem 1.25rem; }
+
+			.transp .tabla tbody tr { display: flex; flex-direction: column; }
+			.transp .tabla tbody td.celda-cab {
+				order: -1;
+				display: block;
+				padding: .875rem;
+				text-align: left;
+				background: var(--a-suave);
+				border-bottom: 1px solid var(--a-borde);
+			}
+			.transp .tabla tbody td.celda-cab::before { content: none; }
+			.transp .acciones-fila { justify-content: flex-end; }
+
+			.transp .tabla tbody tr.tabla--vacia td { display: block; text-align: center; }
+			.transp .tabla tbody tr.tabla--vacia td::before { content: none; }
+		}
+		@media (max-width: 480px) {
+			.transp .hero-icono { display: none; }
+		}
+
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-truck"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">CATÁLOGO DE TRANSPORTE</span>
+			<h1>Vehículos</h1>
+			<p>
+				Registre placas, conductores y destinos disponibles para las
+				salidas. Lo que se registra acá aparece en el selector de la
+				pantalla de salidas.
+			</p>
+		</div>
+	</section>
+
+	<!-- ======== VEHÍCULO + DESTINO ======== -->
+	<!--
+		Los dos registros van dentro de <details>: el coordinador abre el que
+		necesita y el resto queda plegado.
+	-->
+	<div class="rejilla-2">
+
+		<details class="tarjeta tarjeta--nueva detalle">
+			<summary class="tarjeta__cabecera detalle__cabecera">
+				<span class="sec-icono sec-icono--oro" aria-hidden="true"><i class="fas fa-car"></i></span>
+				<div class="tarjeta__titulo-grupo">
+					<h2>Registrar vehículo</h2>
+					<p>Agregue placas propias o contratadas disponibles para el transporte.</p>
+				</div>
+				<span class="detalle__flecha" aria-hidden="true"><i class="fas fa-chevron-down"></i></span>
+			</summary>
+
+			<div class="tarjeta__cuerpo">
+				<form th:action="@{/transporte/vehiculos}" method="post" id="form-vehiculo">
+
+					<div class="bloque-form">
+						<div class="bloque-form__cabecera">
+							<div class="bloque-form__icono"><i class="fas fa-truck-pickup"></i></div>
+							<div>
+								<h3>Datos del vehículo</h3>
+								<p>El proveedor solo aplica a vehículos contratados.</p>
+							</div>
+						</div>
+						<div class="bloque-form__cuerpo">
+							<div class="rejilla-2-campos">
+								<label class="campo">
+									<span class="campo__etiqueta">Placa</span>
+									<input type="text" name="placa" maxlength="10" required>
+								</label>
+								<label class="campo">
+									<span class="campo__etiqueta">Capacidad</span>
+									<input type="number" name="capacidad" min="1" required>
+								</label>
+								<label class="campo">
+									<span class="campo__etiqueta">Conductor</span>
+									<input type="text" name="conductor" maxlength="120">
+								</label>
+								<!--
+									El teléfono es del conductor y viaja con él al reporte: es lo
+									que permite llamarlo si el vehículo se atrasa. Solo tiene
+									sentido con nombre, y el servidor lo exige así.
+								-->
+								<label class="campo">
+									<span class="campo__etiqueta">Teléfono del conductor</span>
+									<input type="tel" name="telefonoConductor" maxlength="20"
+										   placeholder="300 123 4567">
+								</label>
+								<label class="campo">
+									<span class="campo__etiqueta">Propietario</span>
+									<select name="propietario" id="propietario" required>
+										<option value="PROPIO">Propio</option>
+										<option value="CONTRATADO">Contratado</option>
+									</select>
+								</label>
+								<!--
+									El proveedor solo importa si el vehículo es de otra empresa: con
+									"Propio" el campo ni aparece, y con "Contratado" nace obligatorio.
+									La regla se exige en el servidor igualmente; esto evita llegar allá
+									con el formulario a medias.
+								-->
+								<label class="campo campo--ancho" id="campo-proveedor" hidden>
+									<span class="campo__etiqueta">Proveedor</span>
+									<input type="text" name="proveedor" maxlength="120"
+										   placeholder="Empresa que alquila el vehículo">
+								</label>
+							</div>
+						</div>
+					</div>
+
+					<div class="form-actions-bar">
+						<input type="hidden" name="dia" th:value="${dia}">
+						<button type="submit" class="boton boton--primario">
+							<i class="fas fa-plus"></i> Registrar vehículo
+						</button>
+					</div>
+				</form>
+			</div>
+		</details>
+
+		<details class="tarjeta tarjeta--nueva detalle">
+			<summary class="tarjeta__cabecera detalle__cabecera">
+				<span class="sec-icono sec-icono--oro" aria-hidden="true"><i class="fas fa-location-dot"></i></span>
+				<div class="tarjeta__titulo-grupo">
+					<h2>Registrar destino</h2>
+					<p>Puntos de recogida y entrega que se ofrecen al asignar pasajeros.</p>
+				</div>
+				<span class="detalle__flecha" aria-hidden="true"><i class="fas fa-chevron-down"></i></span>
+			</summary>
+
+			<div class="tarjeta__cuerpo">
+				<form th:action="@{/transporte/destinos}" method="post">
+
+					<div class="bloque-form">
+						<div class="bloque-form__cabecera">
+							<div class="bloque-form__icono"><i class="fas fa-map-pin"></i></div>
+							<div>
+								<h3>Datos del destino</h3>
+								<p>La zona y la referencia ayudan al conductor a ubicarlo.</p>
+							</div>
+						</div>
+						<div class="bloque-form__cuerpo">
+							<div class="rejilla-2-campos">
+								<label class="campo">
+									<span class="campo__etiqueta">Nombre</span>
+									<input type="text" name="nombre" maxlength="120" required>
+								</label>
+								<label class="campo">
+									<span class="campo__etiqueta">Zona</span>
+									<input type="text" name="zona" maxlength="120">
+								</label>
+								<label class="campo">
+									<span class="campo__etiqueta">Dirección</span>
+									<input type="text" name="direccion" maxlength="200"
+										   placeholder="Calle y número o puerta de ingreso">
+								</label>
+								<label class="campo">
+									<span class="campo__etiqueta">Punto de referencia</span>
+									<input type="text" name="referencia" maxlength="200"
+										   placeholder="Frente al muelle 3, portón norte…">
+								</label>
+							</div>
+						</div>
+					</div>
+
+					<div class="form-actions-bar">
+						<input type="hidden" name="dia" th:value="${dia}">
+						<button type="submit" class="boton boton--primario">
+							<i class="fas fa-plus"></i> Registrar destino
+						</button>
+					</div>
+				</form>
+			</div>
+		</details>
+
+	</div>
+
+	<!-- ======== VEHÍCULOS REGISTRADOS ======== -->
+	<!--
+		Se ve cuáles hay, se pueden corregir sus datos y se pueden eliminar con
+		todo lo que cuelga de ellos.
+	-->
+	<details class="tarjeta detalle">
+		<summary class="tarjeta__cabecera detalle__cabecera">
+			<span class="sec-icono sec-icono--azul" aria-hidden="true"><i class="fas fa-truck"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Vehículos registrados</h2>
+				<p>Placas disponibles para programar salidas.</p>
+			</div>
+			<span class="etiqueta" th:text="${#lists.size(vehiculos)} + ' vehículo(s)'">0</span>
+			<span class="detalle__flecha" aria-hidden="true"><i class="fas fa-chevron-down"></i></span>
+		</summary>
+
+		<div class="tabla-envoltura">
+			<table class="tabla">
+				<thead>
+				<tr>
+					<th>Placa</th>
+					<th class="tabla__num">Capacidad</th>
+					<th>Conductor</th>
+					<th>Propietario</th>
+					<th>Proveedor</th>
+					<th class="tabla__acciones">Acción</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr th:each="vehiculo : ${vehiculos}">
+					<td class="celda-cab" data-label="Placa"><span class="placa" th:text="${vehiculo.placa}">ABC123</span></td>
+					<td class="tabla__num" data-label="Capacidad" th:text="${vehiculo.capacidad}">4</td>
+					<td data-label="Conductor">
+						<span th:text="${vehiculo.conductor ?: 'Sin conductor'}">Conductor</span>
+						<span class="tabla__secundario" th:if="${vehiculo.telefonoConductor != null}"
+							  th:text="'Tel. ' + ${vehiculo.telefonoConductor}">Tel. 300 123 4567</span>
+					</td>
+					<td data-label="Propietario">
+						<span class="etiqueta etiqueta--chico"
+							  th:classappend="${vehiculo.propietario != null and vehiculo.propietario.name() == 'CONTRATADO'} ? 'etiqueta--alerta' : ''"
+							  th:text="${vehiculo.propietario}">PROPIO</span>
+					</td>
+					<td data-label="Proveedor" th:text="${vehiculo.proveedor ?: '—'}">—</td>
+					<td class="tabla__acciones" data-label="Acción">
+						<div class="acciones-fila">
+							<a th:href="@{/transporte/vehiculos/{id}/editar(id=${vehiculo.id}, dia=${dia})}"
+							   class="boton boton--fantasma boton--chico">
+								<i class="fas fa-pen"></i> Editar
+							</a>
+							<form th:action="@{/transporte/vehiculos/{id}/eliminar(id=${vehiculo.id})}"
+								  method="post" class="form-linea"
+								  th:attr="data-confirm=|¿Eliminar el vehículo ${vehiculo.placa}? Sus salidas programadas se eliminan con él.|,data-confirm-peligro='true'">
+								<input type="hidden" name="dia" th:value="${dia}">
+								<button type="submit" class="boton boton--peligro boton--chico">
+									<i class="fas fa-trash-can"></i> Eliminar
+								</button>
+							</form>
+						</div>
+					</td>
+				</tr>
+				<tr th:if="${#lists.isEmpty(vehiculos)}" class="tabla--vacia">
+					<td colspan="6" data-label="Aviso">
+						<i class="fas fa-truck vacio-icono" aria-hidden="true"></i>
+						<strong>Sin vehículos</strong><br>
+						Registre el primero con el formulario de arriba.
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+	</details>
+
+	<!-- ======== DESTINOS REGISTRADOS ======== -->
+	<!--
+		Se ve qué hay y se puede eliminar (con sus salidas, que cuelgan de él por
+		clave ajena). El destino "Variado" es para los transportes que no siguen
+		una ruta fija.
+	-->
+	<details class="tarjeta detalle">
+		<summary class="tarjeta__cabecera detalle__cabecera">
+			<span class="sec-icono sec-icono--verde" aria-hidden="true"><i class="fas fa-map-location-dot"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Destinos registrados</h2>
+				<p>Rutas disponibles para programar salidas.</p>
+			</div>
+			<span class="etiqueta" th:text="${#lists.size(destinos)} + ' destino(s)'">0</span>
+			<span class="detalle__flecha" aria-hidden="true"><i class="fas fa-chevron-down"></i></span>
+		</summary>
+
+		<div class="tabla-envoltura">
+			<table class="tabla">
+				<thead>
+				<tr>
+					<th>Nombre</th>
+					<th>Zona</th>
+					<th>Dirección</th>
+					<th class="tabla__acciones">Acción</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr th:each="destino : ${destinos}">
+					<td class="celda-cab" data-label="Nombre"><span class="placa" th:text="${destino.nombre}">Variado</span></td>
+					<td data-label="Zona" th:text="${destino.zona ?: '—'}">—</td>
+					<td data-label="Dirección" th:text="${destino.direccion ?: '—'}">—</td>
+					<td class="tabla__acciones" data-label="Acción">
+						<div class="acciones-fila">
+							<form th:action="@{/transporte/destinos/{id}/eliminar(id=${destino.id})}"
+								  method="post" class="form-linea"
+								  th:attr="data-confirm=|¿Eliminar el destino ${destino.nombre}? Sus salidas programadas se eliminan con él.|,data-confirm-peligro='true'">
+								<input type="hidden" name="dia" th:value="${dia}">
+								<button type="submit" class="boton boton--peligro boton--chico">
+									<i class="fas fa-trash-can"></i> Eliminar
+								</button>
+							</form>
+						</div>
+					</td>
+				</tr>
+				<tr th:if="${#lists.isEmpty(destinos)}" class="tabla--vacia">
+					<td colspan="4" data-label="Aviso">
+						<i class="fas fa-map-location-dot vacio-icono" aria-hidden="true"></i>
+						<strong>Sin destinos</strong><br>
+						Registre el primero con el formulario de arriba.
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+	</details>
+
+	<script>
+		// El proveedor solo existe para vehículos de terceros: se muestra al elegir
+		// "Contratado" y nace obligatorio; al volver a "Propio" se oculta y se
+		// vacía para que un residuo de otra sesión no viaje al servidor.
+		(function () {
+			const selector = document.getElementById("propietario");
+			const bloque = document.getElementById("campo-proveedor");
+			if (!selector || !bloque) return;
+			const campo = bloque.querySelector("input[name=proveedor]");
+			function sincronizar() {
+				const contratado = selector.value === "CONTRATADO";
+				bloque.hidden = !contratado;
+				campo.required = contratado;
+				if (!contratado) campo.value = "";
+			}
+			selector.addEventListener("change", sincronizar);
+			sincronizar();
+		})();
+	</script>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es" th:replace="~{fragments/layout :: pagina('Prueba de alcance', 'inicio', ~{::contenido})}">
+
+<body>
+<div th:fragment="contenido" class="prueba">
+
+	<!--
+		Esta pantalla usa los componentes del sistema visual: hero-inicio,
+		tarjeta, campo, boton, alerta.
+
+		En móvil:
+		- El hero se apila en una columna.
+		- La ficha de datos pasa a una columna.
+		- El filtro de área se apila verticalmente.
+		- Los selects suben a 16px para que iOS no haga zoom al enfocar.
+	-->
+	<style>
+		/* =================================================================
+		   Prueba de alcance · estilos locales
+		   ================================================================= */
+		.prueba {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+		.prueba > .hero-inicio,
+		.prueba > .tarjeta { margin-bottom: 1.25rem; }
+
+		/* ---- Portada ---- */
+		.prueba .hero-inicio,
+		.prueba .hero-inicio * { animation: none; }
+		.prueba .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.prueba .hero-inicio::before,
+		.prueba .hero-inicio::after { content: none; }
+		.prueba .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.prueba .hero-inicio__contenido { max-width: 44rem; }
+		.prueba .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+			text-transform: uppercase;
+		}
+		.prueba .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.prueba .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+
+		/* ---- Tarjeta y cabecera ---- */
+		.prueba .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+			overflow: hidden;
+		}
+		.prueba .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.prueba .tarjeta__cuerpo { padding: 1.5rem; }
+		.prueba .tarjeta__pie {
+			margin-top: 1.5rem;
+			padding: 1rem 1.25rem;
+			background: #f8fafd;
+			border-top: 1px solid var(--a-borde);
+			border-radius: 0 0 var(--radio) var(--radio);
+			font-size: .875rem;
+			color: var(--a-tenue);
+			font-weight: 500;
+			line-height: 1.55;
+		}
+
+		/* ---- Rejilla de datos (dl/dt/dd) ---- */
+		.prueba .rejilla-datos {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 1.25rem 1.75rem;
+			margin: 0;
+		}
+		.prueba .rejilla-datos dt {
+			margin-bottom: .3125rem;
+			font-size: .6875rem;
+			font-weight: 700;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+			color: var(--a-tenue);
+		}
+		.prueba .rejilla-datos dd {
+			margin: 0;
+			font-size: .9375rem;
+			font-weight: 700;
+			color: var(--a-navy);
+			line-height: 1.5;
+			overflow-wrap: anywhere;
+		}
+
+		/* ---- Introducción ---- */
+		.prueba .intro {
+			margin: 0 0 1.375rem;
+			font-size: .9375rem;
+			line-height: 1.65;
+			color: var(--a-texto);
+			font-weight: 500;
+		}
+
+		/* ---- Campos ---- */
+		.prueba .campo__etiqueta,
+		.prueba .campo:focus-within .campo__etiqueta {
+			margin-bottom: .375rem;
+			color: var(--a-navy);
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+		.prueba select {
+			width: 100%;
+			padding: .625rem .875rem;
+			padding-right: 2.5rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background-color: #fff;
+			font-size: .9375rem;
+			font-weight: 500;
+			color: var(--a-texto);
+		}
+		.prueba select:hover { border-color: #b9c9dc; }
+		.prueba select:focus {
+			border-color: var(--a-azul);
+			box-shadow: 0 0 0 3px rgba(23, 68, 117, .14);
+			outline: none;
+		}
+
+		/* ---- Botones ---- */
+		.prueba .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.prueba .boton::after { display: none; }
+		.prueba .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.prueba .boton--primario,
+		.prueba .boton--primario:hover {
+			border-color: var(--a-accion);
+			background: var(--a-accion);
+			box-shadow: 0 3px 10px rgba(221, 145, 44, .28);
+		}
+		.prueba .boton--primario:hover {
+			border-color: var(--a-accion-hover);
+			background: var(--a-accion-hover);
+			box-shadow: 0 4px 12px rgba(221, 145, 44, .36);
+		}
+
+		/* ---- Filtro de área ---- */
+		.prueba .filtro-linea {
+			display: flex;
+			align-items: flex-end;
+			gap: .75rem;
+			flex-wrap: wrap;
+		}
+		.prueba .filtro-linea .campo {
+			flex: 1 1 12rem;
+			margin-bottom: 0;
+		}
+
+		/* =================================================================
+		   Móvil
+		   ================================================================= */
+		@media (max-width: 768px) {
+			.prueba .hero-inicio { padding: 1.25rem; min-height: 0; }
+			.prueba .hero-inicio h1 { font-size: 1.5rem; }
+			.prueba .tarjeta__cuerpo { padding: 1rem; }
+			.prueba .rejilla-datos { grid-template-columns: 1fr; gap: 1rem; }
+
+			.prueba .campo select { font-size: 16px; }
+
+			.prueba .filtro-linea {
+				flex-direction: column;
+				align-items: stretch;
+			}
+			.prueba .filtro-linea .campo,
+			.prueba .filtro-linea .boton { width: 100%; }
+			.prueba .filtro-linea .boton { justify-content: center; }
+		}
+		@media (max-width: 480px) {
+			.prueba .hero-icono { display: none; }
+		}
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-magnifying-glass"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">FILTRO POR ÁREA</span>
+			<h1 th:if="${area != null}">Alcance verificado</h1>
+			<h1 th:if="${area == null}">Prueba de alcance</h1>
+			<p th:if="${area != null}">El servicio aceptó la operación porque el área está dentro de su alcance.</p>
+			<p th:if="${area == null}">Compruebe qué pasa cuando pide un área que no le toca.</p>
+		</div>
+	</section>
+
+	<!-- ======== ÁREA VERIFICADA ======== -->
+	<div class="tarjeta" th:if="${area != null}">
+		<div class="tarjeta__cuerpo">
+
+			<dl class="rejilla-datos">
+				<div>
+					<dt>Área</dt>
+					<dd th:text="${area.nombre}">Operaciones</dd>
+				</div>
+				<div>
+					<dt>Código</dt>
+					<dd th:text="${area.codigo}">OPE</dd>
+				</div>
+				<div>
+					<dt>Verificada por</dt>
+					<dd th:text="${principalActual.nombreCompleto}">Usuario</dd>
+				</div>
+			</dl>
+
+			<div class="tarjeta__pie">
+				<span>
+					Ahora pruebe con otro identificador de área desde el panel: si no está en su alcance,
+					el servicio lo rechaza, lo registra y lo manda al acceso denegado.
+				</span>
+			</div>
+
+		</div>
+	</div>
+
+	<!-- ======== SELECCIÓN DE ÁREA ======== -->
+	<div class="tarjeta" th:if="${area == null}">
+		<div class="tarjeta__cuerpo">
+
+			<p class="intro">Elija un área para comprobar el filtro de alcance.</p>
+
+			<form class="filtro-linea" th:action="@{/prueba-alcance}" method="get">
+				<label class="campo">
+					<span class="campo__etiqueta">Área</span>
+					<select name="areaId" required>
+						<option th:each="visible : ${areas}" th:value="${visible.id}"
+								th:text="${visible.nombre}">Área</option>
+					</select>
+				</label>
+				<button type="submit" class="boton boton--primario">Verificar</button>
+			</form>
+
+			<div class="tarjeta__pie">
+				<span>
+					Solo se ofrecen las áreas que ya están en su alcance. Para ver el rechazo
+					y su registro en la bitácora, use el identificador de un área ajena.
+				</span>
+			</div>
+
+		</div>
+	</div>
+
+</div>
+</body>
+
+</html>

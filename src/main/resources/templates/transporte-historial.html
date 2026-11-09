@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es" th:replace="~{fragments/layout :: pagina('Historial de transporte', 'transporte', ~{::contenido})}">
+<body>
+<div th:fragment="contenido" class="trh">
+
+	<!--
+		Historial completo de los viajes de transporte ya registrados (salidas e
+		ingresos), de la más reciente a la más antigua: fecha, tipo, vehículo,
+		destino, cuántas subieron y las acciones de ver/imprimir y eliminar.
+
+		Estilo: mismo sistema de transporte.html y colaboradores.html. Todas las
+		reglas van prefijadas con .trh y anulan las de app.css.
+
+		En móvil: la tabla pasa a una tarjeta por viaje, con la fecha arriba
+		como encabezado.
+	-->
+	<style>
+		/* =================================================================
+		   Historial de transporte · estilos locales
+		   ================================================================= */
+		/* ---- Variables ---- */
+		.trh {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+		.trh > .hero-inicio,
+		.trh > .tarjeta,
+		.trh > .rejilla-2,
+		.trh > .panel-identidad { margin-bottom: 1.25rem; }
+
+		/* ---- Portada ---- */
+		.trh .hero-inicio,
+		.trh .hero-inicio * { animation: none; }
+		.trh .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.trh .hero-inicio::before,
+		.trh .hero-inicio::after { content: none; }
+		.trh .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.trh .hero-inicio__contenido { max-width: 44rem; }
+		.trh .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+		}
+		.trh .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.trh .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+
+		/* ---- Tarjeta y cabecera ---- */
+		.trh .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-top: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+		}
+		.trh .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.trh .tarjeta__cabecera {
+			justify-content: flex-start;
+			padding: 1.375rem 1.5rem;
+			gap: 1rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.trh .sec-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.25rem;
+		}
+		.trh .sec-icono--azul,
+		.trh .sec-icono--cian { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+		.trh .sec-icono--oro { background: #e09837; box-shadow: 0 3px 10px rgba(224, 152, 55, .3); }
+		.trh .sec-icono--verde { background: #2d7a55; box-shadow: 0 3px 10px rgba(45, 122, 85, .25); }
+		.trh .tarjeta__titulo-grupo { flex: 1 1 16rem; }
+		.trh .tarjeta__titulo-grupo h2 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+		}
+		.trh .tarjeta__cabecera h2::before,
+		.trh .tarjeta__titulo-grupo h2::before { display: none; }
+		.trh .tarjeta__titulo-grupo p {
+			margin-top: .25rem;
+			max-width: 62ch;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+		.trh .tarjeta__cabecera > .etiqueta { align-self: center; }
+		.trh .tarjeta__cuerpo { padding: 1.5rem; }
+		.trh .tarjeta--nueva { border-color: #f1d8b2; }
+		.trh .tarjeta--nueva .tarjeta__cabecera { background: #fdf8f0; border-bottom-color: #f1d8b2; }
+
+		/* ---- Tarjeta plegable ---- */
+		.trh .detalle__flecha { margin-left: auto; background: var(--a-suave); color: var(--a-navy); }
+		.trh .detalle__cabecera:hover .detalle__flecha { background: var(--a-accion); color: #fff; }
+		.trh details:not([open]) > .tarjeta__cabecera { border-bottom: 0; }
+
+		/* ---- Botones ---- */
+		.trh .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.trh .boton::after { display: none; }
+		.trh .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.trh .boton--primario,
+		.trh .boton--primario:hover {
+			border-color: var(--a-accion);
+			background: var(--a-accion);
+			box-shadow: 0 3px 10px rgba(221, 145, 44, .28);
+		}
+		.trh .boton--primario:hover {
+			border-color: var(--a-accion-hover);
+			background: var(--a-accion-hover);
+			box-shadow: 0 4px 12px rgba(221, 145, 44, .36);
+		}
+		.trh .boton--chico { padding: .5rem .875rem; font-size: .75rem; }
+		.trh .boton--contorno {
+			border: 1px solid #cfe0f2;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.trh .boton--contorno:hover:not(:disabled) {
+			border: 1px solid #b6cfe9;
+			background: #e9f1fa;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.trh .boton--fantasma {
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.trh .boton--fantasma:hover {
+			border: 1px solid #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.trh .boton--peligro {
+			border: 1px solid #f0c4c4;
+			background: #fff;
+			color: #b42318;
+			box-shadow: none;
+		}
+		.trh .boton--peligro:hover {
+			border: 1px solid #e6a8a8;
+			background: #fdf3f3;
+			color: #b42318;
+			box-shadow: none;
+		}
+		.trh .boton:disabled { opacity: .5; box-shadow: none; }
+
+		/* ---- Campos ---- */
+		.trh .campo__etiqueta,
+		.trh .campo:focus-within .campo__etiqueta {
+			margin-bottom: .375rem;
+			color: var(--a-navy);
+			font-size: .875rem;
+			font-weight: 700;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+		.trh .campo__ayuda { color: var(--a-tenue); line-height: 1.45; }
+		.trh input[type="text"],
+		.trh input[type="tel"],
+		.trh input[type="number"],
+		.trh input[type="search"],
+		.trh input[type="date"],
+		.trh select {
+			padding: .625rem .875rem;
+			border: 1px solid #d5e0ed;
+			border-radius: 10px;
+			background-color: #fff;
+			font-size: .9375rem;
+			font-weight: 500;
+			color: var(--a-texto);
+		}
+		.trh select { padding-right: 2.5rem; }
+		.trh input:hover, .trh select:hover { border-color: #b9c9dc; }
+		.trh input[type="text"]:focus,
+		.trh input[type="tel"]:focus,
+		.trh input[type="number"]:focus,
+		.trh input[type="search"]:focus,
+		.trh input[type="date"]:focus,
+		.trh select:focus {
+			border-color: var(--a-azul);
+			box-shadow: 0 0 0 3px rgba(23, 68, 117, .14);
+		}
+
+		/* ---- Formulario ---- */
+		.trh .bloque-form {
+			margin-bottom: 1.25rem;
+			border: 1px solid var(--a-borde);
+			border-radius: 12px;
+			background: #f9fbfd;
+			box-shadow: none;
+		}
+		.trh .bloque-form__cabecera { display: none; }
+		.trh .bloque-form__cuerpo { padding: 1.25rem; }
+		.trh .bloque-form__cuerpo .campo { margin-bottom: 0; }
+		.trh .rejilla-2-campos {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 1rem 1.25rem;
+		}
+		.trh .campo--ancho { grid-column: 1 / -1; }
+		.trh .form-actions-bar {
+			display: flex;
+			justify-content: flex-end;
+			padding: 0;
+			margin: 0;
+			background: none;
+			border: 0;
+		}
+		.trh .rejilla-2 {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 1.25rem;
+			align-items: start;
+		}
+
+		/* ---- Etiquetas ---- */
+		.trh .etiqueta {
+			padding: .375rem .875rem;
+			border: 0;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+		}
+		.trh .etiqueta::before { content: none; display: none; animation: none; }
+		.trh .etiqueta--gris { background: #eceff3; color: var(--a-tenue); }
+		.trh .etiqueta--alerta { background: #fdf0d9; color: #9a5a0a; }
+		.trh .etiqueta i { margin-right: .25rem; }
+		.trh .etiqueta--ingreso { background: #e3f2ea; color: #1f6b47; }
+		.trh .pasajeros {
+			display: inline-flex;
+			align-items: center;
+			padding: .375rem .875rem;
+			border-radius: 999px;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			font-variant-numeric: tabular-nums;
+		}
+
+		/* ---- Tabla ---- */
+		.trh .tabla-envoltura {
+			margin: 1.25rem 1.5rem 1.5rem;
+			border: 1px solid #dfe8f3;
+			border-radius: 12px;
+			background: #fff;
+		}
+		.trh .tabla thead th {
+			padding: .875rem 1.125rem;
+			background: var(--a-suave);
+			color: #2f4a70;
+			border-bottom: 1px solid #e3ebf4;
+			font-size: .75rem;
+			font-weight: 600;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+		}
+		.trh .tabla thead tr th:first-child { border-left: 0; }
+		.trh .tabla thead th.tabla__num { text-align: right; }
+		.trh .tabla thead th.tabla__acciones { text-align: center; }
+		.trh .tabla tbody td {
+			padding: 1rem 1.125rem;
+			border-bottom: 1px solid #edf2f8;
+			vertical-align: middle;
+			color: var(--a-texto);
+		}
+		.trh .tabla tbody tr { animation: none; }
+		.trh .tabla tbody tr:nth-child(even) { background: transparent; }
+		.trh .tabla tbody tr:hover { background: #f7fafd; }
+		.trh .tabla tbody tr:hover td:first-child { box-shadow: none; }
+		.trh .tabla tbody tr:last-child td { border-bottom: 0; }
+		.trh .tabla__principal { color: var(--a-navy); font-weight: 700; }
+		.trh .tabla__secundario { color: var(--a-tenue); font-weight: 500; }
+		.trh .placa {
+			display: block;
+			font-weight: 700;
+			font-size: .875rem;
+			color: var(--a-navy);
+			letter-spacing: .01em;
+		}
+		.trh .hora {
+			display: inline-block;
+			color: var(--a-navy);
+			font-weight: 700;
+			font-size: .9375rem;
+			font-variant-numeric: tabular-nums;
+		}
+		.trh .acciones-fila {
+			display: flex;
+			flex-wrap: wrap;
+			gap: .5rem;
+			align-items: center;
+			justify-content: center;
+		}
+
+		/* ---- Lista vacía ---- */
+		.trh .tabla--vacia td {
+			white-space: normal;
+			line-height: 1.6;
+			text-align: center;
+			padding: 2rem 1rem 2.25rem;
+			color: var(--a-tenue);
+			font-size: .75rem;
+		}
+		.trh .tabla tr.tabla--vacia:hover { background: transparent; }
+		.trh .vacio-icono { display: block; margin-bottom: .625rem; color: #1f4b7a; font-size: 2rem; }
+		.trh .tabla--vacia strong { color: var(--a-navy); font-size: .875rem; font-weight: 700; }
+
+		/* ---- Móvil ---- */
+		@media (max-width: 900px) {
+			.trh .rejilla-2 { grid-template-columns: 1fr; }
+		}
+		@media (max-width: 768px) {
+			.trh .campo input,
+			.trh .campo select { font-size: 16px; }
+			.trh .hero-inicio { padding: 1.25rem; min-height: 0; }
+			.trh .hero-inicio h1 { font-size: 1.5rem; }
+			.trh .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.trh .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.trh .tarjeta__cuerpo { padding: 1rem; }
+			.trh .bloque-form__cuerpo { padding: 1rem; }
+			.trh .rejilla-2-campos { grid-template-columns: 1fr; }
+			.trh .form-actions-bar { flex-direction: column-reverse; align-items: stretch; }
+			.trh .form-actions-bar .boton { width: 100%; justify-content: center; }
+			.trh .form-actions-bar__inicio { margin-right: 0; }
+			.trh .tabla-envoltura { margin: 1rem 1rem 1.25rem; }
+
+			.trh .tabla tbody tr { display: flex; flex-direction: column; }
+			.trh .tabla tbody td.celda-cab {
+				order: -1;
+				display: block;
+				padding: .875rem;
+				text-align: left;
+				background: var(--a-suave);
+				border-bottom: 1px solid var(--a-borde);
+			}
+			.trh .tabla tbody td.celda-cab::before { content: none; }
+			.trh .acciones-fila { justify-content: flex-end; }
+
+			.trh .tabla tbody tr.tabla--vacia td { display: block; text-align: center; }
+			.trh .tabla tbody tr.tabla--vacia td::before { content: none; }
+		}
+		@media (max-width: 480px) {
+			.trh .hero-icono { display: none; }
+		}
+
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-clock-rotate-left"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">VIAJES ANTERIORES</span>
+			<h1>Historial de transporte</h1>
+			<p>
+				Todas las salidas e ingresos registrados, de la más reciente a la
+				más antigua. Vuelva a abrirlos para imprimirlos.
+			</p>
+		</div>
+	</section>
+
+	<div class="tarjeta">
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--azul" aria-hidden="true"><i class="fas fa-route"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Viajes registrados</h2>
+				<p>Cada fila muestra el tipo, el vehículo, el destino y cuánta gente
+					subió el día que salió o entró.</p>
+			</div>
+			<span class="etiqueta" th:text="${#lists.size(salidas)} + ' viaje(s)'">0 viaje(s)</span>
+		</div>
+
+		<div class="tabla-envoltura">
+			<table class="tabla tabla--historial">
+				<thead>
+				<tr>
+					<th>Salida</th>
+					<th>Tipo</th>
+					<th>Vehículo</th>
+					<th>Destino</th>
+					<th class="tabla__num">Pasajeros</th>
+					<th class="tabla__acciones">Acción</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr th:each="viaje : ${salidas}">
+					<td class="celda-cab" data-label="Salida">
+						<span class="tabla__principal"
+							  th:text="${#temporals.format(viaje.salida, 'dd/MM/yyyy')}">12/10/2026</span>
+						<span class="tabla__secundario"
+							  th:text="${#temporals.format(viaje.salida, 'HH:mm')}">19:00</span>
+					</td>
+					<td data-label="Tipo">
+						<span class="etiqueta" th:if="${viaje.tipo.name() == 'SALIDA'}">
+							<i class="fas fa-car-side" aria-hidden="true"></i> Salida
+						</span>
+						<span class="etiqueta etiqueta--ingreso" th:unless="${viaje.tipo.name() == 'SALIDA'}">
+							<i class="fas fa-right-to-bracket" aria-hidden="true"></i> Ingreso
+						</span>
+					</td>
+					<td data-label="Vehículo">
+						<span class="placa" th:text="${viaje.vehiculo.placa}">ABC123</span>
+						<span class="tabla__secundario" th:if="${viaje.vehiculo.conductor != null}"
+							  th:text="${viaje.vehiculo.conductor}">Conductor</span>
+					</td>
+					<td data-label="Destino">
+						<span th:text="${viaje.destino.nombre}">Destino</span>
+						<span class="tabla__secundario" th:if="${viaje.destino.direccion != null}"
+							  th:text="${viaje.destino.direccion}">Dirección</span>
+					</td>
+					<td class="tabla__num" data-label="Pasajeros">
+						<span class="pasajeros"
+							  th:text="${conteos[viaje.id]} + ' / ' + ${viaje.vehiculo.capacidad}">0 / 4</span>
+					</td>
+					<td class="tabla__acciones" data-label="Acción">
+						<div class="acciones-fila">
+							<a th:href="@{/transporte/reporte(dia=${viaje.salida.toLocalDate()}, viaje=${viaje.id})}" target="_blank"
+							   class="boton boton--contorno boton--chico">
+								<i class="fas fa-file-pdf"></i> Ver / Imprimir
+							</a>
+							<form th:action="@{/transporte/viajes/{id}/eliminar(id=${viaje.id})}"
+								  method="post" class="form-linea"
+								  th:attr="data-confirm=|¿Eliminar ${viaje.tipo.name() == 'INGRESO' ? 'el ingreso' : 'la salida'} del ${#temporals.format(viaje.salida, 'dd/MM/yyyy HH:mm')}? Se quitan también sus pasajeros.|,data-confirm-peligro='true'">
+								<input type="hidden" name="dia" th:value="${viaje.salida.toLocalDate()}">
+								<button type="submit" class="boton boton--peligro boton--chico">
+									<i class="fas fa-trash-can"></i> Eliminar
+								</button>
+							</form>
+						</div>
+					</td>
+				</tr>
+				<tr th:if="${#lists.isEmpty(salidas)}" class="tabla--vacia">
+					<td colspan="6" data-label="Aviso">
+						<i class="fas fa-clock-rotate-left vacio-icono" aria-hidden="true"></i>
+						<strong>Historial vacío</strong><br>
+						Todavía no se ha registrado ningún viaje de transporte.
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+</div>
+</body>
+</html>

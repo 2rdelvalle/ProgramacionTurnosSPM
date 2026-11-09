@@ -1,0 +1,156 @@
+name: CI DevSecOps
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+# Permisos minimos: solo lectura de contenido, escritura de checks y SARIF.
+permissions:
+  contents: read
+  checks: write
+  security-events: write
+
+jobs:
+  build-and-test:
+    name: Compilar, probar y escanear
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── Fuentes ──────────────────────────────────────────────────────────
+      - name: Checkout con historial completo
+        # actions/checkout v4.2.2 — commit SHA verificado via API GitHub
+        # https://api.github.com/repos/actions/checkout/git/ref/tags/v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          # historial completo requerido por Gitleaks para escanear commits anteriores
+          fetch-depth: 0
+
+      # ── Java ─────────────────────────────────────────────────────────────
+      - name: Instalar Java 25
+        # actions/setup-java v4.6.0 — commit SHA verificado via API GitHub
+        # https://api.github.com/repos/actions/setup-java/git/ref/tags/v4.6.0
+        uses: actions/setup-java@7a6d8a8234af8eb26422e24e3006232cccaa061b
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: maven
+
+      # ── Permisos de ejecucion de mvnw ────────────────────────────────────
+      # mvnw está versionado con modo 100644; en Linux CI la shell necesita
+      # permiso de ejecucion explícito porque git checkout respeta el modo del índice.
+      - name: Habilitar permiso de ejecucion de mvnw
+        run: chmod +x mvnw
+
+      # ── Compilacion ───────────────────────────────────────────────────────
+      - name: Compilar (sin pruebas)
+        run: ./mvnw -B compile -q
+
+      # ── Escaneo de secretos (control obligatorio, bloquea el pipeline) ───
+      # Un secreto en el historial es una vulnerabilidad; no se usa continue-on-error.
+      # Para allowlist de hallazgos históricos legítimos: agregar .gitleaks.toml
+      # con motivo, responsable y fecha de vencimiento.
+      - name: Escanear secretos con Gitleaks
+        # gitleaks/gitleaks-action v2.3.4 — commit SHA verificado via API GitHub
+        # https://api.github.com/repos/gitleaks/gitleaks-action/git/ref/tags/v2.3.4
+        uses: gitleaks/gitleaks-action@e6dab246340401bf53eec993b8f05aebe80ac636
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
+          GITLEAKS_ENABLE_SUMMARY: true
+
+      # ── Pruebas con Testcontainers ────────────────────────────────────────
+      # DB_URL/DB_USER/DB_PASSWORD se dejan vacías: Testcontainers gestiona
+      # la BD efímera. Tests sin @PruebaDeIntegracion fallan al no resolver
+      # el host ficticio configurado como fallback.
+      - name: Ejecutar pruebas
+        run: ./mvnw -B test -Dspring.profiles.active=test
+        env:
+          DB_URL: ""
+          DB_USER: ""
+          DB_PASSWORD: ""
+
+      # ── Resultados de pruebas ─────────────────────────────────────────────
+      - name: Publicar resultados JUnit
+        # dorny/test-reporter v1.9.1 — commit SHA verificado via API GitHub
+        # https://api.github.com/repos/dorny/test-reporter/git/ref/tags/v1.9.1
+        uses: dorny/test-reporter@31a54ee7ebcacc03a09ea97a7e5465a47b84aea5
+        if: always()
+        with:
+          name: Resultados JUnit
+          path: target/surefire-reports/*.xml
+          reporter: java-junit
+          fail-on-error: true
+
+      # ── Análisis de dependencias OWASP DC (control obligatorio) ──────────
+      # Falla en CVSS >= 7. Sin continue-on-error: una vulnerabilidad alta
+      # bloquea el pipeline intencionalmente.
+      # Excepcionalmente: agregar owasp-suppressions.xml con motivo, responsable
+      # y fecha de vencimiento antes de suprimir cualquier hallazgo.
+      #
+      # NVD_API_KEY: configurar como secreto del repositorio. Sin clave la
+      # descarga de NVD queda throttled a 1 req/30s y el paso puede superar
+      # el timeout. Obtener clave gratuita en: https://nvd.nist.gov/developers/request-an-api-key
+      - name: Analisis OWASP Dependency Check
+        run: |
+          ./mvnw -B org.owasp:dependency-check-maven:12.1.0:check \
+            -DfailBuildOnCVSS=7 \
+            -Dformat=HTML,SARIF \
+            -DoutputDirectory=target/dependency-check-report \
+            -DnvdApiKey=${{ secrets.NVD_API_KEY }}
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+
+      - name: Subir reporte Dependency Check
+        # actions/upload-artifact v4.6.0 — commit SHA verificado via API GitHub
+        # https://api.github.com/repos/actions/upload-artifact/git/ref/tags/v4.6.0
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+        if: always()
+        with:
+          name: dependency-check-report
+          path: target/dependency-check-report/
+          retention-days: 30
+
+      # ── SBOM ─────────────────────────────────────────────────────────────
+      - name: Generar SBOM (CycloneDX)
+        run: |
+          ./mvnw -B org.cyclonedx:cyclonedx-maven-plugin:2.8.0:makeAggregateBom \
+            -DoutputFormat=json \
+            -DoutputName=sbom
+
+      - name: Subir SBOM
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+        if: always()
+        with:
+          name: sbom
+          path: target/sbom.json
+          retention-days: 90
+
+      # ── Análisis estático SpotBugs ────────────────────────────────────────
+      # failOnError=false: SpotBugs no bloquea por hallazgos de código (falsos
+      # positivos frecuentes con Lombok). continue-on-error eliminado: si la
+      # herramienta falla (plugin no encontrado, error de ejecución), el paso
+      # falla y el artefacto faltante evidencia el problema. Los hallazgos de
+      # código se revisan manualmente en el reporte subido.
+      - name: Analisis estatico SpotBugs
+        run: |
+          ./mvnw -B com.github.spotbugs:spotbugs-maven-plugin:4.8.6.4:check \
+            -Dspotbugs.effort=max \
+            -Dspotbugs.threshold=medium \
+            -Dspotbugs.failOnError=false
+
+      - name: Subir reporte SpotBugs
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+        if: always()
+        with:
+          name: spotbugs-report
+          path: target/spotbugs*.xml
+          retention-days: 30
+
+      # ── Equivalentes locales ──────────────────────────────────────────────
+      # Secretos:   gitleaks detect --source . --log-opts="--all"
+      # Pruebas:    ./mvnw test -Dspring.profiles.active=test
+      # Deps:       ./mvnw org.owasp:dependency-check-maven:12.1.0:check -DfailBuildOnCVSS=7
+      # SBOM:       ./mvnw org.cyclonedx:cyclonedx-maven-plugin:2.8.0:makeAggregateBom
+      # SpotBugs:   ./mvnw com.github.spotbugs:spotbugs-maven-plugin:4.8.6.4:check

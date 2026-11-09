@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="es" th:replace="~{fragments/layout :: pagina('Propuestas guardadas', 'nueva', ~{::contenido})}">
+
+<body>
+<div th:fragment="contenido" class="prop-lote">
+
+	<!--
+		Esta pantalla usa los componentes del sistema visual (hero-inicio,
+		tarjeta, tabla, etiqueta, boton) con la paleta sobria de
+		colaboradores.html y transporte.html.
+
+		En móvil:
+		- El hero se apila en una columna.
+		- La tabla se convierte en tarjeta por propuesta.
+		- El pie con botones se apila y cada botón ocupa todo el ancho.
+	-->
+	<style>
+		/* =================================================================
+		   Propuestas guardadas · estilos locales
+		   ================================================================= */
+		.prop-lote {
+			--a-navy: #12304f;
+			--a-azul: #174475;
+			--a-azul-hover: #123860;
+			--a-circulo: #194779;
+			--a-accion: #dd912c;
+			--a-accion-hover: #c9811f;
+			--a-oro-claro: #e8c27e;
+			--a-borde: #e3ebf4;
+			--a-suave: #f3f7fb;
+			--a-texto: #1b2b3f;
+			--a-tenue: #5b7191;
+			animation: none;
+		}
+		.prop-lote > .hero-inicio,
+		.prop-lote > .tarjeta { margin-bottom: 1.25rem; }
+
+		/* ---- Portada ---- */
+		.prop-lote .hero-inicio,
+		.prop-lote .hero-inicio * { animation: none; }
+		.prop-lote .hero-inicio {
+			flex-wrap: nowrap;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 1.25rem;
+			min-height: 9.5rem;
+			padding: 1.5rem 2rem;
+			border-radius: var(--radio);
+			background-color: #12304f;
+			background-image:
+					linear-gradient(100deg, #0c223b 0%, #123049 38%, rgba(30, 62, 94, .78) 68%, rgba(52, 70, 88, .55) 100%),
+					var(--foto, linear-gradient(120deg, #17385a, #2a4a66));
+			background-size: cover;
+			background-position: right center;
+			box-shadow: 0 8px 24px rgba(11, 25, 41, .16);
+		}
+		.prop-lote .hero-inicio::before,
+		.prop-lote .hero-inicio::after { content: none; }
+		.prop-lote .hero-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			align-self: flex-start;
+			width: 3.25rem;
+			height: 3.25rem;
+			border-radius: 50%;
+			background: #e09837;
+			color: #fff;
+			font-size: 1.25rem;
+			box-shadow: 0 3px 10px rgba(224, 152, 55, .3);
+		}
+		.prop-lote .hero-inicio__contenido { max-width: 46rem; flex: 1 1 auto; min-width: 0; }
+		.prop-lote .hero-inicio__etiqueta {
+			display: block;
+			margin: 0 0 .25rem;
+			padding: 0;
+			background: none;
+			border-radius: 0;
+			color: var(--a-oro-claro);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .08em;
+			text-transform: uppercase;
+		}
+		.prop-lote .hero-inicio h1 {
+			margin: 0 0 .5rem;
+			font-size: 1.75rem;
+			font-weight: 700;
+			letter-spacing: -.01em;
+		}
+		.prop-lote .hero-inicio .hero-inicio__contenido p {
+			max-width: none;
+			color: rgba(255, 255, 255, .9);
+			font-size: .9375rem;
+			line-height: 1.55;
+		}
+		.prop-lote .hero-inicio__acciones {
+			display: flex;
+			align-items: center;
+			gap: .625rem;
+			flex-wrap: wrap;
+			margin-top: 1rem;
+		}
+		.prop-lote .hero-inicio__acciones .boton {
+			padding: .625rem 1.125rem;
+			border: 1px solid rgba(255, 255, 255, .22);
+			border-radius: 10px;
+			background: rgba(255, 255, 255, .08);
+			color: #fff;
+			font-weight: 700;
+			font-size: .8125rem;
+			box-shadow: none;
+		}
+		.prop-lote .hero-inicio__acciones .boton::after { display: none; }
+		.prop-lote .hero-inicio__acciones .boton:hover {
+			background: rgba(255, 255, 255, .16);
+			border-color: rgba(255, 255, 255, .4);
+			transform: none;
+			filter: none;
+		}
+
+		/* ---- Tarjeta y cabecera ---- */
+		.prop-lote .tarjeta {
+			border: 1px solid var(--a-borde);
+			border-radius: var(--radio);
+			background: #fff;
+			box-shadow: 0 2px 10px rgba(30, 58, 95, .05);
+			animation: none;
+			overflow: hidden;
+		}
+		.prop-lote .tarjeta:hover { box-shadow: 0 2px 10px rgba(30, 58, 95, .05); border-color: var(--a-borde); }
+		.prop-lote .tarjeta__cabecera {
+			justify-content: flex-start;
+			padding: 1.375rem 1.5rem;
+			gap: 1rem;
+			background: #f8fafd;
+			border-bottom: 1px solid var(--a-borde);
+		}
+		.prop-lote .tarjeta__titulo-grupo { flex: 1 1 16rem; }
+		.prop-lote .tarjeta__titulo-grupo h2 {
+			font-size: 1.1875rem;
+			font-weight: 700;
+			letter-spacing: -.005em;
+			color: var(--a-navy);
+		}
+		.prop-lote .tarjeta__cabecera h2::before,
+		.prop-lote .tarjeta__titulo-grupo h2::before { display: none; }
+		.prop-lote .tarjeta__titulo-grupo p {
+			margin-top: .25rem;
+			max-width: 62ch;
+			font-size: .875rem;
+			color: var(--a-tenue);
+		}
+
+		/* Acento azul: la tarjeta es un listado de propuestas */
+		.prop-lote .tarjeta--listado { border-color: var(--a-borde); }
+
+		/* ---- Íconos de sección ---- */
+		.prop-lote .sec-icono {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 50%;
+			color: #fff;
+			font-size: 1.25rem;
+		}
+		.prop-lote .sec-icono--azul { background: var(--a-circulo); box-shadow: 0 3px 10px rgba(25, 71, 121, .25); }
+
+		/* ---- Etiquetas ---- */
+		.prop-lote .etiqueta {
+			padding: .375rem .875rem;
+			border: 0;
+			background: #e6effa;
+			color: #24406a;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+			white-space: nowrap;
+		}
+		.prop-lote .etiqueta::before { content: none; display: none; animation: none; }
+		.prop-lote .etiqueta--info { background: #e6effa; color: #24406a; }
+		.prop-lote .etiqueta--gris { background: #eceff3; color: var(--a-tenue); }
+		.prop-lote .etiqueta--ok { background: #dff3e6; color: #1f6b43; }
+		.prop-lote .etiqueta--alerta { background: #fdf0d9; color: #9a5a0a; }
+		.prop-lote .etiqueta--error { background: #fdecec; color: #b42318; }
+
+		/* ---- Botones ---- */
+		.prop-lote .boton {
+			padding: .75rem 1.375rem;
+			border: 1px solid var(--a-azul);
+			border-radius: 10px;
+			background: var(--a-azul);
+			color: #fff;
+			box-shadow: 0 3px 10px rgba(23, 68, 117, .22);
+			filter: none;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.prop-lote .boton::after { display: none; }
+		.prop-lote .boton:hover {
+			background: var(--a-azul-hover);
+			border-color: var(--a-azul-hover);
+			box-shadow: 0 4px 12px rgba(23, 68, 117, .28);
+			filter: none;
+			transform: none;
+		}
+		.prop-lote .boton--primario,
+		.prop-lote .boton--primario:hover {
+			border-color: var(--a-accion);
+			background: var(--a-accion);
+			box-shadow: 0 3px 10px rgba(221, 145, 44, .28);
+		}
+		.prop-lote .boton--primario:hover {
+			border-color: var(--a-accion-hover);
+			background: var(--a-accion-hover);
+			box-shadow: 0 4px 12px rgba(221, 145, 44, .36);
+		}
+		.prop-lote .boton--chico { padding: .5rem .875rem; font-size: .75rem; }
+		.prop-lote .boton--fantasma {
+			border: 1px solid #dce5ef;
+			background: #fff;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+		.prop-lote .boton--fantasma:hover {
+			border: 1px solid #c3d3e6;
+			background: #f3f7fc;
+			color: var(--a-navy);
+			box-shadow: none;
+		}
+
+		/* ---- Persona: inicial + nombre ---- */
+		.prop-lote .persona {
+			display: flex;
+			align-items: center;
+			gap: .75rem;
+			min-width: 0;
+		}
+		.prop-lote .inicial {
+			flex: none;
+			display: grid;
+			place-items: center;
+			width: 2.5rem;
+			height: 2.5rem;
+			border-radius: 50%;
+			background: #2c5f94;
+			color: #fff;
+			font-size: .8125rem;
+			font-weight: 600;
+			box-shadow: none;
+			text-transform: uppercase;
+		}
+
+		.prop-lote .tabla thead th.tabla__num { text-align: right; }
+
+		/* ---- Tabla dentro de recuadro ---- */
+		.prop-lote .tabla-envoltura {
+			margin: 1.25rem 1.5rem 1.5rem;
+			border: 1px solid #dfe8f3;
+			border-radius: 12px;
+			background: #fff;
+			overflow-x: auto;
+			-webkit-overflow-scrolling: touch;
+		}
+		.prop-lote .tabla thead th {
+			padding: .875rem 1.125rem;
+			background: var(--a-suave);
+			color: #2f4a70;
+			border-bottom: 1px solid #e3ebf4;
+			font-size: .75rem;
+			font-weight: 600;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+			white-space: nowrap;
+		}
+		.prop-lote .tabla thead tr th:first-child { border-left: 0; }
+		.prop-lote .tabla tbody td {
+			padding: 1rem 1.125rem;
+			border-bottom: 1px solid #edf2f8;
+			vertical-align: middle;
+			color: var(--a-texto);
+		}
+		.prop-lote .tabla tbody tr { animation: none; }
+		.prop-lote .tabla tbody tr:nth-child(even) { background: transparent; }
+		.prop-lote .tabla tbody tr:hover { background: #f7fafd; }
+		.prop-lote .tabla tbody tr:hover td:first-child { box-shadow: none; }
+		.prop-lote .tabla tbody tr:last-child td { border-bottom: 0; }
+		.prop-lote .tabla__principal { color: var(--a-navy); font-weight: 700; }
+		.prop-lote .tabla__num { text-align: right; font-variant-numeric: tabular-nums; }
+		.prop-lote .tenue { color: var(--a-tenue); }
+
+		/* ---- Estado vacío ---- */
+		.prop-lote .tabla--vacia td {
+			white-space: normal;
+			line-height: 1.6;
+			text-align: center;
+			padding: 2rem 1rem 2.25rem;
+			color: var(--a-tenue);
+			font-size: .75rem;
+		}
+		.prop-lote .tabla tr.tabla--vacia:hover { background: transparent; }
+		.prop-lote .vacio-icono { display: block; margin-bottom: .625rem; color: #1f4b7a; font-size: 2rem; }
+		.prop-lote .tabla--vacia strong { display: block; margin-bottom: .375rem; color: var(--a-navy); font-size: .875rem; font-weight: 700; }
+
+		/* ---- Pie de acciones ---- */
+		.prop-lote .tarjeta__pie--acciones {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: .625rem;
+			flex-wrap: wrap;
+			padding: 1rem 1.5rem;
+			border-top: 1px solid var(--a-borde);
+			background: #f8fafd;
+		}
+		.prop-lote .formulario-linea { display: inline-flex; margin: 0; }
+
+		/* =================================================================
+		   Móvil
+		   ================================================================= */
+		@media (max-width: 768px) {
+			.prop-lote .hero-inicio { padding: 1.25rem; min-height: 0; flex-wrap: wrap; }
+			.prop-lote .hero-inicio h1 { font-size: 1.5rem; }
+			.prop-lote .hero-inicio__acciones { width: 100%; }
+			.prop-lote .hero-inicio__acciones .boton { flex: 1 1 auto; justify-content: center; }
+			.prop-lote .tarjeta__cabecera { padding: 1.125rem 1rem; }
+			.prop-lote .sec-icono { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+			.prop-lote .tabla-envoltura { margin: 1rem 1rem 1.25rem; }
+
+			.prop-lote .tabla tbody tr { display: flex; flex-direction: column; }
+			.prop-lote .tabla tbody td {
+				display: block;
+				text-align: left;
+				padding: .5rem .875rem;
+				border-bottom: 1px dashed #edf2f8;
+			}
+			.prop-lote .tabla tbody td:last-child { border-bottom: 0; }
+			.prop-lote .tabla tbody td::before {
+				content: attr(data-label);
+				display: block;
+				margin-bottom: .25rem;
+				font-size: .625rem;
+				font-weight: 800;
+				letter-spacing: .06em;
+				text-transform: uppercase;
+				color: var(--a-tenue);
+			}
+			.prop-lote .tabla tbody td.tabla__num { text-align: left; }
+
+			.prop-lote .tabla tbody td.celda-nombre {
+				order: -1;
+				padding: .875rem;
+				background: var(--a-suave);
+				border-bottom: 1px solid var(--a-borde);
+			}
+			.prop-lote .tabla tbody td.celda-nombre::before { content: none; }
+			.prop-lote .celda-nombre .persona { font-size: 1rem; }
+			.prop-lote .celda-nombre .inicial { width: 2.5rem; height: 2.5rem; font-size: .9375rem; }
+
+			.prop-lote .tabla tbody tr.tabla--vacia td { display: block; text-align: center; }
+			.prop-lote .tabla tbody tr.tabla--vacia td::before { content: none; }
+
+			.prop-lote .tarjeta__pie--acciones {
+				flex-direction: column;
+				align-items: stretch;
+				padding: 1rem;
+			}
+			.prop-lote .tarjeta__pie--acciones .boton,
+			.prop-lote .formulario-linea,
+			.prop-lote .formulario-linea .boton { width: 100%; justify-content: center; }
+		}
+		@media (max-width: 480px) {
+			.prop-lote .hero-icono { display: none; }
+		}
+	</style>
+
+	<!-- ======== PORTADA ======== -->
+	<section class="hero-inicio">
+		<span class="hero-icono" aria-hidden="true"><i class="fas fa-inbox"></i></span>
+		<div class="hero-inicio__contenido">
+			<span class="hero-inicio__etiqueta">PENDIENTE DE ENVIAR</span>
+			<h1>Propuestas guardadas</h1>
+			<p th:if="${#lists.isEmpty(pendientes)}">
+				Las <span th:text="${#lists.size(propuestas)}">3</span> de esta lista ya salieron a
+				revisión. Puedes volver al listado o proponer más.
+			</p>
+			<p th:unless="${#lists.isEmpty(pendientes)}">
+				Quedan <span th:text="${#lists.size(pendientes)}">3</span> en borrador de
+				<span th:text="${#lists.size(propuestas)}">3</span>.
+				Envíelas a revisión cuando estén todas.
+			</p>
+			<div class="hero-inicio__acciones">
+				<a th:href="@{/programaciones}" class="boton boton--fantasma">
+					<i class="fas fa-list"></i> Ver todas
+				</a>
+			</div>
+		</div>
+	</section>
+
+	<!-- ======== LISTA ======== -->
+	<div class="tarjeta tarjeta--listado">
+
+		<!-- Cabecera con icono azul: listado de propuestas -->
+		<div class="tarjeta__cabecera">
+			<span class="sec-icono sec-icono--azul" aria-hidden="true"><i class="fas fa-list-check"></i></span>
+			<div class="tarjeta__titulo-grupo">
+				<h2>Propuestas de esta lista</h2>
+				<p>Borradores que se envían todas juntas a revisión. Todavía puede editarlas antes.</p>
+			</div>
+			<span class="etiqueta" th:text="${#lists.size(propuestas)} + ' en total'">0</span>
+		</div>
+
+		<div class="tabla-envoltura">
+			<table class="tabla">
+				<thead>
+				<tr>
+					<th>Persona</th>
+					<th>Área</th>
+					<th class="tabla__num">Fecha</th>
+					<th class="tabla__num">Horario</th>
+					<th class="tabla__num">Horas</th>
+					<th>Estado</th>
+					<th>Motivo</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr th:each="propuesta : ${propuestas}">
+					<td class="celda-nombre" data-label="Persona">
+						<div class="persona">
+								<span class="inicial" aria-hidden="true"
+									  th:text="${#strings.toUpperCase(#strings.substring(propuesta.colaborador.nombreCompleto, 0, 1))}">N</span>
+							<span class="tabla__principal" th:text="${propuesta.colaborador.nombreCompleto}">Nombre</span>
+						</div>
+					</td>
+					<td data-label="Área" th:text="${propuesta.area.nombre}">Área</td>
+					<td class="tabla__num" data-label="Fecha"
+						th:text="${#temporals.format(propuesta.inicioProgramado, 'dd/MM/yyyy')}">fecha</td>
+					<td class="tabla__num" data-label="Horario"
+						th:text="${#temporals.format(propuesta.inicioProgramado, 'HH:mm')} + ' – ' + ${#temporals.format(propuesta.finProgramado, 'HH:mm')}">
+						00:00
+					</td>
+					<td class="tabla__num" data-label="Horas"
+						th:text="${propuesta.horasProgramadas} + ' h'">0 h</td>
+					<td data-label="Estado">
+							<span class="etiqueta"
+								  th:classappend="${propuesta.estado == 'APROBADA' or propuesta.estado == 'EJECUTADA' or propuesta.estado == 'CERRADA'} ? 'etiqueta--ok'
+											: (${propuesta.estado == 'RECHAZADA' or propuesta.estado == 'CANCELADA'} ? 'etiqueta--error'
+												: (${propuesta.estado == 'ENVIADA' or propuesta.estado == 'EN_REVISION_TH'} ? 'etiqueta--alerta' : 'etiqueta--gris'))"
+								  th:text="${propuesta.estado}">BORRADOR</span>
+					</td>
+					<td class="tenue" data-label="Motivo" th:text="${propuesta.motivo}">motivo</td>
+				</tr>
+
+				<tr th:if="${#lists.isEmpty(propuestas)}" class="tabla--vacia">
+					<td colspan="7" data-label="Aviso">
+						<i class="fas fa-inbox vacio-icono" aria-hidden="true"></i>
+						<strong>No hay nada que enviar</strong>
+						Las propuestas no están dentro de su alcance.
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="tarjeta__pie--acciones">
+			<a th:href="@{/programaciones/nueva}" class="boton boton--fantasma">
+				<i class="fas fa-plus"></i> Proponer más
+			</a>
+			<form th:if="${!#lists.isEmpty(pendientes)}"
+				  th:action="@{/programaciones/lote/enviar}"
+				  method="post" class="formulario-linea"
+				  th:attr="data-confirm=${'¿Enviar a revisión ' + #lists.size(pendientes) + ' propuestas de esta lista? Todavía puede revisarlas antes.'}">
+				<input type="hidden" th:each="propuesta : ${pendientes}" name="ids" th:value="${propuesta.id}">
+				<button type="submit" class="boton boton--primario">
+					<i class="fas fa-paper-plane"></i>
+					Enviar a revisión (<span th:text="${#lists.size(pendientes)}">3</span>)
+				</button>
+			</form>
+		</div>
+	</div>
+
+</div>
+</body>
+
+</html>
